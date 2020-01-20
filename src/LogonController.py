@@ -42,7 +42,7 @@ class LogonController:
         self.labelPassword = Label(self.content, text="Password:", font=("Arial Bold", 12))
         self.labelPassword.grid(row=2, column=0)
 
-        self.textPassword = Entry(self.content, width=20)
+        self.textPassword = Entry(self.content, show='*', width=20)
         self.textPassword.grid(row=2, column=1)
 
         self.labelDatabase = Label(self.content, text="Database Name:", font=("Arial Bold", 12))

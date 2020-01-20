@@ -3,7 +3,7 @@ from src.App import App
 if __name__ == '__main__':
     app = App()
     try:
-        app.run()
+        app.main()
     except KeyboardInterrupt:
         pass
     finally:
