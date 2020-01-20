@@ -2,6 +2,7 @@ __pycache__/
 
 *.so
 *.spec
+*.bat
 
 *.log
 
