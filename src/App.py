@@ -19,20 +19,30 @@ class App:
 
         self.window.geometry('640x480')
 
-        self.dataBase = Database(host="localhost", user="root", password="")
+        self.dataBase = False
 
     def __del__(self):
         # Delete dataBase object to close connection with database
-        self.logger.debug("Deleting database object.")
-        del self.dataBase
+        if self.dataBase:
+            self.logger.debug("Deleting database object.")
+            try:
+                del self.dataBase
+            except:
+                pass
         self.logger.info("Closing application.")
         self.logger.debug("===================================================================")
 
     def run(self):
-        logon = LogonController(self.window)
+        self.logonWindow = LogonController(self.window, self.logonEvent)
         self.window.mainloop()
 
+    def logonEvent(self, database):
+        try:
+            self.logonWindow.tlLogon.destroy()
+        except Exception as e:
+            self.logger.critical(f"An error occured while detroying logon window! Exception = {e}")
+        self.window.attributes("-topmost", True)
+        self.dataBase = database
+        res = self.dataBase.executeStatement("SELECT * FROM wlasciciele")
+        print(f"{res}")
 
-if __name__ == "__main__":
-    application = App()
-    application.run()

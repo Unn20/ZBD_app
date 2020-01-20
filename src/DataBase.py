@@ -8,6 +8,7 @@ class Database:
         # Initialize logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("Database logger has started.")
+        self.connection = False
         # Initialize database connection
         try:
             self.logger.debug("Trying to attempt connection with database.")
@@ -36,5 +37,9 @@ class Database:
     def __del__(self):
         """ Close connection with database """
         # Close database connection
-        self.logger.info("Closing database connection.")
-        self.connection.close()
+        if self.connection:
+            self.logger.info("Closing database connection.")
+            try:
+                self.connection.close()
+            except:
+                pass

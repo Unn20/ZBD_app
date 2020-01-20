@@ -15,20 +15,21 @@ def loggingLevels(string):
     else:
         return logging.DEBUG
 
-
 class Logger:
     def __init__(self, loggerName, loggingLevel):
         self.logger = logging.getLogger(loggerName)
-        self.logger.setLevel(logging.DEBUG)
-        self.fileHandler = logging.FileHandler("..\\logFile.log")
-        self.streamHandler = logging.StreamHandler()
-        self.formatter = logging.Formatter("%(asctime)s:%(name)s : %(levelname)s : %(message)s")
-        self.fileHandler.setLevel(logging.DEBUG)
-        self.fileHandler.setFormatter(self.formatter)
-        self.streamHandler.setLevel(loggingLevels(loggingLevel))
-        self.streamHandler.setFormatter(self.formatter)
-        self.logger.addHandler(self.fileHandler)
-        self.logger.addHandler(self.streamHandler)
+        if not len(self.logger.handlers):
+            self.logger = logging.getLogger(loggerName)
+            self.logger.setLevel(logging.DEBUG)
+            self.fileHandler = logging.FileHandler("logFile.log")
+            self.streamHandler = logging.StreamHandler()
+            self.formatter = logging.Formatter("%(asctime)s:%(name)s : %(levelname)s : %(message)s")
+            self.fileHandler.setLevel(logging.DEBUG)
+            self.fileHandler.setFormatter(self.formatter)
+            self.streamHandler.setLevel(loggingLevels(loggingLevel))
+            self.streamHandler.setFormatter(self.formatter)
+            self.logger.addHandler(self.fileHandler)
+            self.logger.addHandler(self.streamHandler)
 
     def debug(self, _message):
         return self.logger.debug(_message)
