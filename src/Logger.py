@@ -20,7 +20,7 @@ class Logger:
     def __init__(self, loggerName, loggingLevel):
         self.logger = logging.getLogger(loggerName)
         self.logger.setLevel(logging.DEBUG)
-        self.fileHandler = logging.FileHandler("logFile.log")
+        self.fileHandler = logging.FileHandler("..\\logFile.log")
         self.streamHandler = logging.StreamHandler()
         self.formatter = logging.Formatter("%(asctime)s:%(name)s : %(levelname)s : %(message)s")
         self.fileHandler.setLevel(logging.DEBUG)

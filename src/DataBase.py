@@ -1,5 +1,5 @@
 import pymysql
-from Logger import Logger
+from src.Logger import Logger
 
 
 class Database:
@@ -11,7 +11,7 @@ class Database:
         # Initialize database connection
         try:
             self.logger.debug("Trying to attempt connection with database.")
-            self.connection = pymysql.connect(host=host, user=user, passwd=password, database="zbd_project")
+            self.connection = pymysql.connect(host=host, user=user, passwd=password, database=database)
         except Exception as e:
             self.logger.critical(f"Could not connect to database! Error = {e}")
             raise ConnectionRefusedError(f"Could not connect to database! Error = {e}")
