@@ -1,0 +1,15 @@
+{
+  "table_names": [
+        "autorzy",
+        "biblioteki",
+        "czytelnicy",
+        "dzialy",
+        "egzemplarze",
+        "gatunki",
+        "historia_operacji",
+        "ksiazki",
+        "pracownicy",
+        "regaly",
+        "wlasciciele"
+  ]
+}

@@ -8,7 +8,7 @@ class Database:
         # Initialize logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("Database logger has started.")
-        self.connection = False
+        self.connection = None
         # Initialize database connection
         try:
             self.logger.debug("Trying to attempt connection with database.")
@@ -22,6 +22,16 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+    def __del__(self):
+        """ Close connection with database """
+        # Close database connection
+        if self.connection is not None:
+            self.logger.info("Closing database connection.")
+            try:
+                self.connection.close()
+            except:
+                pass
+
     def executeStatement(self, statement):
         """ Execute an statement using database cursor"""
         try:
@@ -34,12 +44,4 @@ class Database:
         self.logger.debug(f"Result = {result}")
         return result
 
-    def __del__(self):
-        """ Close connection with database """
-        # Close database connection
-        if self.connection:
-            self.logger.info("Closing database connection.")
-            try:
-                self.connection.close()
-            except:
-                pass
+
