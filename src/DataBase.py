@@ -59,3 +59,4 @@ class Database:
         """ Get all table names read from config file """
         return self.config["table_names"]
 
+

@@ -1,14 +1,16 @@
 from tkinter import *
 from src.Logger import Logger
-from src.DataBase import Database
+from src.TableController import TableController
 
 
 class MainController:
-    def __init__(self, themeWindow, database, logoutEvent, width=300, height=200):
+    """ A class that contains all methods to handle main window with table names """
+    def __init__(self, themeWindow, database, logoutEvent):
+        self.database = database
+        self.themeWindow = themeWindow
         # Start logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("MainController logger has started.")
-        self.database = database
         # Read table names from database object
         self.tableNames = self.database.getTableNames()
         if len(self.tableNames) != 0:
@@ -18,8 +20,8 @@ class MainController:
 
         # Widgets
         # Main frame of this window
-        self.content = Frame(themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
-                             width=themeWindow.winfo_width() - 80, height=themeWindow.winfo_height() - 80)
+        self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
+                             width=self.themeWindow.winfo_width() - 80, height=self.themeWindow.winfo_height() - 80)
         self.content.place(x=40, y=40)
         self.content.bind("<<signout>>", lambda _: logoutEvent(None))
         self.content.update()
@@ -42,7 +44,8 @@ class MainController:
         self.selectionVar = IntVar()  # Int variable which contains current selection
         for no, table in enumerate(self.tableNames):
             Radiobutton(self.tablesFrame, bg="white", text=f"{table}", variable=self.selectionVar,
-                        value=no, command=self.selection).pack(anchor=W)
+                        value=no, command=lambda: self.selection(self.tableNames[self.selectionVar.get()])
+                        ).pack(anchor=W)
 
         self.tablesCanvas.place(x=40, y=30)
         self.tablesCanvas.create_window(0, 0, anchor='nw', window=self.tablesFrame)
@@ -76,8 +79,8 @@ class MainController:
         self.buttonViewTable.grid(row=3, column=0)
 
 
-    def selection(self):
-        pass
+    def selection(self, tabName):
+        self.logger.debug(f"Choosed `{tabName}` table.")
 
     def customProcedure(self):
         # TODO: wykonac procedure
@@ -88,12 +91,14 @@ class MainController:
         pass
 
     def logout(self):
+        """ Generate an event to sign out """
         self.content.event_generate("<<signout>>")
-        pass
 
     def viewTable(self):
         """ Go to selected table screen """
-        print(f"VIEW {self.selectionVar.get()}")
+        self.content.destroy()
+        self.tableController = TableController(self.tableNames[self.selectionVar.get()],
+                                               self.database, self.themeWindow)
 
 
 
