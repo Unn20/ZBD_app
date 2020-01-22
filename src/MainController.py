@@ -23,6 +23,7 @@ class MainController:
         self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
                              width=self.themeWindow.winfo_width() - 80, height=self.themeWindow.winfo_height() - 80)
         self.content.place(x=40, y=40)
+        self.content.grid(row=0, column=0)
         self.content.bind("<<signout>>", lambda _: logoutEvent(None))
         self.content.update()
 
@@ -96,9 +97,15 @@ class MainController:
 
     def viewTable(self):
         """ Go to selected table screen """
-        self.content.destroy()
+        #self.content.destroy()
+        self.content.grid_forget()
         self.tableController = TableController(self.tableNames[self.selectionVar.get()],
-                                               self.database, self.themeWindow)
+                                               self.database, self.themeWindow, self.chooseTableEvent)
+
+    def chooseTableEvent(self, _):
+        self.tableController.content.destroy()
+        self.content.grid(row=0, column=0)
+
 
 
 
