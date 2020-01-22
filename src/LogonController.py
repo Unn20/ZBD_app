@@ -18,6 +18,7 @@ class LogonController:
 
         self.tlLogon.geometry(f"{width}x{height}+{int(xOffset)}+{int(yOffset)}")
         self.tlLogon.lift()
+        self.tlLogon.resizable(0, 0)
         self.tlLogon.attributes("-topmost", True)
         self.tlLogon.bind("<FocusIn>", self.eventHandleFocus)
         self.tlLogon.protocol('WM_DELETE_WINDOW', self.doNothing)
@@ -25,19 +26,21 @@ class LogonController:
 
         # Other widgets
         self.content = Frame(self.tlLogon)
-        self.content.place(x=self.tlLogon.winfo_width()/6, y=self.tlLogon.winfo_height()/6)
+        self.content.place(x=self.tlLogon.winfo_width()/12, y=self.tlLogon.winfo_height()/6)
 
         self.labelAddress = Label(self.content, text="Adress:", font=("Arial Bold", 12))
         self.labelAddress.grid(row=0, column=0)
 
         self.textAddress = Entry(self.content, width=20)
         self.textAddress.grid(row=0, column=1)
+        self.textAddress.insert(END, "localhost")  # TODO: REMOVE IT LATER
 
         self.labelUser = Label(self.content, text="Username:", font=("Arial Bold", 12))
         self.labelUser.grid(row=1, column=0)
 
         self.textUser = Entry(self.content, width=20)
         self.textUser.grid(row=1, column=1)
+        self.textUser.insert(END, "root") # TODO: REMOVE IT LATER
 
         self.labelPassword = Label(self.content, text="Password:", font=("Arial Bold", 12))
         self.labelPassword.grid(row=2, column=0)

@@ -1,5 +1,6 @@
 import pymysql
 from src.Logger import Logger
+import json
 
 
 class Database:
@@ -17,6 +18,16 @@ class Database:
             self.logger.critical(f"Could not connect to database! Error = {e}")
             raise ConnectionRefusedError(f"Could not connect to database! Error = {e}")
         self.logger.info("Database connection is stable.")
+
+        self.config = dict()
+        try:
+            with open("config.json") as f:
+                self.config = {**self.config, **json.load(f)}
+        except IOError as e:
+            self.logger.error(f"Error occured while reading config from .json file!. Error = {e}")
+            exit(-1)
+        self.logger.debug("Config has been read.")
+
         # Initialize global cursor
         self.logger.debug("Creating global cursor.")
         self.cursor = self.connection.cursor()
@@ -44,4 +55,7 @@ class Database:
         self.logger.debug(f"Result = {result}")
         return result
 
+    def getTableNames(self):
+        """ Get all table names read from config file """
+        return self.config["table_names"]
 

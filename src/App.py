@@ -12,7 +12,7 @@ class App:
         self.logger.debug("===================================================================")
         self.logger.debug("Application logger has started.")
 
-        self.config = {}
+        self.config = dict()
         try:
             with open(configPath) as f:
                 self.config = {**self.config, **json.load(f)}
@@ -28,11 +28,13 @@ class App:
         self.logger.debug("Application window has been initialized.")
 
         self.window.geometry(f"{int(width)}x{int(height)}+0+0")
+        self.window.resizable(0, 0)
+        self.window.attributes("-topmost", True)
 
         # Setting a theme picture
         self.theme = Canvas(width=width, height=height, bg='black')
         self.theme.grid(column=0, row=0)
-        self.imagesDict = {}
+        self.imagesDict = dict()
         self.imagesDict["themeC"] = PhotoImage(file="theme.gif")
         self.imagesDict["themeG"] = PhotoImage(file="grayscale_theme.gif")
         self.logger.debug("Images has been loaded.")
@@ -60,10 +62,23 @@ class App:
         except Exception as e:
             self.logger.error(f"An error occurred while destroying logon window! Exception = {e}")
         self.window.attributes("-topmost", True)
+        self.window.attributes("-topmost", False)
         self.theme.itemconfig(self.imageOnCanvas, image=self.imagesDict["themeC"])
         self.logger.debug("Setting coloured theme.")
 
         self.database = database
 
-        self.mainWindow = MainController(self.window, self.database)
+        self.mainWindow = MainController(self.window, self.database, self.logoutEvent)
+
+    def logoutEvent(self, _):
+        try:
+            self.mainWindow.content.destroy()
+        except Exception as e:
+            self.logger.error(f"An error occurred while destroying logon window! Exception = {e}")
+        self.logger.info("Signed out")
+        self.theme.itemconfig(self.imageOnCanvas, image=self.imagesDict["themeG"])
+
+        self.database = None
+
+        self.logonWindow = LogonController(self.window, self.logonEvent)
 
