@@ -36,7 +36,7 @@ class Database:
     def __del__(self):
         """ Close connection with database """
         # Close database connection
-        if self.connection is not None:
+        if self.connection:
             self.logger.info("Closing database connection.")
             try:
                 self.connection.close()
@@ -59,4 +59,183 @@ class Database:
         """ Get all table names read from config file """
         return self.config["table_names"]
 
+    def getData(self, tableName):
+        """Create and execute statement"""
+        statement = "SELECT * FROM " + tableName + ";"
+        self.executeStatement(statement)
+        self.connection.commit()
 
+    def getColumns(self, tableName):
+        """Create and execute statement"""
+        tableName = "'" + tableName + "'"
+        statement = "SELECT column_name FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addOvner(self, nip, companyName='NULL', name='NULL', surname='NULL'):
+        """Add ' at the beggining and at the end of a string"""
+        if companyName != 'NULL':
+            companyName = "'" + companyName + "'"
+        if name != 'NULL':
+            name = "'" + name + "'"
+        if surname != 'NULL':
+            surname = "'" + surname + "'"
+
+        """Create and execute statement"""
+        nip = str(nip)
+        statement = "INSERT INTO `wlasciciele`(`nip`, `nazwa_firmy`, `imie`, `nazwisko`) VALUES ( " + nip + ", " + companyName + ", " + name + ", " + surname + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addAuthor(self, name, surname, birthday, deathday ='NULL'):
+        """Add ' at the beggining and at the end of a string"""
+        if name != 'NULL':
+            name = "'" + name + "'"
+        if surname != 'NULL':
+            surname = "'" + surname + "'"
+        if birthday != 'NULL':
+            birthday = "'" + birthday + "'"
+        if deathday != 'NULL':
+            deathday = "'" + deathday + "'"
+
+        """Create and execute statement"""
+        statement = "INSERT INTO `autorzy`(`imie`, `nazwisko`, `data_urodzenia`, `data_smierci`) VALUES ( " + name + ", " + surname + ", " + birthday + ", " + deathday + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addGenre(self, name):
+        """Add ' at the beggining and at the end of a string"""
+        if name != 'NULL':
+            name = "'" + name + "'"
+
+        """Create and execute statement"""
+        statement = "INSERT INTO `gatunki`(`gatunek`) VALUES ( " + name + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addSection(self, name, location):
+        """Add ' at the beggining and at the end of a string"""
+        if name != 'NULL':
+            name = "'" + name + "'"
+        if location != 'NULL':
+            location = "'" + location + "'"
+
+        """Create and execute statement"""
+        statement = "INSERT INTO `dzialy`(`nazwa`, `lokalizacja`) VALUES ( " + name + ", " + location + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addReader(self, name, surname):
+        """Add ' at the beggining and at the end of a string"""
+        if name != 'NULL':
+            name = "'" + name + "'"
+        if surname != 'NULL':
+            surname = "'" + surname + "'"
+
+        """Create and execute statement"""
+        statement = "INSERT INTO `czytelnicy`(`imie`, `nazwisko`) VALUES ( " + name + ", " + surname + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addLibrary(self, name, location):
+        """Add ' at the beggining and at the end of a string"""
+        if name != 'NULL':
+            name = "'" + name + "'"
+        if location != 'NULL':
+            location = "'" + location + "'"
+
+        """Create and execute statement"""
+        statement = "INSERT INTO `biblioteki`(`nazwa`, `lokalizacja`) VALUES ( " + name + ", " + location + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addBookstand(self, number, capacity, booksCount, sectionName):
+        """Add ' at the beggining and at the end of a string"""
+        if sectionName != 'NULL':
+            sectionName = "'" + sectionName + "'"
+
+        """Create and execute statement"""
+        number = str(number)
+        capacity = str(capacity)
+        booksCount = str(booksCount)
+        statement = "INSERT INTO `regaly`(`numer`, `pojemnosc`, `liczba_ksiazek`, `dział_nazwa`) VALUES ( " + number + ", " + capacity + ", " + booksCount + ", " + sectionName + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addBook(self, title, publicationDate, genre):
+        """Add ' at the beggining and at the end of a string"""
+        if title != 'NULL':
+            title = "'" + title + "'"
+        if publicationDate != 'NULL':
+            publicationDate = "'" + publicationDate + "'"
+        if genre != 'NULL':
+            genre = "'" + genre + "'"
+
+        """Create and execute statement"""
+        statement = "INSERT INTO `ksiazki`(`tytul`, `data_opublikowania`, `gatunek`) VALUES ( " + title + ", " + publicationDate + ", " + genre + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addAuthorBook(self, author_id, book_id):
+        """Create and execute statement"""
+        author_id = str(author_id)
+        book_id = str(book_id)
+        statement = "INSERT INTO `autor_ksiazka`(`autorzy_autor_id`, `ksiazki_ksiazka_id`) VALUES ( " + author_id + ", " + book_id + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addSpecimen(self, book_id, bookstandNumber):
+        """Create and execute statement"""
+        book_id = str(book_id)
+        bookstandNumber = str(bookstandNumber)
+        statement = "INSERT INTO `egzemplarze`(`ksiazka_id`, `regal_numer`) VALUES ( " + book_id + ", " + bookstandNumber + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addWorker(self, name, surname, function, boss_id = 'NULL'):
+        """Add ' at the beggining and at the end of a string"""
+        if name != 'NULL':
+            name = "'" + name + "'"
+        if surname != 'NULL':
+            surname = "'" + surname + "'"
+        if function != 'NULL':
+            function = "'" + function + "'"
+
+        """Create and execute statement. Disable FK checking"""
+        boss_id = str(boss_id)
+        statement = "INSERT INTO `pracownicy`(`szef_id`, `imie`, `nazwisko`, `funkcja`) VALUES ( " + boss_id + ", " + name + ", " + surname + ", " + function + " );"
+        self.executeStatement("SET FOREIGN_KEY_CHECKS = 0;")
+        self.executeStatement(statement)
+        self.executeStatement("SET FOREIGN_KEY_CHECKS = 1;")
+        self.connection.commit()
+
+    def addOvnerLibrary(self, ovner_nip, library_name):
+        """Add ' at the beggining and at the end of a string"""
+        if library_name != 'NULL':
+            library_name = "'" + library_name + "'"
+
+        """Create and execute statement"""
+        ovner_nip = str(ovner_nip)
+        statement = "INSERT INTO `wlasciciel_biblioteka`(`wlasciciel_nip`, `biblioteka_nazwa`) VALUES ( " + ovner_nip + ", " + library_name + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
+
+    def addOperation(self, date, library_name, worker_id, reader_id, specimen_id, operationType, returnDelay, comments):
+        """Add ' at the beggining and at the end of a string"""
+        if date != 'NULL':
+            date = "'" + date + "'"
+        if library_name != 'NULL':
+            library_name = "'" + library_name + "'"
+        if operationType != 'NULL':
+            operationType = "'" + operationType + "'"
+        if comments != 'NULL':
+            comments = "'" + comments + "'"
+
+        """Create and execute statement"""
+        worker_id = str(worker_id)
+        reader_id = str(reader_id)
+        specimen_id = str(specimen_id)
+        returnDelay = str(returnDelay)
+        statement = "INSERT INTO `historia_operacji`(`data`, `biblioteka_nazwa`, `pracownik_id`, `czytelnik_id`, `egzemplarz_id`, `rodzaj_operacji`, `opoznienie`, `uwagi`) VALUES ( " + date + ", " + library_name + ", " + worker_id + ", " + reader_id + ", " + specimen_id + ", " + operationType + ", " + returnDelay + ", " + comments + " );"
+        self.executeStatement(statement)
+        self.connection.commit()
