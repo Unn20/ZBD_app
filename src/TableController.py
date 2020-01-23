@@ -2,6 +2,7 @@ from tkinter import *
 from src.Logger import Logger
 from tkintertable.Tables import TableCanvas
 from tkintertable.TableModels import TableModel
+from src.AddController import AddController
 
 
 class TableController:
@@ -19,13 +20,18 @@ class TableController:
         self.tableData = self.database.getRawData(tableName)
         data = self.database.getData(tableName)
         self.model = TableModel()
+        if len(data) == 0:
+            data["_"] = dict()
+            data["_"]["_"] = "Empty table"
         self.model.importDict(data)
+
 
         # Widgets
         self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
                              width=self.themeWindow.winfo_width() - 80,
                              height=self.themeWindow.winfo_height() - 80)
         self.content.place(x=40, y=40)
+        self.content.grid(row=0, column=0)
         self.content.bind("<<goback>>", lambda _: returnEvent(None))
         self.content.update()
 
@@ -41,13 +47,13 @@ class TableController:
         self.sortButton.pack(fill='both', side=LEFT)
         self.findButton = Button(self.topCanvas, text=" Find ", command=self.find, width=22)
         self.findButton.pack(fill='both', side=LEFT)
-        self.showButton = Button(self.topCanvas, text=" Show all ", command=self.showAll, width=22)
+        self.showButton = Button(self.topCanvas, text="Refresh table", command=self.refreshTable, width=22)
         self.showButton.pack(fill='both', side=LEFT)
 
         # Canvas with data
         self.middleFrame = Frame(self.content)
         self.middleFrame.pack(fill='both', side=TOP)
-        self.table = TableCanvas(self.middleFrame, model=self.model, read_only=True,
+        self.table = TableCanvas(self.middleFrame, model=self.model, read_only=False,
                                  cellwidth=60, cellbackgr='#e3f698',
                                  thefont=('Arial', 12), rowheight=20, rowheaderwidth=30,
                                  rowselectedcolor='yellow', editable=True
@@ -67,15 +73,17 @@ class TableController:
         self.buttonDelete = Button(self.bottomCanvas, text=" DELETE ", command=self.delete, width=25, height=3, bd=5)
         self.buttonDelete.pack(side=LEFT)
 
-
-
     def back(self):
         """ Go back to main window """
         self.content.event_generate("<<goback>>")
 
     def add(self):
         """ Go to add window """
-        print('add')
+        self.content.grid_forget()
+        self.addWindow = AddController(self.addBackEvent())
+
+    def addBackEvent(self):
+        self.content.grid(row=0, column=0)
 
     def modify(self):
         print('modify')
@@ -89,5 +97,6 @@ class TableController:
     def find(self):
         print('find')
 
-    def showAll(self):
-        print('show all')
+    def refreshTable(self):
+        self.model.importDict(self.database.getData(self.tableName))
+        self.table.redraw()
