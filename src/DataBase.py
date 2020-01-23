@@ -59,18 +59,31 @@ class Database:
         """ Get all table names read from config file """
         return self.config["table_names"]
 
-    def getData(self, tableName):
-        """Create and execute statement"""
+    def getRawData(self, tableName):
+        """ Gets data and return its in list form """
         statement = "SELECT * FROM " + tableName + ";"
-        self.executeStatement(statement)
-        self.connection.commit()
+        #self.connection.commit()
+        return self.executeStatement(statement)
 
     def getColumns(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
         statement = "SELECT column_name FROM information_schema.columns WHERE table_name = " + tableName + ";"
-        self.executeStatement(statement)
-        self.connection.commit()
+        #self.connection.commit()
+        return self.executeStatement(statement)
+
+    def getData(self, tableName):
+        """ Gets data and return it in dict form """
+        rowData = self.getRawData(tableName)
+        columns = self.getColumns(tableName)
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"cer{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"cer{noR + 1}"][f"{column[0]}"] = row[noC]
+
+        return result
+
 
     def addOvner(self, nip, companyName='NULL', name='NULL', surname='NULL'):
         """Add ' at the beggining and at the end of a string"""

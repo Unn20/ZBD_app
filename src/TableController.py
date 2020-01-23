@@ -1,6 +1,7 @@
 from tkinter import *
 from src.Logger import Logger
-from src.DataBase import Database
+from tkintertable.Tables import TableCanvas
+from tkintertable.TableModels import TableModel
 
 
 class TableController:
@@ -14,8 +15,11 @@ class TableController:
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("TableController logger has started.")
 
-        columns = ('NIP', 'Firma', "Imie", "Nazwisko")
-        rows = self.database.executeStatement("SELECT * FROM wlasciciele")
+        self.columnNames = self.database.getColumns(tableName)
+        self.tableData = self.database.getRawData(tableName)
+        data = self.database.getData(tableName)
+        self.model = TableModel()
+        self.model.importDict(data)
 
         # Widgets
         self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
@@ -41,33 +45,16 @@ class TableController:
         self.showButton.pack(fill='both', side=LEFT)
 
         # Canvas with data
-        # TODO: zrob to kiedy indziej
-        self.middleCanvas = Canvas(self.content, bg="white", bd=1, relief=FLAT,
-                                   width=int(self.content.winfo_width()),
-                                   height=int(self.content.winfo_height() / 1.5))
-        self.middleCanvas.pack(fill='both', side=TOP)
+        self.middleFrame = Frame(self.content)
+        self.middleFrame.pack(fill='both', side=TOP)
+        self.table = TableCanvas(self.middleFrame, model=self.model, read_only=True,
+                                 cellwidth=60, cellbackgr='#e3f698',
+                                 thefont=('Arial', 12), rowheight=20, rowheaderwidth=30,
+                                 rowselectedcolor='yellow', editable=True
+                                 )
+        self.table.show()
 
-        self.columnRow = Canvas(self.middleCanvas,
-                                width=int(self.middleCanvas.winfo_width()),
-                                height=20)
-        self.columnRow.pack(fill='both', side=TOP)
-        self.checkbuttonAll = Checkbutton(self.columnRow, text="")
-        self.checkbuttonAll.grid(row=0, column=0)
-        columnrows = list()
-        for i in range(3):
-            columnrows.append(Entry(self.columnRow, text="").grid(row=1, column=1+i))
 
-        self.tableCanvas = Canvas(self.middleCanvas,
-                                width=int(self.middleCanvas.winfo_width()),
-                                height=100)
-        self.tableCanvas.pack(fill='both', side=TOP)
-        table = list()
-        for i in range(5):
-            Checkbutton(self.tableCanvas, text="").grid(row=i, column=0)
-            table.append(list())
-            for j in range(3):
-                table[i].append(Entry(self.columnRow, text="").grid(row=i, column=1+j))
-        ############
         # Canvas with DML buttons
         self.bottomCanvas = Canvas(self.content, bg="white", bd=1, relief=FLAT,
                                    width=int(self.content.winfo_width()),
