@@ -34,8 +34,6 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        self.modifyRecord('wlasciciele', ['1234567890', 'JanuszPol','Piotr',''], ['', 'JanuszPol','Maciej','NULL'])
-
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -118,7 +116,7 @@ class Database:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
             return False
 
-    """Columns with NULL value won't be modify"""
+    """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
         self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
         try:
@@ -160,6 +158,39 @@ class Database:
         except Exception as e:
             self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
             return False
+
+    def deleteRecord(self, tableName, values):
+        self.logger.debug(f"Deleting record {values[0]} from {tableName}.")
+
+        """Create columns names ready to put into mysql question"""
+        columns = []
+        tmp = self.getColumns(tableName)
+        for column in tmp:
+            newColumn = str(column)
+            newColumn = "`" + newColumn[2:-3] + "`"
+            columns.append(newColumn)
+
+        """Create where_str ready to put into mysql question"""
+        where_str = ""
+        for i in range(len(columns)):
+            value = values[i]
+            if value in ('NULL', ''):
+                where_str += columns[i] + " IS NULL AND "
+            else:
+                where_str += columns[i] + " = "
+                value = str(values[i])
+                where_str += "'" + value + "' AND "
+        where_str = where_str[:-5]
+
+        """Create and execute statement"""
+        tableName = "`" + tableName + "`"
+        statement = "DELETE FROM " + tableName + " WHERE " + where_str + ";"
+        res = self.executeStatement(statement)
+        if res is not False:
+            self.logger.debug(f"Record {values[0]} deleted succesfully.")
+        else:
+            self.logger.error("Could not realize an deleteRecord function. Cannot delete a parent row: a foreign key constraint fails")
+            raise RuntimeError("Could not realize an deleteRecord function. Cannot delete a parent row: a foreign key constraint fails")
 
     def generateDataBase(self):
         self.logger.debug(f"Generating new data base started.")
