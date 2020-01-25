@@ -108,7 +108,6 @@ class Database:
             tableName = "`" + tableName + "`"
             statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
             self.executeStatement(statement)
-            self.connection.commit()
             self.logger.debug("New record added succesfully.")
         except Exception as e:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")

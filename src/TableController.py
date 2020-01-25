@@ -92,6 +92,7 @@ class TableController:
         if self.modifyWindow is not None:
             self.modifyWindow.modifyWindow.destroy()
             self.modifyWindow = None
+        self.refreshTable()
 
     def add(self):
         """ Go to add window """
@@ -123,5 +124,15 @@ class TableController:
         print('find')
 
     def refreshTable(self):
-        self.model.importDict(self.database.getData(self.tableName))
+        self.data = self.database.getData(self.tableName)
+        if len(self.data) == 0:
+            messagebox.showwarning("Empty table", "This table has no records!")
+            self.data["_"] = dict()
+            self.data["_"]["_"] = "Empty table"
+        else:
+            for key, records in self.data.items():
+                for col, value in records.items():
+                    if isinstance(value, datetime.date):
+                        self.data[key][col] = str(value)
+        self.model.importDict(self.data)
         self.table.redraw()

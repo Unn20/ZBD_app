@@ -1,5 +1,6 @@
 from src.Logger import Logger
 from tkinter import *
+from tkinter import messagebox
 
 
 class AddController:
@@ -24,10 +25,12 @@ class AddController:
                               height=self.themeWindow.winfo_height() - 40)
         self.colFrame.pack(fill='both', side=TOP)
 
-        self.entries = dict()
+        self.entries = list()
         for no, col in enumerate(self.colNames):
             Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
-            self.entries[col] = Entry(self.colFrame, width=20).grid(row=no, column=1, columnspan=2)
+            entry = Entry(self.colFrame, width=20)
+            entry.grid(row=no, column=1, columnspan=2)
+            self.entries.append(entry)
 
         self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
@@ -41,8 +44,20 @@ class AddController:
     def goBack(self):
         self.addWindow.event_generate("<<back>>")
 
-    def addRecordToDatabase(self):
-        pass
-
     def checkEntry(self):
-        pass
+        newRecord = list()
+        for entry in self.entries:
+            newRecord.append(entry.get())
+        try:
+            self.database.addRecord(self.tableName, newRecord)
+        except Exception as e:
+            print(f"Exception! e = {e}")
+        confirm = messagebox.askyesno("Add record confirmation",
+                                      "Are You sure that You want to add this record to database?")
+
+        if confirm:
+            self.database.connection.commit()
+            self.goBack()
+        else:
+            self.database.connection.rollback()
+            self.themeWindow.focus_set()
