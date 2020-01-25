@@ -6,6 +6,7 @@ from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
 from src.AddController import AddController
 from src.ModifyController import ModifyController
+import datetime
 
 
 class TableController:
@@ -26,12 +27,17 @@ class TableController:
         self.tableData = self.database.getRawData(tableName)
         self.data = self.database.getData(tableName)
         self.model = TableModel()
+
         if len(self.data) == 0:
             messagebox.showwarning("Empty table", "This table has no records!")
             self.data["_"] = dict()
             self.data["_"]["_"] = "Empty table"
+        else:
+            for key, records in self.data.items():
+                for col, value in records.items():
+                    if isinstance(value, datetime.date):
+                        self.data[key][col] = str(value)
         self.model.importDict(self.data)
-
 
         # Widgets
         self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
