@@ -34,6 +34,8 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+        self.generateDataBase()
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -205,7 +207,7 @@ class Database:
         
         """Generate ovners"""
         self.logger.debug("Generating ovners. Putting records to `wlasciciele` table.")
-        tmp = random.randint(100,10000)
+        tmp = random.randint(1000000000,2000000000)
         for i in range(10):
             nip = tmp + i
             if random.randint(0,1) == 1:
