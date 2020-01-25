@@ -34,8 +34,6 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        self.generateDataBase()
-
     def __del__(self):
         """ Close connection with database """
         # Close database connection

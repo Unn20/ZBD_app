@@ -344,7 +344,7 @@ INSERT INTO `regaly` (`numer`, `pojemnosc`, `liczba_ksiazek`, `dział_nazwa`) VA
 --
 
 CREATE TABLE `wlasciciele` (
-  `nip` int(11) NOT NULL,
+  `nip` int(11) NOT NULL CHECK (`nip` BETWEEN 1000000000 AND 9999999999),
   `nazwa_firmy` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `imie` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `nazwisko` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
