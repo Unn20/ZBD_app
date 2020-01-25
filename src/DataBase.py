@@ -34,6 +34,8 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+        self.modifyRecord('wlasciciele', ['1234567890', 'JanuszPol','Piotr',''], ['', 'JanuszPol','Maciej','NULL'])
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -99,7 +101,9 @@ class Database:
             values_str = "("
             for v in values:
                 newValue = v
-                if newValue != 'NULL':
+                if newValue in ('NULL', ''):
+                    newValue = 'NULL'
+                else:
                     newValue = "'" + str(v) + "'"
                 values_str += newValue + ", "
             values_str = values_str[:-2] + ")"
@@ -108,14 +112,15 @@ class Database:
             tableName = "`" + tableName + "`"
             statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
             self.executeStatement(statement)
+            self.connection.commit()
             self.logger.debug("New record added succesfully.")
         except Exception as e:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
             return False
 
     """Columns with NULL value won't be modify"""
-    def modifyRecord(self, tableName, record_id, values):
-        self.logger.debug(f"Modifying record {record_id} from {tableName}. New values = {values}")
+    def modifyRecord(self, tableName, oldValues, values):
+        self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
         try:
             """Create columns names ready to put into mysql question"""
             columns = []
@@ -125,21 +130,33 @@ class Database:
                 newColumn = "`" + newColumn[2:-3] + "`"
                 columns.append(newColumn)
 
-            """Create setString ready to put into mysql question"""
-            setString = ""
+            """Create set_str ready to put into mysql question"""
+            set_str = ""
             for i in range(len(columns)):
-                if str(values[i]) == 'NULL':
+                if str(values[i]) in ('NULL', ''):
                     continue
-                setString += columns[i] + " = "
-                setString += "'" + str(values[i]) + "', "
-            setString = setString[:-2]
+                set_str += columns[i] + " = "
+                set_str += "'" + str(values[i]) + "', "
+            set_str = set_str[:-2]
+
+            """Create where_str ready to put into mysql question"""
+            where_str = ""
+            for i in range(len(columns)):
+                oldValue = oldValues[i]
+                if oldValue in ('NULL', ''):
+                    where_str += columns[i] + " IS NULL AND "
+                else:
+                    where_str += columns[i] + " = "
+                    oldValue = str(oldValues[i])
+                    where_str += "'" + oldValue + "' AND "
+            where_str = where_str[:-5]
 
             """Create and execute statement"""
             tableName = "`" + tableName + "`"
-            statement = "UPDATE " + tableName + " SET " + setString + " WHERE " + columns[0] + " = " + str(record_id) + ";"
+            statement = "UPDATE " + tableName + " SET " + set_str + " WHERE " + where_str + ";"
             self.executeStatement(statement)
             self.connection.commit()
-            self.logger.debug(f"Record {record_id} modified succesfully.")
+            self.logger.debug(f"Record {oldValues[0]} modified succesfully.")
         except Exception as e:
             self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
             return False
