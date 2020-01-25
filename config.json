@@ -1,6 +1,7 @@
 {
   "table_names": [
         "autorzy",
+        "autor_ksiazka",
         "biblioteki",
         "czytelnicy",
         "dzialy",
@@ -10,6 +11,7 @@
         "ksiazki",
         "pracownicy",
         "regaly",
-        "wlasciciele"
+        "wlasciciele",
+        "wlasciciel_biblioteka"
   ]
 }
