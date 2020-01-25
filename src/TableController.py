@@ -17,6 +17,8 @@ class TableController:
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("TableController logger has started.")
 
+        self.addWindow = None
+
         self.columnNames = self.database.getColumns(tableName)
         self.tableData = self.database.getRawData(tableName)
         data = self.database.getData(tableName)
@@ -76,11 +78,15 @@ class TableController:
 
     def add(self):
         """ Go to add window """
-        self.content.grid_forget()
-        self.addWindow = AddController(self.addBackEvent())
+        #self.content.grid_forget()
+        if self.addWindow is None:
+            self.logger.debug("Starting add window.")
+            self.addWindow = AddController(self.themeWindow, self.tableName, self.database, self.addBackEvent)
 
-    def addBackEvent(self):
-        self.content.grid(row=0, column=0)
+    def addBackEvent(self, event):
+        self.addWindow.addWindow.destroy()
+        self.addWindow = None
+        #self.content.grid(row=0, column=0)
 
     def modify(self):
         print('modify')

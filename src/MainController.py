@@ -5,6 +5,7 @@ from src.TableController import TableController
 
 class MainController:
     """ A class that contains all methods to handle main window with table names """
+
     def __init__(self, themeWindow, database, logoutEvent):
         self.database = database
         self.themeWindow = themeWindow
@@ -28,8 +29,8 @@ class MainController:
         self.content.update()
 
         self.listFrame = Frame(self.content, bg="white", bd=1, relief=FLAT,
-                                   width=int(self.content.winfo_width() / 2 + 20),
-                                   height=int(self.content.winfo_height() - 60))
+                               width=int(self.content.winfo_width() / 2 + 20),
+                               height=int(self.content.winfo_height() - 60))
         self.listFrame.place(x=20, y=20)
 
         # Canvas which contains whole list of table names with their buttons
@@ -79,7 +80,6 @@ class MainController:
                                       width=20, height=5)
         self.buttonViewTable.grid(row=3, column=0)
 
-
     def selection(self, tabName):
         self.logger.debug(f"Choosed `{tabName}` table.")
 
@@ -97,7 +97,7 @@ class MainController:
 
     def viewTable(self):
         """ Go to selected table screen """
-        #self.content.destroy()
+        # self.content.destroy()
         self.content.grid_forget()
         self.tableController = TableController(self.tableNames[self.selectionVar.get()],
                                                self.database, self.themeWindow, self.chooseTableEvent)
@@ -105,10 +105,3 @@ class MainController:
     def chooseTableEvent(self, _):
         self.tableController.content.destroy()
         self.content.grid(row=0, column=0)
-
-
-
-
-
-
-
