@@ -34,8 +34,6 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        self.generateDataBase()
-
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -72,7 +70,6 @@ class Database:
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
         statement = "SELECT column_name FROM information_schema.columns WHERE table_name = " + tableName + ";"
-        #self.connection.commit()
         return self.executeStatement(statement)
 
     def getData(self, tableName):
@@ -87,31 +84,40 @@ class Database:
         return result
 
     def addRecord(self, tableName, values):
-        """Create columns_str string to hold columns names ready to put into mysql question"""
-        columns = self.getColumns(tableName)
-        columns_str = "("
-        for c in columns:
-            newColumn = str(c)
-            newColumn = "`" + newColumn[2:-3] + "`"
-            columns_str += newColumn + ", "
-        columns_str = columns_str[:-2] + ")"
+        self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
+        try:
+            """Create columns_str string to hold columns names ready to put into mysql question"""
+            columns = self.getColumns(tableName)
+            columns_str = "("
+            for c in columns:
+                newColumn = str(c)
+                newColumn = "`" + newColumn[2:-3] + "`"
+                columns_str += newColumn + ", "
+            columns_str = columns_str[:-2] + ")"
 
-        """Create values_str string to hold columns values ready to put into mysql question"""
-        values_str = "("
-        for v in values:
-            newValue = v
-            if newValue != 'NULL':
-                newValue = "'" + str(v) + "'"
-            values_str += newValue + ", "
-        values_str = values_str[:-2] + ")"
+            """Create values_str string to hold columns values ready to put into mysql question"""
+            values_str = "("
+            for v in values:
+                newValue = v
+                if newValue != 'NULL':
+                    newValue = "'" + str(v) + "'"
+                values_str += newValue + ", "
+            values_str = values_str[:-2] + ")"
 
-        """Create and execute statement"""
-        tableName = "`" + tableName + "`"
-        statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
-        self.executeStatement(statement)
-        self.connection.commit()
+            """Create and execute statement"""
+            tableName = "`" + tableName + "`"
+            statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
+            self.executeStatement(statement)
+            self.connection.commit()
+            self.logger.debug("New record added succesfully.")
+        except Exception as e:
+            self.logger.error(f"Could not realize an addRecord function. Error = {e}")
+            return False
 
     def generateDataBase(self):
+
+        self.logger.debug(f"Generating new data base started.")
+
         names = ['Piotr', 'Maciej', 'Jan', 'Jakub', 'Karol', 'Joanna', 'Marta', 'Magda', 'Natalia', 'Olga']
         surnames = ['Krol', 'Nowak', 'Zima', 'Leszczyk', 'Karol', 'Nowaczyk', 'Kowalczyk', 'Wozniak', 'Mazur', 'Krawczyk']
         dates = ['1997-05-05', '1993-12-25', '1991-08-01', '1988-07-17', '1992-10-11', '1991-01-22', '1987-03-30', '1997-11-28', '1990-09-03', '1980-04-14']
@@ -124,7 +130,10 @@ class Database:
         firmNames = ['Januszpol', 'Toyota', 'Adidas', 'Walkman', 'Red_Bull', 'Junkers', 'Ikea', 'Tesco', 'CCC', 'Bakoma']
         workersFunctions = ['szef', 'sprzatanie', 'obsluga_bazy', 'kucharz']
 
+        self.logger.debug("Random collumn values created succesfully.")
+
         """Generate authors"""
+        self.logger.debug("Generating authors. Putting records to `autorzy` table.")
         for _ in range(10):
             author_id = 'NULL'
             name = random.choice(names)
@@ -133,36 +142,46 @@ class Database:
             deathday = random.choice(['NULL', random.choice(dates)])
             values = [author_id, name, surname, birthday, deathday]
             self.addRecord('autorzy', values)
+        self.logger.debug("Authors records put into 'autorzy' table succesfully.")
 
         """Generate libraries"""
+        self.logger.debug("Generating libraries. Putting records to `biblioteki` table.")
         for i in range(10):
             name = libraryNames[i]
             adres = random.choice(adresses)
             values = [name, adres]
             self.addRecord('biblioteki', values)
+        self.logger.debug("Libraries records put into 'biblioteki' table succesfully.")
 
         """Generate readers"""
+        self.logger.debug("Generating readers. Putting records to `czytelnicy` table.")
         for _ in range(10):
             reader_id = 'NULL'
             name = random.choice(names)
             surname = random.choice(surnames)
             values = [reader_id, name, surname]
             self.addRecord('czytelnicy', values)
+        self.logger.debug("Readers records put into 'czytelnicy' table succesfully.")
 
         """Generate sections"""
+        self.logger.debug("Generating sections. Putting records to `dzialy` table.")
         for i in range(10):
             name = 'dzial' + str(i)
             location = 'lokalizacja' + str(i)
             values = [name, location]
             self.addRecord('dzialy', values)
+        self.logger.debug("Sections records put into 'dzialy' table succesfully.")
             
         """Generate genres"""
+        self.logger.debug("Generating genres. Putting records to `gatunki` table.")
         for i in range(10):
             name = genres[i]
             values = [name]
             self.addRecord('gatunki', values)
+        self.logger.debug("Genres records put into 'gatunki' table succesfully.")
         
         """Generate books"""
+        self.logger.debug("Generating books. Putting records to `ksiazki` table.")
         for i in range(10):
             book_id = 'NULL'
             title = booksTitles[i]
@@ -170,8 +189,10 @@ class Database:
             genre = random.choice(genres)
             values = [book_id, title, date, genre]
             self.addRecord('ksiazki', values)
+        self.logger.debug("Books records put into 'ksiazki' table succesfully.")
 
         """Generate bookstands"""
+        self.logger.debug("Generating bookstands. Putting records to `regaly` table.")
         for i in range(10):
             number = i
             capacity = random.randint(5,9)
@@ -180,8 +201,10 @@ class Database:
             section = 'dzial' + str(section)
             values = [number, capacity, booksCount, section]
             self.addRecord('regaly', values)
+        self.logger.debug("Bookstands records put into 'regaly' table succesfully.")
         
         """Generate ovners"""
+        self.logger.debug("Generating ovners. Putting records to `wlasciciele` table.")
         tmp = random.randint(100,10000)
         for i in range(10):
             nip = tmp + i
@@ -195,8 +218,10 @@ class Database:
                 surname = random.choice(surnames)
             values = [nip, firmName, name, surname]
             self.addRecord('wlasciciele', values)
+        self.logger.debug("Ovners records put into 'wlasciciele' table succesfully.")
         
         """Generate ovner-library"""
+        self.logger.debug("Generating ovner-library. Putting records to `wlasciciel_biblioteka` table.")
         tmp = self.getRawData('wlasciciele')
         nips = [record[0] for record in tmp]
         tmp = self.getRawData('biblioteki')
@@ -206,8 +231,10 @@ class Database:
             library = libraries[i]
             values = [nip, library]
             self.addRecord('wlasciciel_biblioteka', values)
+        self.logger.debug("Ovner-library records put into 'wlasciciel_biblioteka' table succesfully.")
         
         """Generate author-book"""
+        self.logger.debug("Generating author-book. Putting records to `autor_ksiazka` table.")
         tmp = self.getRawData('autorzy')
         authors_ids = [record[0] for record in tmp]
         tmp = self.getRawData('ksiazki')
@@ -217,8 +244,10 @@ class Database:
             book_id = books_ids[i]
             values = [author_id, book_id]
             self.addRecord('autor_ksiazka', values)
+        self.logger.debug("Author-book records put into 'autor_ksiazka' table succesfully.")
         
         """Generate specimens"""
+        self.logger.debug("Generating specimens. Putting records to `egzemplarze` table.")
         tmp = self.getRawData('ksiazki')
         books_ids = [record[0] for record in tmp]
         tmp = self.getRawData('regaly')
@@ -242,10 +271,13 @@ class Database:
             else:
                 self.logger.error(f"Could not add specimen to bookstand {bookstandNumber}. Not enough space on the bookstand")
                 return False
+        self.logger.debug("Specimens records put into 'egzemplarze' table succesfully.")
 
         
         """Generate workers. Disable FK checking"""
+        self.logger.debug("Generating workers. Putting records to `pracownicy` table.")
         self.executeStatement("SET FOREIGN_KEY_CHECKS = 0;")
+        self.logger.debug("FOREIGN_KEY_CHECKS disabled")
         for i in range(10):
             worker_id = 'NULL'
             if i != 0:
@@ -258,8 +290,11 @@ class Database:
             values = [worker_id, boss_id, name, surname, function]
             self.addRecord('pracownicy', values)
         self.executeStatement("SET FOREIGN_KEY_CHECKS = 1;")
+        self.logger.debug("FOREIGN_KEY_CHECKS enabled")
+        self.logger.debug("Workers records put into 'pracownicy' table succesfully.")
 
         """Generate operations"""
+        self.logger.debug("Generating operations. Putting records to `historia_operacji` table.")
         tmp = self.getRawData('biblioteki')
         libraries = [record[0] for record in tmp]
         tmp = self.getRawData('pracownicy')
@@ -280,3 +315,4 @@ class Database:
             comment = random.choice(['NULL', random.choice(comments)])
             values = [operation_id, date, library, worker_id, reader_id, specimen_id, operationType, delay, comment]
             self.addRecord('historia_operacji', values)
+        self.logger.debug("Operations records put into 'historia_operacji' table succesfully.")
