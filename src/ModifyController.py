@@ -1,5 +1,6 @@
 from src.Logger import Logger
 from tkinter import *
+from tkinter import messagebox
 
 
 class ModifyController:
@@ -44,7 +45,24 @@ class ModifyController:
         self.cancelButton.pack(side=LEFT)
 
     def checkEntry(self):
-        print(self.selectedRecord)
+        newRecord = list()
+        for entry in self.entries:
+            newRecord.append(entry.get())
+        try:
+            pass
+            # TODO: Dodaj modyfikacje jak bedzie ukonczona metoda w backendzie
+            #self.database.modifyRecord(self.tableName, newRecord)
+        except Exception as e:
+            print(f"Exception! e = {e}")
+        confirm = messagebox.askyesno("Modify record confirmation",
+                                      "Are You sure that You want to modify this record in database?")
+
+        if confirm:
+            self.database.connection.commit()
+            self.goBack()
+        else:
+            self.database.connection.rollback()
+            self.themeWindow.focus_set()
 
     def modifyRecordInDatabase(self):
         pass
