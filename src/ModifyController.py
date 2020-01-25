@@ -31,9 +31,13 @@ class ModifyController:
             Label(self.colFrame, text=col[0], font=("Arial Bold", 12)).grid(row=no, column=0)
             entry = Entry(self.colFrame, width=20)
             entry.grid(row=no, column=1, columnspan=2)
-            if data[selectedRecord][col[0]] is not None:
-                entry.insert(END, data[selectedRecord][col[0]])
+            if data[self.selectedRecord][col[0]] is not None:
+                entry.insert(END, data[self.selectedRecord][col[0]])
             self.entries.append(entry)
+
+        self.oldRecord = list()
+        for entry in self.entries:
+            self.oldRecord.append(entry.get())
 
         self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
@@ -49,9 +53,7 @@ class ModifyController:
         for entry in self.entries:
             newRecord.append(entry.get())
         try:
-            pass
-            # TODO: Dodaj modyfikacje jak bedzie ukonczona metoda w backendzie
-            #self.database.modifyRecord(self.tableName, newRecord)
+            self.database.modifyRecord(self.tableName, self.oldRecord, newRecord)
         except Exception as e:
             print(f"Exception! e = {e}")
         confirm = messagebox.askyesno("Modify record confirmation",
