@@ -10,7 +10,7 @@ class AddController:
         self.backEvent = backEvent
         # Start logger
         self.logger = Logger(__name__, loggingLevel="debug")
-        self.logger.debug("TableController logger has started.")
+        self.logger.debug("AddController logger has started.")
 
         self.addWindow = Toplevel(self.themeWindow)
         self.addWindow.title("Add a new record to database.")
@@ -20,8 +20,8 @@ class AddController:
         self.colNames = self.database.getColumns(self.tableName)
 
         self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
-                               width=self.themeWindow.winfo_width(),
-                               height=self.themeWindow.winfo_height() - 40)
+                              width=self.themeWindow.winfo_width(),
+                              height=self.themeWindow.winfo_height() - 40)
         self.colFrame.pack(fill='both', side=TOP)
 
         self.entries = dict()
@@ -30,8 +30,8 @@ class AddController:
             self.entries[col] = Entry(self.colFrame, width=20).grid(row=no, column=1, columnspan=2)
 
         self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
-                               width=self.themeWindow.winfo_width(),
-                               height=40)
+                                 width=self.themeWindow.winfo_width(),
+                                 height=40)
         self.buttonFrame.pack(fill='both', side=TOP)
         self.addButton = Button(self.buttonFrame, text="Add record", command=self.checkEntry)
         self.addButton.pack(side=LEFT)

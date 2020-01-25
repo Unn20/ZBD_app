@@ -1,9 +1,11 @@
 from tkinter import *
+from tkinter import messagebox
 from src.Logger import Logger
 from tkintertable.Tables import TableCanvas
 from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
 from src.AddController import AddController
+from src.ModifyController import ModifyController
 
 
 class TableController:
@@ -18,15 +20,17 @@ class TableController:
         self.logger.debug("TableController logger has started.")
 
         self.addWindow = None
+        self.modifyWindow = None
 
         self.columnNames = self.database.getColumns(tableName)
         self.tableData = self.database.getRawData(tableName)
-        data = self.database.getData(tableName)
+        self.data = self.database.getData(tableName)
         self.model = TableModel()
-        if len(data) == 0:
-            data["_"] = dict()
-            data["_"]["_"] = "Empty table"
-        self.model.importDict(data)
+        if len(self.data) == 0:
+            messagebox.showwarning("Empty table", "This table has no records!")
+            self.data["_"] = dict()
+            self.data["_"]["_"] = "Empty table"
+        self.model.importDict(self.data)
 
 
         # Widgets
@@ -59,7 +63,6 @@ class TableController:
         self.table = CustomTable(self.middleFrame, model=self.model)
         self.table.show()
 
-
         # Canvas with DML buttons
         self.bottomCanvas = Canvas(self.content, bg="white", bd=1, relief=FLAT,
                                    width=int(self.content.winfo_width()),
@@ -76,20 +79,31 @@ class TableController:
         """ Go back to main window """
         self.content.event_generate("<<goback>>")
 
+    def backEvent(self, event):
+        if self.addWindow is not None:
+            self.addWindow.addWindow.destroy()
+            self.addWindow = None
+        if self.modifyWindow is not None:
+            self.modifyWindow.modifyWindow.destroy()
+            self.modifyWindow = None
+
     def add(self):
         """ Go to add window """
-        #self.content.grid_forget()
         if self.addWindow is None:
             self.logger.debug("Starting add window.")
-            self.addWindow = AddController(self.themeWindow, self.tableName, self.database, self.addBackEvent)
-
-    def addBackEvent(self, event):
-        self.addWindow.addWindow.destroy()
-        self.addWindow = None
-        #self.content.grid(row=0, column=0)
+            self.addWindow = AddController(self.themeWindow, self.tableName, self.database, self.backEvent)
 
     def modify(self):
-        print('modify')
+        """ Go to modify window """
+        if self.table.startrow != self.table.endrow:
+            messagebox.showwarning('Modify error', 'Please select only one record!')
+        else:
+            selectedRow = self.table.currentrow
+            if self.modifyWindow is None:
+                self.logger.debug("Starting modify window.")
+                self.modifyWindow = ModifyController(self.themeWindow, self.tableName, self.database,
+                                                     self.model.getRecName(selectedRow),
+                                                     self.data, self.backEvent)
 
     def delete(self):
         print('delete')

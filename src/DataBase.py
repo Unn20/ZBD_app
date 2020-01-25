@@ -81,9 +81,9 @@ class Database:
         columns = self.getColumns(tableName)
         result = dict()
         for noR, row in enumerate(rowData):
-            result[f"cer{noR + 1}"] = dict()
+            result[f"rec{noR + 1}"] = dict()
             for noC, column in enumerate(columns):
-                result[f"cer{noR + 1}"][f"{column[0]}"] = row[noC]
+                result[f"rec{noR + 1}"][f"{column[0]}"] = row[noC]
         return result
 
     def addRecord(self, tableName, values):
