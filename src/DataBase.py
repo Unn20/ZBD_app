@@ -114,8 +114,38 @@ class Database:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
             return False
 
-    def generateDataBase(self):
+    """Columns with NULL value won't be modify"""
+    def modifyRecord(self, tableName, record_id, values):
+        self.logger.debug(f"Modifying record {record_id} from {tableName}. New values = {values}")
+        try:
+            """Create columns names ready to put into mysql question"""
+            columns = []
+            tmp = self.getColumns(tableName)
+            for column in tmp:
+                newColumn = str(column)
+                newColumn = "`" + newColumn[2:-3] + "`"
+                columns.append(newColumn)
 
+            """Create setString ready to put into mysql question"""
+            setString = ""
+            for i in range(len(columns)):
+                if str(values[i]) == 'NULL':
+                    continue
+                setString += columns[i] + " = "
+                setString += "'" + str(values[i]) + "', "
+            setString = setString[:-2]
+
+            """Create and execute statement"""
+            tableName = "`" + tableName + "`"
+            statement = "UPDATE " + tableName + " SET " + setString + " WHERE " + columns[0] + " = " + str(record_id) + ";"
+            self.executeStatement(statement)
+            self.connection.commit()
+            self.logger.debug(f"Record {record_id} modified succesfully.")
+        except Exception as e:
+            self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
+            return False
+
+    def generateDataBase(self):
         self.logger.debug(f"Generating new data base started.")
 
         names = ['Piotr', 'Maciej', 'Jan', 'Jakub', 'Karol', 'Joanna', 'Marta', 'Magda', 'Natalia', 'Olga']
