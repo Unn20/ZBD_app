@@ -56,10 +56,6 @@ class TableController:
 
         self.backButton = Button(self.topCanvas, text=" < ", command=self.back, width=9)
         self.backButton.pack(fill='both', side=LEFT)
-        self.sortButton = Button(self.topCanvas, text=" Sort ", command=self.sort, width=22)
-        self.sortButton.pack(fill='both', side=LEFT)
-        self.findButton = Button(self.topCanvas, text=" Find ", command=self.find, width=22)
-        self.findButton.pack(fill='both', side=LEFT)
         self.showButton = Button(self.topCanvas, text="Refresh table", command=self.refreshTable, width=22)
         self.showButton.pack(fill='both', side=LEFT)
 
@@ -116,12 +112,6 @@ class TableController:
         """ Delete selected records """
         for no, i in enumerate(self.table.multiplerowlist):
             print(f"rec {no} : {self.model.getRecName(i)}")
-
-    def sort(self):
-        print('sort')
-
-    def find(self):
-        print('find')
 
     def refreshTable(self):
         self.data = self.database.getData(self.tableName)
