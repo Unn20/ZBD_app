@@ -1,6 +1,7 @@
 from tkinter import *
 from src.Logger import Logger
 from tkintertable.Tables import TableCanvas
+from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
 from src.AddController import AddController
 
@@ -53,11 +54,7 @@ class TableController:
         # Canvas with data
         self.middleFrame = Frame(self.content)
         self.middleFrame.pack(fill='both', side=TOP)
-        self.table = TableCanvas(self.middleFrame, model=self.model, read_only=False,
-                                 cellwidth=60, cellbackgr='#e3f698',
-                                 thefont=('Arial', 12), rowheight=20, rowheaderwidth=30,
-                                 rowselectedcolor='yellow', editable=True
-                                 )
+        self.table = CustomTable(self.middleFrame, model=self.model)
         self.table.show()
 
 

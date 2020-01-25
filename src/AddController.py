@@ -5,4 +5,3 @@ class AddController:
         # Start logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("TableController logger has started.")
-        pass
