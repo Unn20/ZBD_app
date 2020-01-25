@@ -106,7 +106,9 @@ class TableController:
                                                      self.data, self.backEvent)
 
     def delete(self):
-        print('delete')
+        """ Delete selected records """
+        for no, i in enumerate(self.table.multiplerowlist):
+            print(f"rec {no} : {self.model.getRecName(i)}")
 
     def sort(self):
         print('sort')
