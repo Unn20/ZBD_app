@@ -170,12 +170,12 @@ class Database:
             genre = random.choice(genres)
             values = [book_id, title, date, genre]
             self.addRecord('ksiazki', values)
-        
+
         """Generate bookstands"""
         for i in range(10):
             number = i
-            capacity = random.randint(100,10000)
-            booksCount = capacity - random.randint(0, capacity)
+            capacity = random.randint(5,9)
+            booksCount = 0
             section = random.randint(0,9)
             section = 'dzial' + str(section)
             values = [number, capacity, booksCount, section]
@@ -227,8 +227,22 @@ class Database:
             specimen_id = 'NULL'
             book_id = random.choice(books_ids)
             bookstandNumber = random.choice(bookstandsNumbers)
-            values = [specimen_id, book_id, bookstandNumber]
-            self.addRecord('egzemplarze', values)
+            """Increment bookstand books count"""
+            statement = "SELECT `liczba_ksiazek` FROM `regaly` WHERE `numer` = " + str(bookstandNumber) + ";"
+            booksCount = self.executeStatement(statement)
+            statement = "SELECT `pojemnosc` FROM `regaly` WHERE `numer` = " + str(bookstandNumber) + ";"
+            capacity = self.executeStatement(statement)
+            if booksCount < capacity:
+                statement = "UPDATE `regaly` SET `liczba_ksiazek` = `liczba_ksiazek` + 1 WHERE `numer` = " + str(bookstandNumber) + ";"
+                self.executeStatement(statement)
+                self.connection.commit()
+                """Add specimen"""
+                values = [specimen_id, book_id, bookstandNumber]
+                self.addRecord('egzemplarze', values)
+            else:
+                self.logger.error(f"Could not add specimen to bookstand {bookstandNumber}. Not enough space on the bookstand")
+                return False
+
         
         """Generate workers. Disable FK checking"""
         self.executeStatement("SET FOREIGN_KEY_CHECKS = 0;")
