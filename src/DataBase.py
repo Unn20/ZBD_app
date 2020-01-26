@@ -63,7 +63,6 @@ class Database:
     def getRawData(self, tableName):
         """ Gets data and return its in list form """
         statement = "SELECT * FROM " + tableName + ";"
-        #self.connection.commit()
         return self.executeStatement(statement)
 
     def getColumns(self, tableName):
@@ -102,7 +101,7 @@ class Database:
             values_str = "("
             for v in values:
                 newValue = v
-                if newValue in ('NULL', ''):
+                if newValue in ('NULL', None, ''):
                     newValue = 'NULL'
                 else:
                     newValue = "'" + str(v) + "'"
@@ -112,11 +111,16 @@ class Database:
             """Create statement"""
             tableName = "`" + tableName + "`"
             statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
+            self.logger.debug(f"AddRecord statement created succesfully. Statement = {statement}")
+
+            """Executing statement"""
             self.executeStatement(statement)
-            self.logger.debug("New record added succesfully.")
+            self.logger.debug(f"Record {values[0]} added succesfully.")
+            return True
+
         except Exception as e:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
-            raise Exception(e)
+            raise RuntimeError(e)
 
     """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
@@ -136,7 +140,7 @@ class Database:
             """Create set_str ready to put into mysql question"""
             set_str = ""
             for i in range(len(columns)):
-                if str(values[i]) in ('NULL', ''):
+                if str(values[i]) in ('NULL', None, ''):
                     continue
                 set_str += columns[i] + " = "
                 set_str += "'" + str(values[i]) + "', "
@@ -146,7 +150,7 @@ class Database:
             where_str = ""
             for i in range(len(columns)):
                 oldValue = oldValues[i]
-                if oldValue in ('NULL', ''):
+                if oldValue in ('NULL', None, ''):
                     where_str += columns[i] + " IS NULL AND "
                 else:
                     where_str += columns[i] + " = "
@@ -157,44 +161,56 @@ class Database:
             """Create statement"""
             tableName = "`" + tableName + "`"
             statement = "UPDATE " + tableName + " SET " + set_str + " WHERE " + where_str + ";"
+            self.logger.debug(f"ModifyRecord statement created succesfully. Statement = {statement}")
+
+            """Executing statement"""
             self.executeStatement(statement)
             self.logger.debug(f"Record {oldValues[0]} modified succesfully.")
+            return True
+
         except Exception as e:
             self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
-            raise Exception(e)
+            raise RuntimeError(e)
 
     def deleteRecord(self, tableName, values):
         self.logger.debug(f"Deleting record {values[0]} from {tableName}.")
 
-        """Create columns names ready to put into mysql question"""
-        columns = []
-        tmp = self.getColumns(tableName)
-        for column in tmp:
-            newColumn = str(column)
-            newColumn = "`" + newColumn[2:-3] + "`"
-            columns.append(newColumn)
-
-        """Create where_str ready to put into mysql question"""
-        where_str = ""
-        for i in range(len(columns)):
-            value = values[i]
-            if value in ('NULL', ''):
-                where_str += columns[i] + " IS NULL AND "
-            else:
-                where_str += columns[i] + " = "
-                value = str(values[i])
-                where_str += "'" + value + "' AND "
-        where_str = where_str[:-5]
-
-        """Create and execute statement"""
-        tableName = "`" + tableName + "`"
-        statement = "DELETE FROM " + tableName + " WHERE " + where_str + ";"
         try:
-            res = self.executeStatement(statement)
+            self.logger.debug("Creating deleteRecord statement.")
+
+            """Create columns names ready to put into mysql question"""
+            columns = []
+            tmp = self.getColumns(tableName)
+            for column in tmp:
+                newColumn = str(column)
+                newColumn = "`" + newColumn[2:-3] + "`"
+                columns.append(newColumn)
+
+            """Create where_str ready to put into mysql question"""
+            where_str = ""
+            for i in range(len(columns)):
+                value = values[i]
+                if value in ('NULL', None, ''):
+                    where_str += columns[i] + " IS NULL AND "
+                else:
+                    where_str += columns[i] + " = "
+                    value = str(values[i])
+                    where_str += "'" + value + "' AND "
+            where_str = where_str[:-5]
+
+            """Create statement"""
+            tableName = "`" + tableName + "`"
+            statement = "DELETE FROM " + tableName + " WHERE " + where_str + ";"
+            self.logger.debug(f"DeleteRecord statement created succesfully. Statement = {statement}")
+
+            """Executing statement"""
+            self.executeStatement(statement)
+            self.logger.debug(f"Record {values[0]} deleted succesfully.")
+            return True
+
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
-            raise Exception(e)
-        self.logger.debug(f"Record {values[0]} deleted succesfully.")
+            raise RuntimeError(e)
 
     def generateDataBase(self):
         self.logger.debug(f"Generating new data base started.")
