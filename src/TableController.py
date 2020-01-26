@@ -74,7 +74,8 @@ class TableController:
         self.buttonAdd.pack(side=LEFT)
         self.buttonModify = Button(self.bottomCanvas, text=" MODIFY ", command=self.modify, width=25, height=3, bd=5)
         self.buttonModify.pack(side=LEFT)
-        self.buttonDelete = Button(self.bottomCanvas, text=" DELETE ", command=self.delete, width=25, height=3, bd=5)
+        self.buttonDelete = Button(self.bottomCanvas, text=" DELETE ",
+                                   command=lambda: self.delete(self.tableName), width=25, height=3, bd=5)
         self.buttonDelete.pack(side=LEFT)
 
     def back(self):
@@ -108,10 +109,29 @@ class TableController:
                                                      self.model.getRecName(selectedRow),
                                                      self.data, self.backEvent)
 
-    def delete(self):
+    def delete(self, tableName):
         """ Delete selected records """
         for no, i in enumerate(self.table.multiplerowlist):
-            print(f"rec {no} : {self.model.getRecName(i)}")
+            recName = self.model.getRecName(i)
+            deletedRecord = list()
+            for column, value in self.data[recName].items():
+                deletedRecord.append(value)
+            print(f"deletedRecord = {deletedRecord}")
+            try:
+                self.database.deleteRecord(tableName, deletedRecord)
+            except Exception as e:
+                self.logger.error(f"Can not delete selected records! Error = {e}")
+                messagebox.showerror("Can not delete selected records!",
+                                     f"Error {e}")
+                return
+        confirm = messagebox.askyesno("Deleting record confirmation",
+                                      "Are You sure that You want to delete selected records?")
+        if confirm:
+            self.database.connection.commit()
+        else:
+            self.database.connection.rollback()
+        self.refreshTable()
+        return
 
     def refreshTable(self):
         self.data = self.database.getData(self.tableName)
