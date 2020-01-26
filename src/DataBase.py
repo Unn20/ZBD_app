@@ -85,7 +85,10 @@ class Database:
 
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
+
         try:
+            self.logger.debug("Creating addRecord statement.")
+
             """Create columns_str string to hold columns names ready to put into mysql question"""
             columns = self.getColumns(tableName)
             columns_str = "("
@@ -106,7 +109,7 @@ class Database:
                 values_str += newValue + ", "
             values_str = values_str[:-2] + ")"
 
-            """Create and execute statement"""
+            """Create statement"""
             tableName = "`" + tableName + "`"
             statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
             self.executeStatement(statement)
@@ -118,7 +121,10 @@ class Database:
     """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
         self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
+
         try:
+            self.logger.debug("Creating modifyRecord statement.")
+
             """Create columns names ready to put into mysql question"""
             columns = []
             tmp = self.getColumns(tableName)
@@ -148,7 +154,7 @@ class Database:
                     where_str += "'" + oldValue + "' AND "
             where_str = where_str[:-5]
 
-            """Create and execute statement"""
+            """Create statement"""
             tableName = "`" + tableName + "`"
             statement = "UPDATE " + tableName + " SET " + set_str + " WHERE " + where_str + ";"
             self.executeStatement(statement)
