@@ -121,8 +121,14 @@ class TableController:
                 self.database.deleteRecord(tableName, deletedRecord)
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
-                messagebox.showerror("Can not delete selected records!",
-                                     f"Error {e}")
+                errorNo = int(e.__str__().split()[0][1:-1])
+                if errorNo == 1451:
+                    messagebox.showerror("Can not delete selected records!",
+                                         f"There are bounds including selected record.")
+                else:
+                    messagebox.showerror("Can not delete selected records!",
+                                        f"Error {e}")
+
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       "Are You sure that You want to delete selected records?")
