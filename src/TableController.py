@@ -130,6 +130,7 @@ class TableController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.model.createEmptyModel()
         self.refreshTable()
         return
 
