@@ -85,7 +85,10 @@ class Database:
 
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
+
         try:
+            self.logger.debug("Creating addRecord statement.")
+
             """Create columns_str string to hold columns names ready to put into mysql question"""
             columns = self.getColumns(tableName)
             columns_str = "("
@@ -106,20 +109,33 @@ class Database:
                 values_str += newValue + ", "
             values_str = values_str[:-2] + ")"
 
-            """Create and execute statement"""
+            """Create statement"""
             tableName = "`" + tableName + "`"
             statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
-            self.executeStatement(statement)
-            self.connection.commit()
-            self.logger.debug("New record added succesfully.")
+            self.logger.debug(f"AddRecord statement created succesfully. Statement = {statement}")
+
         except Exception as e:
-            self.logger.error(f"Could not realize an addRecord function. Error = {e}")
+            self.logger.error(f"Could not create an addRecord statement. Error = {e}")
+            raise RuntimeError(f"Could not create an addRecord statement. Error = {e}")
+            return False
+
+        """Executing statement"""
+        res = self.executeStatement(statement)
+        if res is not False:
+            self.logger.debug(f"Record {values[0]} added succesfully.")
+            return True
+        else:
+            self.logger.error(f"Could not realize an addRecord function statement. Statement = {statement}")
+            raise RuntimeError(f"Could not realize an addRecord function statement. Statement = {statement}")
             return False
 
     """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
         self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
+
         try:
+            self.logger.debug("Creating modifyRecord statement.")
+
             """Create columns names ready to put into mysql question"""
             columns = []
             tmp = self.getColumns(tableName)
@@ -149,48 +165,71 @@ class Database:
                     where_str += "'" + oldValue + "' AND "
             where_str = where_str[:-5]
 
-            """Create and execute statement"""
+            """Create statement"""
             tableName = "`" + tableName + "`"
             statement = "UPDATE " + tableName + " SET " + set_str + " WHERE " + where_str + ";"
-            self.executeStatement(statement)
-            self.connection.commit()
-            self.logger.debug(f"Record {oldValues[0]} modified succesfully.")
+            self.logger.debug(f"ModifyRecord statement created succesfully. Statement = {statement}")
+
         except Exception as e:
-            self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
+            self.logger.error(f"Could not create an modifyRecord statement. Error = {e}")
+            raise RuntimeError(f"Could not create an modifyRecord statement. Error = {e}")
+            return False
+
+        """Executing statement"""
+        res = self.executeStatement(statement)
+        if res is not False:
+            self.logger.debug(f"Record {values[0]} modified succesfully.")
+            return True
+        else:
+            self.logger.error(f"Could not realize an modifyRecord function statement. Statement = {statement}")
+            raise RuntimeError(f"Could not realize an modifyRecord function statement. Statement = {statement}")
             return False
 
     def deleteRecord(self, tableName, values):
         self.logger.debug(f"Deleting record {values[0]} from {tableName}.")
 
-        """Create columns names ready to put into mysql question"""
-        columns = []
-        tmp = self.getColumns(tableName)
-        for column in tmp:
-            newColumn = str(column)
-            newColumn = "`" + newColumn[2:-3] + "`"
-            columns.append(newColumn)
+        try:
+            self.logger.debug("Creating deleteRecord statement.")
 
-        """Create where_str ready to put into mysql question"""
-        where_str = ""
-        for i in range(len(columns)):
-            value = values[i]
-            if value in ('NULL', ''):
-                where_str += columns[i] + " IS NULL AND "
-            else:
-                where_str += columns[i] + " = "
-                value = str(values[i])
-                where_str += "'" + value + "' AND "
-        where_str = where_str[:-5]
+            """Create columns names ready to put into mysql question"""
+            columns = []
+            tmp = self.getColumns(tableName)
+            for column in tmp:
+                newColumn = str(column)
+                newColumn = "`" + newColumn[2:-3] + "`"
+                columns.append(newColumn)
 
-        """Create and execute statement"""
-        tableName = "`" + tableName + "`"
-        statement = "DELETE FROM " + tableName + " WHERE " + where_str + ";"
+            """Create where_str ready to put into mysql question"""
+            where_str = ""
+            for i in range(len(columns)):
+                value = values[i]
+                if value in ('NULL', ''):
+                    where_str += columns[i] + " IS NULL AND "
+                else:
+                    where_str += columns[i] + " = "
+                    value = str(values[i])
+                    where_str += "'" + value + "' AND "
+            where_str = where_str[:-5]
+
+            """Create statement"""
+            tableName = "`" + tableName + "`"
+            statement = "DELETE FROM " + tableName + " WHERE " + where_str + ";"
+            self.logger.debug(f"DeleteRecord statement created succesfully. Statement = {statement}")
+
+        except Exception as e:
+            self.logger.error(f"Could not create an deleteRecord statement. Error = {e}")
+            raise RuntimeError(f"Could not create an deleteRecord statement. Error = {e}")
+            return False
+
+        """Executing statement"""
         res = self.executeStatement(statement)
         if res is not False:
             self.logger.debug(f"Record {values[0]} deleted succesfully.")
+            return True
         else:
-            self.logger.error("Could not realize an deleteRecord function. Cannot delete a parent row: a foreign key constraint fails")
-            raise RuntimeError("Could not realize an deleteRecord function. Cannot delete a parent row: a foreign key constraint fails")
+            self.logger.error(f"Could not realize an deleteRecord function statement. Statement = {statement}")
+            raise RuntimeError(f"Could not realize an deleteRecord function statement. Statement = {statement}")
+            return False
 
     def generateDataBase(self):
         self.logger.debug(f"Generating new data base started.")
