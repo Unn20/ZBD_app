@@ -51,7 +51,10 @@ class AddController:
         try:
             self.database.addRecord(self.tableName, newRecord)
         except Exception as e:
-            print(f"Exception! e = {e}")
+            self.logger.error(f"Exception! e = {e}")
+            messagebox.showerror("Can not add a record to database!",
+                                 f"Error {e}")
+            return
         confirm = messagebox.askyesno("Add record confirmation",
                                       "Are You sure that You want to add this record to database?")
 

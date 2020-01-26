@@ -51,7 +51,7 @@ class Database:
             self.cursor.execute(statement)
         except Exception as e:
             self.logger.error(f"Could not realize an execute statement. Statement = {statement}. Error = {e}")
-            return False
+            raise Exception(e)
         result = self.cursor.fetchall()
         self.logger.debug(f"Result = {result}")
         return result
@@ -110,11 +110,10 @@ class Database:
             tableName = "`" + tableName + "`"
             statement = "INSERT INTO " + tableName + columns_str + " VALUES " + values_str + ";"
             self.executeStatement(statement)
-            self.connection.commit()
             self.logger.debug("New record added succesfully.")
         except Exception as e:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
-            return False
+            raise Exception(e)
 
     """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
@@ -153,11 +152,10 @@ class Database:
             tableName = "`" + tableName + "`"
             statement = "UPDATE " + tableName + " SET " + set_str + " WHERE " + where_str + ";"
             self.executeStatement(statement)
-            self.connection.commit()
             self.logger.debug(f"Record {oldValues[0]} modified succesfully.")
         except Exception as e:
             self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
-            return False
+            raise Exception(e)
 
     def deleteRecord(self, tableName, values):
         self.logger.debug(f"Deleting record {values[0]} from {tableName}.")

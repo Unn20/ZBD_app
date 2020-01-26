@@ -55,7 +55,10 @@ class ModifyController:
         try:
             self.database.modifyRecord(self.tableName, self.oldRecord, newRecord)
         except Exception as e:
-            print(f"Exception! e = {e}")
+            self.logger.error(f"Exception! e = {e}")
+            messagebox.showerror("Can not modify record in database!",
+                                 f"Error {e}")
+            return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
 
@@ -65,9 +68,6 @@ class ModifyController:
         else:
             self.database.connection.rollback()
             self.themeWindow.focus_set()
-
-    def modifyRecordInDatabase(self):
-        pass
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
