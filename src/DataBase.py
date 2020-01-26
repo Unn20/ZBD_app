@@ -183,12 +183,12 @@ class Database:
         """Create and execute statement"""
         tableName = "`" + tableName + "`"
         statement = "DELETE FROM " + tableName + " WHERE " + where_str + ";"
-        res = self.executeStatement(statement)
-        if res is not False:
-            self.logger.debug(f"Record {values[0]} deleted succesfully.")
-        else:
-            self.logger.error("Could not realize an deleteRecord function. Cannot delete a parent row: a foreign key constraint fails")
-            raise RuntimeError("Could not realize an deleteRecord function. Cannot delete a parent row: a foreign key constraint fails")
+        try:
+            res = self.executeStatement(statement)
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+        self.logger.debug(f"Record {values[0]} deleted succesfully.")
 
     def generateDataBase(self):
         self.logger.debug(f"Generating new data base started.")
