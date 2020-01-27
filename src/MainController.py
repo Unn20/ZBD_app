@@ -1,6 +1,7 @@
 from tkinter import *
 from src.Logger import Logger
 from src.TableController import TableController
+from src.ProcedureController import ProcedureController
 
 
 class MainController:
@@ -18,6 +19,8 @@ class MainController:
             self.logger.debug("Table names are loaded")
         else:
             self.logger.warning("No table names has been loaded!")
+
+        self.procedureController = None
 
         # Widgets
         # Main frame of this window
@@ -68,7 +71,7 @@ class MainController:
                                       width=20, height=5)
         self.buttonViewTable.grid(row=0, column=0)
         # Button with SQL defined procedure
-        self.buttonViewTable = Button(self.buttonsFrame, text="Custom procedure 1", command=self.customProcedure,
+        self.buttonViewTable = Button(self.buttonsFrame, text="Hire a book", command=self.customProcedure,
                                       width=20, height=5)
         self.buttonViewTable.grid(row=1, column=0)
         # Button with SQL defined function
@@ -84,12 +87,16 @@ class MainController:
         self.logger.debug(f"Choosed `{tabName}` table.")
 
     def customProcedure(self):
-        # TODO: wykonac procedure
-        pass
+        if self.procedureController is None:
+            self.procedureController = ProcedureController(self.themeWindow, self.database, self.backEvent)
 
     def customFunction(self):
         # TODO: wykonac funkcje
         pass
+
+    def backEvent(self):
+        self.procedureController.procedureWindow.destroy()
+        self.procedureController = None
 
     def logout(self):
         """ Generate an event to sign out """
@@ -97,7 +104,6 @@ class MainController:
 
     def viewTable(self):
         """ Go to selected table screen """
-        # self.content.destroy()
         self.content.grid_forget()
         self.tableController = TableController(self.tableNames[self.selectionVar.get()],
                                                self.database, self.themeWindow, self.chooseTableEvent)
