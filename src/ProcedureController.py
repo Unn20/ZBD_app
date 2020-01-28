@@ -1,7 +1,6 @@
 from tkinter import *
 from tkinter import ttk
 from src.Logger import Logger
-from src.DataBase import Database
 from tkinter import messagebox
 
 class ProcedureController:
@@ -94,16 +93,6 @@ class ProcedureController:
             else:
                 args[combo.label.cget("text")] = combo.combo.get()
 
-        print(args["Library"])
-        print(args["Employee's name"])
-        print(args["Employee's surname"])
-        print(args["Reader's name"])
-        print(args["Reader's surname"])
-        print(args["Book title"])
-        print(args["Publishing date"])
-        print(args["Genre"])
-        print(args["(opt)Comment"])
-
         try:
             self.database.borrowBook(args["Library"], args["Employee's name"], args["Employee's surname"],
                                      args["Reader's name"], args["Reader's surname"], args["Book title"],
@@ -116,9 +105,11 @@ class ProcedureController:
                                      f"{e.__str__().split(',')[1][:-2]}")
                 return
             else:
-        # show me dat exception
-                print(f"EXCEPTION = {e}")
+                self.logger.error(f"{e}")
+                messagebox.showerror("Error while hiring a book.",
+                                     f"{e}")
                 return
+        self.database.connection.commit()
         self.goBack()
 
 
