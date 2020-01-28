@@ -247,10 +247,10 @@ class Database:
 
         """Generate authors"""
         self.logger.debug("Generating authors. Putting records to `autorzy` table.")
-        for _ in range(10):
+        for i in range(10):
             author_id = 'NULL'
             name = random.choice(names)
-            surname = random.choice(surnames)
+            surname = surnames[i]
             birthday = random.choice(dates)
             deathday = random.choice(['NULL', random.choice(dates)])
             values = [author_id, name, surname, birthday, deathday]
@@ -268,10 +268,10 @@ class Database:
 
         """Generate readers"""
         self.logger.debug("Generating readers. Putting records to `czytelnicy` table.")
-        for _ in range(10):
+        for i in range(10):
             reader_id = 'NULL'
             name = random.choice(names)
-            surname = random.choice(surnames)
+            surname = surnames[i]
             values = [reader_id, name, surname]
             self.addRecord('czytelnicy', values)
         self.logger.debug("Readers records put into 'czytelnicy' table succesfully.")
@@ -377,7 +377,6 @@ class Database:
             if booksCount < capacity:
                 statement = "UPDATE `regaly` SET `liczba_ksiazek` = `liczba_ksiazek` + 1 WHERE `numer` = " + str(bookstandNumber) + ";"
                 self.executeStatement(statement)
-                self.connection.commit()
                 """Add specimen"""
                 values = [specimen_id, book_id, bookstandNumber]
                 self.addRecord('egzemplarze', values)
@@ -398,7 +397,7 @@ class Database:
             else:
                 boss_id = 'NULL'
             name = random.choice(names)
-            surname = random.choice(surnames)
+            surname = surnames[i]
             function = random.choice(workersFunctions)
             values = [worker_id, boss_id, name, surname, function]
             self.addRecord('pracownicy', values)
@@ -429,3 +428,6 @@ class Database:
             values = [operation_id, date, library, worker_id, reader_id, specimen_id, operationType, delay, comment]
             self.addRecord('historia_operacji', values)
         self.logger.debug("Operations records put into 'historia_operacji' table succesfully.")
+
+        """Commit"""
+        self.connection.commit()
