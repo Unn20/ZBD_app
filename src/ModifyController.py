@@ -1,6 +1,7 @@
 from src.Logger import Logger
 from tkinter import *
 from tkinter import messagebox
+from tkinter import ttk
 
 
 class ModifyController:
@@ -27,13 +28,24 @@ class ModifyController:
         self.colFrame.pack(fill='both', side=TOP)
 
         self.entries = list()
-        for no, col in enumerate(self.colNames):
-            Label(self.colFrame, text=col[0], font=("Arial Bold", 12)).grid(row=no, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
-            if data[self.selectedRecord][col[0]] is not None:
-                entry.insert(END, data[self.selectedRecord][col[0]])
-            self.entries.append(entry)
+
+        if self.tableName in ["autor_ksiazka", "wlasciciel_biblioteka"]:
+            for no, col in enumerate(self.colNames):
+                Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
+                combo = ttk.Combobox(self.colFrame, values=self.initComboValues(self.tableName, col[0]))
+                combo.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                if data[self.selectedRecord][col[0]] is not None:
+                    combo.set(data[self.selectedRecord][col[0]])
+                self.entries.append(combo)
+
+        else:
+            for no, col in enumerate(self.colNames):
+                Label(self.colFrame, text=col[0], font=("Arial Bold", 12)).grid(row=no, column=0)
+                entry = Entry(self.colFrame, width=20)
+                entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                if data[self.selectedRecord][col[0]] is not None:
+                    entry.insert(END, data[self.selectedRecord][col[0]])
+                self.entries.append(entry)
 
         self.oldRecord = list()
         for entry in self.entries:
@@ -56,8 +68,13 @@ class ModifyController:
             self.database.modifyRecord(self.tableName, self.oldRecord, newRecord)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
-            messagebox.showerror("Can not modify record in database!",
-                                 f"Error {e}")
+            errorNo = int(e.__str__().split()[0][1:-1])
+            if errorNo == 1048 or 1062:
+                messagebox.showerror("Can not delete selected records!",
+                                     f"{e.__str__().split(',')[1][:-2]}")
+            else:
+                messagebox.showerror("Can not modify record in database!",
+                                     f"{e}")
             return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
@@ -71,3 +88,6 @@ class ModifyController:
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
+
+    def initComboValues(self, tableName, col):
+        return self.database.executeStatement(f"SELECT DISTINCT `{col}` FROM `{tableName}`")

@@ -34,9 +34,7 @@ class AddController:
                 combo = ttk.Combobox(self.colFrame, values=self.initComboValues(self.tableName, col[0]))
                 combo.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                 self.entries.append(combo)
-                # entry = Entry(self.colFrame, width=20)
-                # entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
-                # self.entries.append(entry)
+
         else:
             for no, col in enumerate(self.colNames):
                 Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
@@ -65,7 +63,7 @@ class AddController:
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             errorNo = int(e.__str__().split()[0][1:-1])
-            if errorNo == 1048:
+            if errorNo == 1048 or 1062:
                 messagebox.showerror("Can not delete selected records!",
                                      f"{e.__str__().split(',')[1][:-2]}")
             else:
@@ -83,6 +81,4 @@ class AddController:
             self.themeWindow.focus_set()
 
     def initComboValues(self, tableName, col):
-        print(tableName)
-        print(col)
         return self.database.executeStatement(f"SELECT DISTINCT `{col}` FROM `{tableName}`")
