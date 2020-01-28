@@ -34,6 +34,8 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+        self.findBestBook(1992)
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -226,6 +228,19 @@ class Database:
 
         except Exception as e:
             self.logger.error(f"Could not realize an borrowBook function. Error = {e}")
+            raise Exception(e)
+
+    def findBestBook(self, bookDateYear):
+        self.logger.debug("Finding best book.")
+
+        try:
+            bestBookBorrowCount = self.executeStatement(f"SELECT findBestBookBorrowCount({bookDateYear});")
+            bestBookID = self.executeStatement(f"SELECT findBestBookID({bookDateYear});")
+            self.logger.debug(f"Book found succesfully. BookID = {bestBookID}. Count = {bestBookBorrowCount}")
+            return [bestBookID, bestBookBorrowCount]
+
+        except Exception as e:
+            self.logger.error(f"Could not realize an findBestBook function. Error = {e}")
             raise Exception(e)
 
     def generateDataBase(self):
