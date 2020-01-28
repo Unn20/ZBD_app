@@ -2,6 +2,7 @@ from tkinter import *
 from src.Logger import Logger
 from src.TableController import TableController
 from src.ProcedureController import ProcedureController
+from src.FunctionController import FunctionController
 
 
 class MainController:
@@ -21,6 +22,7 @@ class MainController:
             self.logger.warning("No table names has been loaded!")
 
         self.procedureController = None
+        self.functionController = None
 
         # Widgets
         # Main frame of this window
@@ -91,8 +93,8 @@ class MainController:
             self.procedureController = ProcedureController(self.themeWindow, self.database, self.backEvent)
 
     def customFunction(self):
-        # TODO: wykonac funkcje
-        pass
+        if self.functionController is None:
+            self.functionController = FunctionController(self.themeWindow, self.database, self.backEvent, 1992)
 
     def backEvent(self):
         self.procedureController.procedureWindow.destroy()
