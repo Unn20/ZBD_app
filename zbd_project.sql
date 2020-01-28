@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Czas generowania: 25 Sty 2020, 13:09
+-- Czas generowania: 28 Sty 2020, 15:12
 -- Wersja serwera: 10.4.11-MariaDB
 -- Wersja PHP: 7.2.26
 
@@ -41,16 +41,16 @@ CREATE TABLE `autorzy` (
 --
 
 INSERT INTO `autorzy` (`autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci`) VALUES
-(1, 'Maciej', 'Zima', '1990-09-03', '1992-10-11'),
-(2, 'Maciej', 'Nowaczyk', '1991-08-01', '1991-08-01'),
-(3, 'Marta', 'Kowalczyk', '1991-08-01', '1990-09-03'),
-(4, 'Maciej', 'Karol', '1991-01-22', '1997-11-28'),
-(5, 'Joanna', 'Kowalczyk', '1991-01-22', NULL),
-(6, 'Magda', 'Karol', '1988-07-17', NULL),
-(7, 'Joanna', 'Karol', '1997-11-28', '1988-07-17'),
-(8, 'Joanna', 'Wozniak', '1997-11-28', '1980-04-14'),
-(9, 'Jakub', 'Nowak', '1980-04-14', NULL),
-(10, 'Piotr', 'Leszczyk', '1988-07-17', '1987-03-30');
+(1, 'Olga', 'Krol', '1991-08-01', '1993-12-25'),
+(2, 'Jan', 'Nowak', '1988-07-17', NULL),
+(3, 'Joanna', 'Zima', '1997-11-28', '1980-04-14'),
+(4, 'Marta', 'Leszczyk', '1997-11-28', NULL),
+(5, 'Jan', 'Karol', '1997-05-05', '1987-03-30'),
+(6, 'Jakub', 'Nowaczyk', '1997-11-28', '1991-08-01'),
+(7, 'Joanna', 'Kowalczyk', '1991-01-22', '1997-05-05'),
+(8, 'Natalia', 'Wozniak', '1997-11-28', NULL),
+(9, 'Olga', 'Mazur', '1991-08-01', NULL),
+(10, 'Maciej', 'Krawczyk', '1993-12-25', '1988-07-17');
 
 -- --------------------------------------------------------
 
@@ -68,16 +68,16 @@ CREATE TABLE `autor_ksiazka` (
 --
 
 INSERT INTO `autor_ksiazka` (`autorzy_autor_id`, `ksiazki_ksiazka_id`) VALUES
-(1, 6),
-(2, 3),
-(3, 5),
-(3, 7),
-(3, 8),
+(3, 6),
 (3, 9),
-(3, 10),
+(5, 3),
+(5, 4),
+(5, 5),
+(5, 10),
 (6, 1),
-(7, 4),
-(10, 2);
+(6, 2),
+(6, 7),
+(8, 8);
 
 -- --------------------------------------------------------
 
@@ -95,16 +95,16 @@ CREATE TABLE `biblioteki` (
 --
 
 INSERT INTO `biblioteki` (`nazwa`, `lokalizacja`) VALUES
-('Biblioteka_dziecieca', 'Zawila_3'),
-('Biblioteka_miejska', 'Brudna_31'),
-('Biblioteka_na_Kwiatowej', 'Dluga_4'),
-('Biblioteka_na_rynku', 'Brudna_31'),
+('Biblioteka_dziecieca', 'Czysta_21'),
+('Biblioteka_miejska', 'Krutka_1'),
+('Biblioteka_na_Kwiatowej', 'Brudna_31'),
+('Biblioteka_na_rynku', 'Powstancow_2'),
 ('Biblioteka_szkolna', 'Brudna_31'),
 ('Czytam_ksiazki', 'Krutka_1'),
-('Czytanie_jest_fajne', 'Zawila_3'),
-('Ksiazki_sa_super', 'Brudna_31'),
-('Super_Biblioteka', 'Poznanska_12'),
-('Warto_czytac', 'Dluga_4');
+('Czytanie_jest_fajne', 'Dluga_4'),
+('Ksiazki_sa_super', 'Dluga_4'),
+('Super_Biblioteka', 'Zawila_3'),
+('Warto_czytac', 'Poznanska_12');
 
 -- --------------------------------------------------------
 
@@ -123,16 +123,16 @@ CREATE TABLE `czytelnicy` (
 --
 
 INSERT INTO `czytelnicy` (`czytelnik_id`, `imie`, `nazwisko`) VALUES
-(1, 'Natalia', 'Krol'),
-(2, 'Jakub', 'Leszczyk'),
-(3, 'Jan', 'Mazur'),
-(4, 'Joanna', 'Krol'),
-(5, 'Jan', 'Kowalczyk'),
-(6, 'Jan', 'Mazur'),
-(7, 'Magda', 'Krawczyk'),
-(8, 'Jan', 'Karol'),
-(9, 'Maciej', 'Nowaczyk'),
-(10, 'Jakub', 'Zima');
+(1, 'Jan', 'Krol'),
+(2, 'Marta', 'Nowak'),
+(3, 'Jan', 'Zima'),
+(4, 'Magda', 'Leszczyk'),
+(5, 'Maciej', 'Karol'),
+(6, 'Marta', 'Nowaczyk'),
+(7, 'Joanna', 'Kowalczyk'),
+(8, 'Joanna', 'Wozniak'),
+(9, 'Jakub', 'Mazur'),
+(10, 'Maciej', 'Krawczyk');
 
 -- --------------------------------------------------------
 
@@ -178,16 +178,16 @@ CREATE TABLE `egzemplarze` (
 --
 
 INSERT INTO `egzemplarze` (`egzemplarz_id`, `ksiazka_id`, `regal_numer`) VALUES
-(1, 3, 2),
-(2, 1, 3),
-(3, 2, 9),
-(4, 2, 6),
-(5, 10, 3),
-(6, 3, 8),
-(7, 8, 3),
-(8, 10, 3),
-(9, 4, 1),
-(10, 9, 1);
+(1, 8, 4),
+(2, 7, 8),
+(3, 7, 2),
+(4, 7, 6),
+(5, 6, 0),
+(6, 8, 7),
+(7, 8, 5),
+(8, 2, 7),
+(9, 5, 8),
+(10, 4, 5);
 
 -- --------------------------------------------------------
 
@@ -238,16 +238,16 @@ CREATE TABLE `historia_operacji` (
 --
 
 INSERT INTO `historia_operacji` (`operacja_id`, `data`, `biblioteka_nazwa`, `pracownik_id`, `czytelnik_id`, `egzemplarz_id`, `rodzaj_operacji`, `opoznienie`, `uwagi`) VALUES
-(1, '1997-11-28', 'Super_Biblioteka', 5, 9, 7, 'przedluzenie', NULL, NULL),
-(2, '1990-09-03', 'Biblioteka_dziecieca', 6, 7, 1, 'zwrot', NULL, NULL),
-(3, '1990-09-03', 'Ksiazki_sa_super', 5, 1, 6, 'przedluzenie', 14, NULL),
-(4, '1988-07-17', 'Biblioteka_na_rynku', 4, 1, 8, 'przedluzenie', NULL, NULL),
-(5, '1993-12-25', 'Biblioteka_na_rynku', 7, 4, 4, 'przedluzenie', NULL, NULL),
-(6, '1990-09-03', 'Biblioteka_na_rynku', 5, 7, 10, 'przedluzenie', NULL, NULL),
-(7, '1980-04-14', 'Super_Biblioteka', 3, 6, 1, 'wyporzyczenie', 8, 'pierwszy raz od dawna'),
-(8, '1993-12-25', 'Biblioteka_na_Kwiatowej', 1, 6, 9, 'przedluzenie', NULL, 'pierwszy raz od dawna'),
-(9, '1980-04-14', 'Warto_czytac', 6, 8, 9, 'wyporzyczenie', NULL, 'bez uwag'),
-(10, '1997-05-05', 'Czytanie_jest_fajne', 7, 7, 9, 'przedluzenie', NULL, NULL);
+(1, '1992-10-11', 'Super_Biblioteka', 6, 1, 10, 'zwrot', 7, NULL),
+(2, '1992-10-11', 'Biblioteka_na_Kwiatowej', 10, 8, 7, 'wyporzyczenie', NULL, 'sprawna operacja'),
+(3, '1997-05-05', 'Biblioteka_na_rynku', 1, 4, 2, 'zwrot', NULL, NULL),
+(4, '1993-12-25', 'Biblioteka_na_Kwiatowej', 8, 1, 2, 'przedluzenie', NULL, NULL),
+(5, '1987-03-30', 'Warto_czytac', 7, 1, 8, 'wyporzyczenie', NULL, NULL),
+(6, '1980-04-14', 'Warto_czytac', 5, 6, 4, 'przedluzenie', 3, 'sprawna operacja'),
+(7, '1988-07-17', 'Czytanie_jest_fajne', 10, 5, 10, 'zwrot', 8, NULL),
+(8, '1992-10-11', 'Biblioteka_dziecieca', 10, 6, 2, 'wyporzyczenie', 11, NULL),
+(9, '1980-04-14', 'Czytam_ksiazki', 4, 5, 9, 'zwrot', 4, 'pierwszy raz od dawna'),
+(10, '1980-04-14', 'Super_Biblioteka', 6, 3, 2, 'wyporzyczenie', 17, NULL);
 
 -- --------------------------------------------------------
 
@@ -267,16 +267,16 @@ CREATE TABLE `ksiazki` (
 --
 
 INSERT INTO `ksiazki` (`ksiazka_id`, `tytul`, `data_opublikowania`, `gatunek`) VALUES
-(1, 'Szeptucha', '1997-05-05', 'literatura_obyczajow'),
-(2, 'Polska_odwraca_oczy', '1980-04-14', 'romans'),
-(3, 'On', '1997-11-28', 'horror'),
-(4, 'Zycie_na_pelnej_petardzie', '1991-01-22', 'kryminal'),
-(5, 'Okularnik', '1980-04-14', 'literatura_obyczajow'),
-(6, 'Najgorszy_czlowiek_na_swiecie', '1980-04-14', 'literatura_mlodziezo'),
-(7, 'Inna_dusza', '1997-11-28', 'literatura_obyczajow'),
-(8, 'Ksiegi_Jakubowe', '1997-05-05', 'sensacja'),
-(9, 'Gniew', '1991-08-01', 'literatura_mlodziezo'),
-(10, 'Trociny', '1990-09-03', 'sensacja');
+(1, 'Szeptucha', '1990-09-03', 'klasyka'),
+(2, 'Polska_odwraca_oczy', '1992-10-11', 'kryminal'),
+(3, 'On', '1993-12-25', 'thriller'),
+(4, 'Zycie_na_pelnej_petardzie', '1980-04-14', 'thriller'),
+(5, 'Okularnik', '1988-07-17', 'powiesc_historyczna'),
+(6, 'Najgorszy_czlowiek_na_swiecie', '1987-03-30', 'kryminal'),
+(7, 'Inna_dusza', '1990-09-03', 'fantasy'),
+(8, 'Ksiegi_Jakubowe', '1992-10-11', 'thriller'),
+(9, 'Gniew', '1987-03-30', 'literatura_mlodziezo'),
+(10, 'Trociny', '1992-10-11', 'horror');
 
 -- --------------------------------------------------------
 
@@ -297,16 +297,16 @@ CREATE TABLE `pracownicy` (
 --
 
 INSERT INTO `pracownicy` (`pracownik_id`, `szef_id`, `imie`, `nazwisko`, `funkcja`) VALUES
-(1, NULL, 'Maciej', 'Wozniak', 'obsluga_bazy'),
-(2, 0, 'Piotr', 'Karol', 'kucharz'),
-(3, 0, 'Natalia', 'Zima', 'kucharz'),
-(4, NULL, 'Magda', 'Wozniak', 'obsluga_bazy'),
-(5, NULL, 'Natalia', 'Zima', 'obsluga_bazy'),
-(6, NULL, 'Jakub', 'Leszczyk', 'sprzatanie'),
-(7, 3, 'Karol', 'Wozniak', 'kucharz'),
-(8, 0, 'Joanna', 'Kowalczyk', 'kucharz'),
-(9, 7, 'Jakub', 'Kowalczyk', 'obsluga_bazy'),
-(10, 4, 'Maciej', 'Karol', 'szef');
+(1, NULL, 'Joanna', 'Krol', 'kucharz'),
+(2, NULL, 'Piotr', 'Nowak', 'szef'),
+(3, 1, 'Maciej', 'Zima', 'szef'),
+(4, 2, 'Natalia', 'Leszczyk', 'kucharz'),
+(5, 0, 'Joanna', 'Karol', 'obsluga_bazy'),
+(6, NULL, 'Jakub', 'Nowaczyk', 'sprzatanie'),
+(7, 3, 'Piotr', 'Kowalczyk', 'obsluga_bazy'),
+(8, 1, 'Piotr', 'Wozniak', 'kucharz'),
+(9, 7, 'Olga', 'Mazur', 'kucharz'),
+(10, NULL, 'Joanna', 'Krawczyk', 'obsluga_bazy');
 
 -- --------------------------------------------------------
 
@@ -326,16 +326,16 @@ CREATE TABLE `regaly` (
 --
 
 INSERT INTO `regaly` (`numer`, `pojemnosc`, `liczba_ksiazek`, `dział_nazwa`) VALUES
-(0, 5, 0, 'dzial6'),
-(1, 9, 2, 'dzial6'),
-(2, 7, 1, 'dzial9'),
-(3, 7, 4, 'dzial6'),
-(4, 6, 0, 'dzial2'),
-(5, 7, 0, 'dzial4'),
-(6, 5, 1, 'dzial1'),
-(7, 8, 0, 'dzial0'),
-(8, 7, 1, 'dzial4'),
-(9, 8, 1, 'dzial6');
+(0, 6, 1, 'dzial6'),
+(1, 8, 0, 'dzial5'),
+(2, 9, 1, 'dzial9'),
+(3, 9, 0, 'dzial6'),
+(4, 5, 1, 'dzial6'),
+(5, 8, 2, 'dzial5'),
+(6, 7, 1, 'dzial3'),
+(7, 8, 2, 'dzial7'),
+(8, 8, 2, 'dzial2'),
+(9, 7, 0, 'dzial3');
 
 -- --------------------------------------------------------
 
@@ -344,7 +344,7 @@ INSERT INTO `regaly` (`numer`, `pojemnosc`, `liczba_ksiazek`, `dział_nazwa`) VA
 --
 
 CREATE TABLE `wlasciciele` (
-  `nip` int(11) NOT NULL CHECK (`nip` BETWEEN 1000000000 AND 9999999999),
+  `nip` int(11) NOT NULL CHECK (`nip` between 1000000000 and 9999999999),
   `nazwa_firmy` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `imie` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `nazwisko` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
@@ -355,16 +355,16 @@ CREATE TABLE `wlasciciele` (
 --
 
 INSERT INTO `wlasciciele` (`nip`, `nazwa_firmy`, `imie`, `nazwisko`) VALUES
-(1938106794, NULL, 'Jan', 'Kowalczyk'),
-(1938106795, NULL, 'Karol', 'Krawczyk'),
-(1938106796, NULL, 'Olga', 'Karol'),
-(1938106797, 'Junkers', NULL, NULL),
-(1938106798, 'Red_Bull', NULL, NULL),
-(1938106799, 'CCC', NULL, NULL),
-(1938106800, 'Bakoma', NULL, NULL),
-(1938106801, NULL, 'Jakub', 'Krawczyk'),
-(1938106802, NULL, 'Natalia', 'Nowak'),
-(1938106803, 'Junkers', NULL, NULL);
+(1698602050, NULL, 'Magda', 'Kowalczyk'),
+(1698602051, NULL, 'Piotr', 'Nowak'),
+(1698602052, 'Tesco', NULL, NULL),
+(1698602053, 'Bakoma', NULL, NULL),
+(1698602054, 'Januszpol', NULL, NULL),
+(1698602055, NULL, 'Natalia', 'Krawczyk'),
+(1698602056, NULL, 'Jakub', 'Zima'),
+(1698602057, 'Walkman', NULL, NULL),
+(1698602058, 'Walkman', NULL, NULL),
+(1698602059, 'Junkers', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -382,16 +382,16 @@ CREATE TABLE `wlasciciel_biblioteka` (
 --
 
 INSERT INTO `wlasciciel_biblioteka` (`wlasciciel_nip`, `biblioteka_nazwa`) VALUES
-(1938106795, 'Biblioteka_szkolna'),
-(1938106796, 'Biblioteka_dziecieca'),
-(1938106796, 'Czytam_ksiazki'),
-(1938106798, 'Czytanie_jest_fajne'),
-(1938106801, 'Biblioteka_na_rynku'),
-(1938106802, 'Biblioteka_miejska'),
-(1938106802, 'Biblioteka_na_Kwiatowej'),
-(1938106802, 'Super_Biblioteka'),
-(1938106802, 'Warto_czytac'),
-(1938106803, 'Ksiazki_sa_super');
+(1698602050, 'Super_Biblioteka'),
+(1698602051, 'Czytanie_jest_fajne'),
+(1698602053, 'Warto_czytac'),
+(1698602055, 'Czytam_ksiazki'),
+(1698602056, 'Biblioteka_miejska'),
+(1698602057, 'Biblioteka_na_Kwiatowej'),
+(1698602057, 'Ksiazki_sa_super'),
+(1698602059, 'Biblioteka_dziecieca'),
+(1698602059, 'Biblioteka_na_rynku'),
+(1698602059, 'Biblioteka_szkolna');
 
 --
 -- Indeksy dla zrzutów tabel
