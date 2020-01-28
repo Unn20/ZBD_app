@@ -239,15 +239,15 @@ CREATE TABLE `historia_operacji` (
 
 INSERT INTO `historia_operacji` (`operacja_id`, `data`, `biblioteka_nazwa`, `pracownik_id`, `czytelnik_id`, `egzemplarz_id`, `rodzaj_operacji`, `opoznienie`, `uwagi`) VALUES
 (1, '1992-10-11', 'Super_Biblioteka', 6, 1, 10, 'zwrot', 7, NULL),
-(2, '1992-10-11', 'Biblioteka_na_Kwiatowej', 10, 8, 7, 'wyporzyczenie', NULL, 'sprawna operacja'),
+(2, '1992-10-11', 'Biblioteka_na_Kwiatowej', 10, 8, 7, 'wypozyczenie', NULL, 'sprawna operacja'),
 (3, '1997-05-05', 'Biblioteka_na_rynku', 1, 4, 2, 'zwrot', NULL, NULL),
 (4, '1993-12-25', 'Biblioteka_na_Kwiatowej', 8, 1, 2, 'przedluzenie', NULL, NULL),
-(5, '1987-03-30', 'Warto_czytac', 7, 1, 8, 'wyporzyczenie', NULL, NULL),
+(5, '1987-03-30', 'Warto_czytac', 7, 1, 8, 'wypozyczenie', NULL, NULL),
 (6, '1980-04-14', 'Warto_czytac', 5, 6, 4, 'przedluzenie', 3, 'sprawna operacja'),
 (7, '1988-07-17', 'Czytanie_jest_fajne', 10, 5, 10, 'zwrot', 8, NULL),
-(8, '1992-10-11', 'Biblioteka_dziecieca', 10, 6, 2, 'wyporzyczenie', 11, NULL),
+(8, '1992-10-11', 'Biblioteka_dziecieca', 10, 6, 2, 'wypozyczenie', 11, NULL),
 (9, '1980-04-14', 'Czytam_ksiazki', 4, 5, 9, 'zwrot', 4, 'pierwszy raz od dawna'),
-(10, '1980-04-14', 'Super_Biblioteka', 6, 3, 2, 'wyporzyczenie', 17, NULL);
+(10, '1980-04-14', 'Super_Biblioteka', 6, 3, 2, 'wypozyczenie', 17, NULL);
 
 -- --------------------------------------------------------
 
@@ -594,7 +594,7 @@ DROP FUNCTION IF EXISTS `findBestBookID`;
 delimiter //
 
 --
--- Procedura wyporzyczKsiazke
+-- Procedura wypożyczKsiazke
 --
 
 CREATE PROCEDURE borrowBook(IN libraryName varchar(50), IN workerName text, IN workerSurname text,
@@ -669,7 +669,7 @@ BEGIN
 END; //
 
 --
--- Funkcja znajdz najczesciej wyporzyczana ksiazke
+-- Funkcja znajdz najczesciej wypożyczana ksiazke
 --
 
 CREATE FUNCTION findBestBookBorrowCount (bookDateYear INT)
@@ -685,7 +685,7 @@ BEGIN
                 WHERE e.egzemplarz_id = h.egzemplarz_id
             ) as ksiazka
             FROM historia_operacji AS h
-            WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+            WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
         ) as tab1
         GROUP BY ksiazka
         HAVING borCount = (
@@ -699,7 +699,7 @@ BEGIN
                         WHERE e.egzemplarz_id = h.egzemplarz_id
                     ) as ksiazka
                     FROM historia_operacji AS h
-                    WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                    WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
                 ) as tab1
                 GROUP BY ksiazka
             ) as tab2
@@ -720,7 +720,7 @@ BEGIN
                 WHERE e.egzemplarz_id = h.egzemplarz_id
             ) as ksiazka
             FROM historia_operacji AS h
-            WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+            WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
         ) as tab1
         GROUP BY ksiazka
         HAVING count(*) = (
@@ -734,7 +734,7 @@ BEGIN
                         WHERE e.egzemplarz_id = h.egzemplarz_id
                     ) as ksiazka
                     FROM historia_operacji AS h
-                    WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                    WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
                 ) as tab1
                 GROUP BY ksiazka
             ) as tab2

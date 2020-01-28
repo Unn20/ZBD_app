@@ -252,7 +252,7 @@ class Database:
         libraryNames = ['Czytam_ksiazki', 'Czytanie_jest_fajne', 'Ksiazki_sa_super', 'Biblioteka_dziecieca', 'Biblioteka_szkolna', 'Biblioteka_miejska', 'Warto_czytac', 'Super_Biblioteka', 'Biblioteka_na_rynku', 'Biblioteka_na_Kwiatowej']
         adresses = ['Kwiatowa_10', 'Rzeczypospolitej_5', 'Dluga_4', 'Krutka_1', 'Poznanska_12', 'Wroclawska_43', 'Zawila_3', 'Czysta_21', 'Powstancow_2', 'Brudna_31']
         genres = ['fantasy', 'horror', 'klasyka', 'kryminal', 'sensacja', 'thriller', 'literatura_mlodziezowa', 'literatura_obyczajowa', 'romans', 'powiesc_historyczna']
-        operationTypes = ['wyporzyczenie', 'zwrot', 'przedluzenie']
+        operationTypes = ['wypozyczenie', 'zwrot', 'przedluzenie']
         comments = ['pierwszy raz od dawna', 'sprawna operacja', 'bez uwag']
         booksTitles = ['Szeptucha', 'Polska_odwraca_oczy', 'On', 'Zycie_na_pelnej_petardzie', 'Okularnik', 'Najgorszy_czlowiek_na_swiecie', 'Inna_dusza', 'Ksiegi_Jakubowe', 'Gniew', 'Trociny']
         firmNames = ['Januszpol', 'Toyota', 'Adidas', 'Walkman', 'Red_Bull', 'Junkers', 'Ikea', 'Tesco', 'CCC', 'Bakoma']
