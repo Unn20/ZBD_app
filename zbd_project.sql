@@ -685,7 +685,7 @@ BEGIN
                 WHERE e.egzemplarz_id = h.egzemplarz_id
             ) as ksiazka
             FROM historia_operacji AS h
-            WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+            WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
         ) as tab1
         GROUP BY ksiazka
         HAVING borCount = (
@@ -699,7 +699,7 @@ BEGIN
                         WHERE e.egzemplarz_id = h.egzemplarz_id
                     ) as ksiazka
                     FROM historia_operacji AS h
-                    WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                    WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
                 ) as tab1
                 GROUP BY ksiazka
             ) as tab2
@@ -720,7 +720,7 @@ BEGIN
                 WHERE e.egzemplarz_id = h.egzemplarz_id
             ) as ksiazka
             FROM historia_operacji AS h
-            WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+            WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
         ) as tab1
         GROUP BY ksiazka
         HAVING count(*) = (
@@ -734,7 +734,7 @@ BEGIN
                         WHERE e.egzemplarz_id = h.egzemplarz_id
                     ) as ksiazka
                     FROM historia_operacji AS h
-                    WHERE h.rodzaj_operacji = 'wypożyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                    WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
                 ) as tab1
                 GROUP BY ksiazka
             ) as tab2
