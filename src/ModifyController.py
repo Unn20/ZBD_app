@@ -30,7 +30,7 @@ class ModifyController:
         for no, col in enumerate(self.colNames):
             Label(self.colFrame, text=col[0], font=("Arial Bold", 12)).grid(row=no, column=0)
             entry = Entry(self.colFrame, width=20)
-            entry.grid(row=no, column=1, columnspan=2)
+            entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
             if data[self.selectedRecord][col[0]] is not None:
                 entry.insert(END, data[self.selectedRecord][col[0]])
             self.entries.append(entry)

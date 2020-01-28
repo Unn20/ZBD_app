@@ -116,7 +116,6 @@ class TableController:
             deletedRecord = list()
             for column, value in self.data[recName].items():
                 deletedRecord.append(value)
-            print(f"deletedRecord = {deletedRecord}")
             try:
                 self.database.deleteRecord(tableName, deletedRecord)
             except Exception as e:
@@ -131,7 +130,7 @@ class TableController:
 
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
-                                      "Are You sure that You want to delete selected records?")
+                                      f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
         if confirm:
             self.database.connection.commit()
         else:

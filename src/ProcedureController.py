@@ -54,8 +54,9 @@ class ProcedureController:
         for no, lab in enumerate(self.personalLabels):
             Label(self.restFrame, text=lab, font=("Arial Bold", 12)).grid(row=no, column=0, columnspan=3)
             entry = Entry(self.restFrame, width=20)
-            entry.grid(row=no, column=3, columnspan=2)
+            entry.grid(row=no, column=3, columnspan=2, padx=5, pady=10)
             self.entries.append(entry)
+
         self.restFrame.pack(fill='both', side=BOTTOM)
 
         self.buttonFrame = Frame(self.procedureWindow, bd=4, relief=RAISED,
