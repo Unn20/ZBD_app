@@ -584,15 +584,19 @@ COMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 
 --
--- Procedury wyzwalane
+-- Procedury i funkcje
 --
+
+DROP PROCEDURE IF EXISTS `borrowBook`;
+DROP FUNCTION IF EXISTS `findBestBookBorrowCount`;
+DROP FUNCTION IF EXISTS `findBestBookID`;
+
+delimiter //
 
 --
 -- Procedura wyporzyczKsiazke
 --
 
-DROP PROCEDURE IF EXISTS `borrowBook`;
-delimiter //
 CREATE PROCEDURE borrowBook(IN libraryName varchar(50), IN workerName text, IN workerSurname text,
                             IN readerName text, IN readerSurname text, IN bookTitle varchar(100),
                             IN bookDate date, IN bookGenre varchar(20), IN comments text)
@@ -662,4 +666,78 @@ BEGIN
     DELETE FROM egzemplarze WHERE egzemplarz_id = specimen_id;
 
     SET FOREIGN_KEY_CHECKS = 1;
+END; //
+
+--
+-- Funkcja znajdz najczesciej wyporzyczana ksiazke
+--
+
+CREATE FUNCTION findBestBookBorrowCount (bookDateYear INT)
+    RETURNS INT
+    DETERMINISTIC
+BEGIN
+    RETURN(
+        SELECT count(*) as borCount
+        FROM (
+            SELECT(
+                SELECT ksiazka_id
+                FROM egzemplarze AS e
+                WHERE e.egzemplarz_id = h.egzemplarz_id
+            ) as ksiazka
+            FROM historia_operacji AS h
+            WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+        ) as tab1
+        GROUP BY ksiazka
+        HAVING borCount = (
+            SELECT MAX(borCount)
+            FROM(
+                SELECT ksiazka, count(*) as borCount
+                FROM (
+                    SELECT(
+                        SELECT ksiazka_id
+                        FROM egzemplarze AS e
+                        WHERE e.egzemplarz_id = h.egzemplarz_id
+                    ) as ksiazka
+                    FROM historia_operacji AS h
+                    WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                ) as tab1
+                GROUP BY ksiazka
+            ) as tab2
+        ) LIMIT 1
+    );
+END; //
+
+CREATE FUNCTION findBestBookID (bookDateYear INT)
+    RETURNS INT
+    DETERMINISTIC
+BEGIN
+    RETURN(
+        SELECT ksiazka
+        FROM (
+            SELECT(
+                SELECT ksiazka_id
+                FROM egzemplarze AS e
+                WHERE e.egzemplarz_id = h.egzemplarz_id
+            ) as ksiazka
+            FROM historia_operacji AS h
+            WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+        ) as tab1
+        GROUP BY ksiazka
+        HAVING count(*) = (
+            SELECT MAX(borCount)
+            FROM(
+                SELECT ksiazka, count(*) as borCount
+                FROM (
+                    SELECT(
+                        SELECT ksiazka_id
+                        FROM egzemplarze AS e
+                        WHERE e.egzemplarz_id = h.egzemplarz_id
+                    ) as ksiazka
+                    FROM historia_operacji AS h
+                    WHERE h.rodzaj_operacji = 'wyporzyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                ) as tab1
+                GROUP BY ksiazka
+            ) as tab2
+        ) LIMIT 1
+    );
 END; //
