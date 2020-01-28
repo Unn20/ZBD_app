@@ -120,7 +120,7 @@ class Database:
 
         except Exception as e:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
-            raise RuntimeError(e)
+            raise Exception(e)
 
     """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
@@ -170,7 +170,7 @@ class Database:
 
         except Exception as e:
             self.logger.error(f"Could not realize an modifyRecord function. Error = {e}")
-            raise RuntimeError(e)
+            raise Exception(e)
 
     def deleteRecord(self, tableName, values):
         self.logger.debug(f"Deleting record {values[0]} from {tableName}.")
@@ -210,7 +210,23 @@ class Database:
 
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
-            raise RuntimeError(e)
+            raise Exception(e)
+
+    def borrowBook(self, libraryName, workerName, workerSurname,
+                    readerName, readerSurname, bookTitle,
+                    bookDate, bookGenre, comments):
+        self.logger.debug("Borrowing book.")
+
+        try:
+            self.executeStatement(f"CALL borrowBook('{libraryName}', '{workerName}', '{workerSurname}',"
+                                  f"'{readerName}', '{readerSurname}', '{bookTitle}',"
+                                  f"'{bookDate}', '{bookGenre}', '{comments}');")
+            self.logger.debug("Book borrowed succesfully.")
+            return True
+
+        except Exception as e:
+            self.logger.error(f"Could not realize an borrowBook function. Error = {e}")
+            raise Exception(e)
 
     def generateDataBase(self):
         self.logger.debug(f"Generating new data base started.")

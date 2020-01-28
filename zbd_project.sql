@@ -591,52 +591,75 @@ COMMIT;
 -- Procedura wyporzyczKsiazke
 --
 
-DELIMITER //
-CREATE TRIGGER wyporzyczKsiazke
-BEFORE UPDATE ON autor_ksiazka
-/*TODO Change procedure start moment*/
-FOR EACH ROW
+DROP PROCEDURE IF EXISTS `borrowBook`;
+delimiter //
+CREATE PROCEDURE borrowBook(IN libraryName varchar(50), IN workerName text, IN workerSurname text,
+                            IN readerName text, IN readerSurname text, IN bookTitle varchar(100),
+                            IN bookDate date, IN bookGenre varchar(20), IN comments text)
 BEGIN
     /*
-    Start Values
+    Declaring needed variables
     */
-    /*TODO Get variables values from procedure arguments*/
-    SET @libraryName = "Czytam_ksiazki";
-    SET @workerName = "Piotr";
-    SET @workerSurname = "Karol";
-    SET @readerName = "Natalia";
-    SET @readerSurname = "Krol";
-    SET @bookTitle = "Szeptucha";
-    SET @bookDate = "1997-05-05";
-    SET @bookGenre = "literatura_obyczajow";
-    SET @comments = "com1";
+    DECLARE operation_id INT;
+    DECLARE operationDate date;
+    DECLARE worker_id INT;
+    DECLARE reader_id INT;
+    DECLARE book_id INT;
+    DECLARE specimen_id INT;
+    DECLARE operationType text;
+    DECLARE delay INT;
+    DECLARE bookstandNumber INT;
+
+    SET FOREIGN_KEY_CHECKS = 0;
+
+    /*
+    Finding needed values
+    */
+    SET operation_id = NULL;
+    SELECT CURDATE() INTO operationDate;
+    SELECT pracownik_id FROM pracownicy WHERE imie = workerName AND nazwisko = workerSurname
+        INTO worker_id;
+    SELECT czytelnik_id FROM czytelnicy WHERE imie = readerName AND nazwisko = readerSurname
+        INTO reader_id;
+    SELECT ksiazka_id FROM ksiazki WHERE tytul = bookTitle AND data_opublikowania = bookDate AND gatunek = bookGenre
+        INTO book_id;
+    SELECT egzemplarz_id FROM egzemplarze WHERE ksiazka_id = book_id LIMIT 1
+        INTO specimen_id;
+    SET operationType = 'wypozyczenie';
+    SET delay = NULL;
+    SELECT regal_numer FROM egzemplarze WHERE egzemplarz_id = specimen_id
+        INTO bookstandNumber;
+
+    /*
+    Handle errors
+    */
+    IF worker_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = 'There is no worker with this name and surname.';
+    ELSEIF reader_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = 'There is no reader with this name and surname.';
+    ELSEIF book_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = 'There is no book with this title date and genre.';
+    ELSEIF specimen_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = 'There is no specimen for this book in this library';
+    END IF;
 
     /*
     Add borrow action to the operation history
     */
-    SET @operation_id = NULL;
-    SET @date = (SELECT CURDATE());
-    SET @worker_id = (SELECT pracownik_id FROM pracownicy WHERE imie = @workerName AND nazwisko = @workerSurname);
-    SET @reader_id = (SELECT czytelnik_id FROM czytelnicy WHERE imie = @readerName AND nazwisko = @readerSurname);
-    SET @book_id = (SELECT ksiazka_id FROM ksiazki WHERE tytul = @bookTitle AND data_opublikowania = @bookDate AND gatunek = @bookGenre);
-    SET @specimen_id = (SELECT egzemplarz_id FROM egzemplarze WHERE ksiazka_id = @book_id LIMIT 1);
-    /*TODO Raise Exception if there is no specimen_id*/
-    SET @operationType = "wyporzyczenie";
-    SET @delay = NULL;
-
     INSERT INTO historia_operacji(operacja_id, data, biblioteka_nazwa, pracownik_id,
                                 czytelnik_id, egzemplarz_id, rodzaj_operacji, opoznienie, uwagi)
-        VALUES(@operation_id, @date, @libraryName, @worker_id,
-                @reader_id, @specimen_id, @operationType, @delay, @comments);
+        VALUES(operation_id, operationDate, libraryName, worker_id,
+                reader_id, specimen_id, operationType, delay, comments);
 
     /*
     Remove specimen from bookstand
     */
-    SET @bookstandNumber = (SELECT regal_numer FROM egzemplarze WHERE egzemplarz_id = @specimen_id);
-    UPDATE regaly SET liczba_ksiazek = liczba_ksiazek - 1 WHERE numer = @bookstandNumber;
+    UPDATE regaly SET liczba_ksiazek = liczba_ksiazek - 1 WHERE numer = bookstandNumber;
 
     /*
     Delete specimen
     */
-    DELETE FROM egzemplarze WHERE egzemplarz_id = @specimen_id;
-END;
+    DELETE FROM egzemplarze WHERE egzemplarz_id = specimen_id;
+
+    SET FOREIGN_KEY_CHECKS = 1;
+END; //
