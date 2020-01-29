@@ -1,4 +1,6 @@
 from tkinter import *
+from tkinter import ttk
+from tkinter import messagebox
 from src.Logger import Logger
 from src.TableController import TableController
 from src.ProcedureController import ProcedureController
@@ -23,6 +25,7 @@ class MainController:
 
         self.procedureController = None
         self.functionController = None
+        self.choiceWindow = None
 
         # Widgets
         # Main frame of this window
@@ -77,7 +80,7 @@ class MainController:
                                       width=20, height=5)
         self.buttonViewTable.grid(row=1, column=0)
         # Button with SQL defined function
-        self.buttonViewTable = Button(self.buttonsFrame, text="Custom function 1", command=self.customFunction,
+        self.buttonViewTable = Button(self.buttonsFrame, text="Top book", command=self.functionEntry,
                                       width=20, height=5)
         self.buttonViewTable.grid(row=2, column=0)
         # Button to log out
@@ -92,13 +95,43 @@ class MainController:
         if self.procedureController is None:
             self.procedureController = ProcedureController(self.themeWindow, self.database, self.backEvent)
 
-    def customFunction(self):
+    def customFunction(self, year):
         if self.functionController is None:
-            self.functionController = FunctionController(self.themeWindow, self.database, self.backEvent, 1992)
+            self.functionController = FunctionController(self.themeWindow, self.database, self.backEvent, 1987)
+            self.choiceWindow.destroy()
+            self.choiceWindow = None
+
+    def functionEntry(self):
+        if self.choiceWindow is not None:
+            return
+        years = self.database.executeStatement("SELECT DISTINCT `data` FROM `historia_operacji` " +
+                                               "WHERE `rodzaj_operacji` = \"wypozyczenie\"")
+        new_years = list()
+        if len(years) == 0:
+            messagebox.showwarning("No hired books", "There are no hired books yet!")
+            return
+        for no, y in enumerate(years):
+            print(y)
+            new_years.append(y[0].year)
+
+        self.choiceWindow = Toplevel(self.themeWindow)
+
+        titleLabel = Label(self.choiceWindow, text="What is best hired book in selected year?")
+        titleLabel.grid(row=0, column=0, columnspan=2)
+        label = Label(self.choiceWindow, text="Choose year: ")
+        label.grid(row=1, column=0)
+        combo = ttk.Combobox(self.choiceWindow, values=new_years)
+        combo.grid(row=1, column=1, columnspan=2)
+        button = Button(self.choiceWindow, text="Add record", command=lambda: self.customFunction(combo.get()))
+        button.grid(row=2, column=0)
 
     def backEvent(self):
-        self.procedureController.procedureWindow.destroy()
-        self.procedureController = None
+        if self.procedureController is not None:
+            self.procedureController.procedureWindow.destroy()
+            self.procedureController = None
+        if self.functionController is not None:
+            self.functionController.functionWindow.destroy()
+            self.functionController = None
 
     def logout(self):
         """ Generate an event to sign out """

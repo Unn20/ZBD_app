@@ -33,14 +33,14 @@ class LogonController:
 
         self.textAddress = Entry(self.content, width=20)
         self.textAddress.grid(row=0, column=1)
-        self.textAddress.insert(END, "localhost")  # TODO: REMOVE IT LATER
+        #self.textAddress.insert(END, "localhost")  # TODO: REMOVE IT LATER
 
         self.labelUser = Label(self.content, text="Username:", font=("Arial Bold", 12))
         self.labelUser.grid(row=1, column=0)
 
         self.textUser = Entry(self.content, width=20)
         self.textUser.grid(row=1, column=1)
-        self.textUser.insert(END, "root") # TODO: REMOVE IT LATER
+        #self.textUser.insert(END, "root") # TODO: REMOVE IT LATER
 
         self.labelPassword = Label(self.content, text="Password:", font=("Arial Bold", 12))
         self.labelPassword.grid(row=2, column=0)
