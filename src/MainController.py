@@ -122,6 +122,7 @@ class MainController:
         label.grid(row=1, column=0)
         combo = ttk.Combobox(self.choiceWindow, values=new_years)
         combo.grid(row=1, column=1, columnspan=2)
+        combo.configure(state="readonly")
         button = Button(self.choiceWindow, text="Add record", command=lambda: self.customFunction(combo.get()))
         button.grid(row=2, column=0)
 
