@@ -577,6 +577,17 @@ ALTER TABLE `regaly`
 ALTER TABLE `wlasciciel_biblioteka`
   ADD CONSTRAINT `wlasciciel_biblioteka_b_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`),
   ADD CONSTRAINT `wlasciciel_biblioteka_w_fk` FOREIGN KEY (`wlasciciel_nip`) REFERENCES `wlasciciele` (`nip`);
+
+CREATE INDEX au_id ON autorzy(autor_id);
+CREATE INDEX cz_id ON czytelnicy(czytelnik_id);
+CREATE INDEX dz_na ON dzialy(nazwa);
+CREATE INDEX eg_id ON egzemplarze(egzemplarz_id);
+CREATE INDEX op_id ON historia_operacji(operacja_id);
+CREATE INDEX ks_id ON ksiazki(ksiazka_id);
+CREATE INDEX pr_id ON pracownicy(pracownik_id);
+CREATE INDEX re_nu ON regaly(numer);
+CREATE INDEX wl_ni ON wlasciciele(nip);
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
