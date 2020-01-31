@@ -19,6 +19,15 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
+-- Czyszczenie starych tablic
+--
+
+DROP TABLE `autorzy`, `autor_ksiazka`, `biblioteki`,
+            `czytelnicy`, `dzialy`, `egzemplarze`,
+            `gatunki`, `historia_operacji`, `ksiazki`,
+            `pracownicy`, `regaly`, `wlasciciele`, `wlasciciel_biblioteka`;
+
+--
 -- Baza danych: `zbd_project`
 --
 
@@ -595,12 +604,16 @@ COMMIT;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 
 --
--- Procedury i funkcje
+-- Procedury, funkcje, triggery
 --
 
 DROP PROCEDURE IF EXISTS `borrowBook`;
 DROP FUNCTION IF EXISTS `findBestBookBorrowCount`;
 DROP FUNCTION IF EXISTS `findBestBookID`;
+DROP TRIGGER IF EXISTS `authorsAddTriger`;
+DROP TRIGGER IF EXISTS `authorsUpdateTriger`;
+DROP TRIGGER IF EXISTS `author_bookAddTriger`;
+DROP TRIGGER IF EXISTS `author_bookUpdateTriger`;
 
 delimiter //
 
@@ -751,4 +764,143 @@ BEGIN
             ) as tab2
         ) LIMIT 1
     );
+END; //
+
+CREATE TRIGGER authorsAddTriger BEFORE INSERT ON autorzy
+FOR EACH ROW
+BEGIN
+    SET @name = NEW.imie;
+    SET @surname = NEW.nazwisko;
+    SET @birthDay = NEW.data_urodzenia;
+    SET @deathDay = NEW.data_smierci;
+
+    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname
+                        AND data_urodzenia = @birthDay AND data_smierci = @deathDay)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This author already exists.";
+
+    ELSEIF @name IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
+    ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
+
+    ELSEIF @surname IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. You need to set surname it can't be none.";
+    ELSEIF NOT @surname REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
+
+    ELSEIF @birthDay IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. You need to set birthDay it can't be none.";
+    ELSEIF NOT @birthDay REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF @birthDay = '0000-00-00' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF (SELECT CURDATE()) < @birthDay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Date can't be from the future.";
+
+    ELSEIF NOT @deathDay REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF @deathDay = '0000-00-00' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF (SELECT CURDATE()) < @deathDay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Date can't be from the future.";
+    ELSEIF @deathDay <= @birthDay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. deathDay can't be before birthDay";
+
+    END IF;
+END; //
+
+CREATE TRIGGER authorsUpdateTriger BEFORE UPDATE ON autorzy
+FOR EACH ROW
+BEGIN
+    SET @name = NEW.imie;
+    SET @surname = NEW.nazwisko;
+    SET @birthDay = NEW.data_urodzenia;
+    SET @deathDay = NEW.data_smierci;
+
+    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname
+                        AND data_urodzenia = @birthDay AND data_smierci = @deathDay)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This author already exists.";
+
+    ELSEIF @name IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
+    ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
+
+    ELSEIF @surname IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. You need to set surname it can't be none.";
+    ELSEIF NOT @surname REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
+
+    ELSEIF @birthDay IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. You need to set birthDay it can't be none.";
+    ELSEIF NOT @birthDay REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF @birthDay = '0000-00-00' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF (SELECT CURDATE()) < @birthDay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Date can't be from the future.";
+
+    ELSEIF @deathDay NOT REGEXP '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF @deathDay = '0000-00-00' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
+    ELSEIF (SELECT CURDATE()) < @deathDay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Date can't be from the future.";
+    ELSEIF @deathDay <= @birthDay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. deathDay can't be before birthDay";
+
+    END IF;
+END; //
+
+CREATE TRIGGER author_bookAddTriger BEFORE INSERT ON autor_ksiazka
+FOR EACH ROW
+BEGIN
+    SET @autor_id = NEW.autorzy_autor_id;
+    SET @ksiazka_id = NEW.ksiazki_ksiazka_id;
+
+    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by some author.";
+
+    ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @autor_id)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Author with this author_id dosn't exist.";
+    ELSEIF @autor_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong autor_id. You need to set autor_id it can't be none.";
+    ELSEIF NOT @autor_id REGEXP BINARY '^[0-9]+$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong autor_id. Make sure autor_id contains only digits.";
+
+    ELSEIF (SELECT NOT EXISTS (SELECT * FROM ksiazki WHERE ksiazka_id = @ksiazka_id)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Book with this book_id dosn't exist.";
+    ELSEIF @ksiazka_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong ksiazka_id. You need to set ksiazka_id it can't be none.";
+    ELSEIF NOT @ksiazka_id REGEXP BINARY '^[0-9]+$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong ksiazka_id. Make sure ksiazka_id contains only digits.";
+
+    END IF;
+END; //
+
+CREATE TRIGGER author_bookUpdateTriger BEFORE UPDATE ON autor_ksiazka
+FOR EACH ROW
+BEGIN
+    SET @autor_id = NEW.autorzy_autor_id;
+    SET @ksiazka_id = NEW.ksiazki_ksiazka_id;
+
+    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id)
+            AND @ksiazka_id <> OLD.ksiazki_ksiazka_id) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by some author.";
+
+    ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @autor_id)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Author with this author_id dosn't exist.";
+    ELSEIF @autor_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong autor_id. You need to set autor_id it can't be none.";
+    ELSEIF NOT @autor_id REGEXP BINARY '^[0-9]+$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong autor_id. Make sure autor_id contains only digits.";
+
+    ELSEIF (SELECT NOT EXISTS (SELECT * FROM ksiazki WHERE ksiazka_id = @ksiazka_id)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Book with this book_id dosn't exist.";
+    ELSEIF @ksiazka_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong ksiazka_id. You need to set ksiazka_id it can't be none.";
+    ELSEIF NOT @ksiazka_id REGEXP BINARY '^[0-9]+$' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong ksiazka_id. Make sure ksiazka_id contains only digits.";
+
+    END IF;
 END; //
