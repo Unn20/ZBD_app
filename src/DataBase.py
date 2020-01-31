@@ -122,7 +122,6 @@ class Database:
             self.logger.error(f"Could not realize an addRecord function. Error = {e}")
             raise Exception(e)
 
-    """Setting NULL or '' value leaves old value"""
     def modifyRecord(self, tableName, oldValues, values):
         self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
 
@@ -141,9 +140,11 @@ class Database:
             set_str = ""
             for i in range(len(columns)):
                 if str(values[i]) in ('NULL', None, ''):
-                    continue
-                set_str += columns[i] + " = "
-                set_str += "'" + str(values[i]) + "', "
+                    set_str += columns[i] + " = "
+                    set_str += 'NULL' + ", "
+                else:
+                    set_str += columns[i] + " = "
+                    set_str += "'" + str(values[i]) + "', "
             set_str = set_str[:-2]
 
             """Create where_str ready to put into mysql question"""
