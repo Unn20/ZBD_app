@@ -71,6 +71,18 @@ class Database:
         statement = "SELECT column_name FROM information_schema.columns WHERE table_name = " + tableName + ";"
         return self.executeStatement(statement)
 
+    def getColumnTypes(self, tableName):
+        """Create and execute statement"""
+        tableName = "'" + tableName + "'"
+        statement = "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        return self.executeStatement(statement)
+
+    def getColumnKeys(self, tableName):
+        """Create and execute statement"""
+        tableName = "'" + tableName + "'"
+        statement = "SELECT column_name, column_key FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        return self.executeStatement(statement)
+
     def getData(self, tableName):
         """ Gets data and return it in dict form """
         rowData = self.getRawData(tableName)
