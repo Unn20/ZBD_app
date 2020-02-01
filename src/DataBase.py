@@ -74,13 +74,13 @@ class Database:
     def getColumnTypes(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
-        statement = "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        statement = "SELECT data_type FROM information_schema.columns WHERE table_name = " + tableName + ";"
         return self.executeStatement(statement)
 
     def getColumnKeys(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
-        statement = "SELECT column_name, column_key FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        statement = "SELECT column_key FROM information_schema.columns WHERE table_name = " + tableName + ";"
         return self.executeStatement(statement)
 
     def getData(self, tableName):
