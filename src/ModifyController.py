@@ -2,6 +2,7 @@ from src.Logger import Logger
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
+from tkcalendar import *
 
 
 class ModifyController:
@@ -22,6 +23,8 @@ class ModifyController:
         self.modifyWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
         self.colNames = self.database.getColumns(self.tableName)
+        self.colTypes = self.database.getColumnTypes(self.tableName)
+        self.colKeys = self.database.getColumnKeys(self.tableName)
         self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
                               height=self.themeWindow.winfo_height() - 40)
@@ -40,12 +43,31 @@ class ModifyController:
 
         else:
             for no, col in enumerate(self.colNames):
-                Label(self.colFrame, text=col[0], font=("Arial Bold", 12)).grid(row=no, column=0)
-                entry = Entry(self.colFrame, width=20)
-                entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                if col[0][-2:] == "id" and self.colKeys[col[0]] == 'PRI':
+                    continue
+                Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
+                if self.colTypes[col[0]] == 'date':
+                    entry = DateEntry(self.colFrame, date_pattern='y/mm/dd')
+                    entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                else:
+                    if self.colKeys[col[0]] == 'MUL':
+                        entry = Entry(self.colFrame, width=20)
+                        entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                    else:
+                        entry = Entry(self.colFrame, width=20)
+                        entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+
                 if data[self.selectedRecord][col[0]] is not None:
-                    entry.insert(END, data[self.selectedRecord][col[0]])
+                    if self.colTypes[col[0]] == 'date':
+                        entry.set_date(data[self.selectedRecord][col[0]])
+                    else:
+                        entry.insert(END, data[self.selectedRecord][col[0]])
                 self.entries.append(entry)
+
+
+
+
+
 
         self.oldRecord = list()
         for entry in self.entries:

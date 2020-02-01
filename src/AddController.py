@@ -2,7 +2,7 @@ from src.Logger import Logger
 from tkinter import *
 from tkinter import messagebox
 from tkinter import ttk
-
+from tkcalendar import *
 
 class AddController:
     def __init__(self, themeWindow, tableName, database, backEvent):
@@ -20,6 +20,11 @@ class AddController:
         self.addWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
         self.colNames = self.database.getColumns(self.tableName)
+        self.colTypes = self.database.getColumnTypes(self.tableName)
+        self.colKeys = self.database.getColumnKeys(self.tableName)
+        print(self.colNames)
+        print(self.colTypes)
+        print(self.colKeys)
 
         self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
@@ -37,9 +42,19 @@ class AddController:
 
         else:
             for no, col in enumerate(self.colNames):
+                if col[0][-2:] == "id" and self.colKeys[col[0]] == 'PRI':
+                    continue
                 Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
-                entry = Entry(self.colFrame, width=20)
-                entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                if self.colTypes[col[0]] == 'date':
+                    entry = DateEntry(self.colFrame, date_pattern='y/mm/dd')
+                    entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                else:
+                    if self.colKeys[col[0]] == 'MUL':
+                        entry = Entry(self.colFrame, width=20)
+                        entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                    else:
+                        entry = Entry(self.colFrame, width=20)
+                        entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                 self.entries.append(entry)
 
         self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
