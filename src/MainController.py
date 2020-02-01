@@ -96,8 +96,9 @@ class MainController:
             self.procedureController = ProcedureController(self.themeWindow, self.database, self.backEvent)
 
     def customFunction(self, year):
+        self.year = year
         if self.functionController is None:
-            self.functionController = FunctionController(self.themeWindow, self.database, self.backEvent, 1987)
+            self.functionController = FunctionController(self.themeWindow, self.database, self.backEvent, self.year)
             self.choiceWindow.destroy()
             self.choiceWindow = None
 
@@ -111,10 +112,10 @@ class MainController:
             messagebox.showwarning("No hired books", "There are no hired books yet!")
             return
         for no, y in enumerate(years):
-            print(y)
             new_years.append(y[0].year)
 
         self.choiceWindow = Toplevel(self.themeWindow)
+        self.choiceWindow.protocol('WM_DELETE_WINDOW', self.backEvent)
 
         titleLabel = Label(self.choiceWindow, text="What is best hired book in selected year?")
         titleLabel.grid(row=0, column=0, columnspan=2)
@@ -123,7 +124,7 @@ class MainController:
         combo = ttk.Combobox(self.choiceWindow, values=new_years)
         combo.grid(row=1, column=1, columnspan=2)
         combo.configure(state="readonly")
-        button = Button(self.choiceWindow, text="Add record", command=lambda: self.customFunction(combo.get()))
+        button = Button(self.choiceWindow, text="Select", command=lambda: self.customFunction(combo.get()))
         button.grid(row=2, column=0)
 
     def backEvent(self):
@@ -133,6 +134,9 @@ class MainController:
         if self.functionController is not None:
             self.functionController.functionWindow.destroy()
             self.functionController = None
+        if self.choiceWindow is not None:
+            self.choiceWindow.destroy()
+            self.choiceWindow = None
 
     def logout(self):
         """ Generate an event to sign out """

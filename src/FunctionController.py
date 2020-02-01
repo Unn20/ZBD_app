@@ -9,6 +9,7 @@ class FunctionController:
         self.rootWindow = rootWindow
         self.backEvent = backEvent
         self.database = database
+        self.year = year
         # Start logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("FunctionController logger has started.")
@@ -18,7 +19,7 @@ class FunctionController:
         self.functionWindow.protocol('WM_DELETE_WINDOW', self.goBack)
         self.functionWindow.bind("<<back>>", lambda _: self.backEvent())
 
-        self.data = self.database.findBestBook(year)
+        self.data = self.database.findBestBook(self.year)
         values = self.database.executeStatement(f"SELECT * FROM `ksiazki` WHERE `ksiazka_id` = {self.data[0][0][0]}")
         self.finalData = dict()
         self.finalData["Title"] = values[0][1]
