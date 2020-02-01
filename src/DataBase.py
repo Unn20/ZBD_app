@@ -2,6 +2,7 @@ import pymysql
 from src.Logger import Logger
 import json
 import random
+import re
 
 
 class Database:
@@ -33,6 +34,7 @@ class Database:
         self.logger.debug("Creating global cursor.")
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -105,14 +107,38 @@ class Database:
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
 
         try:
+            """Check if values are in correct format"""
+            self.logger.debug("Checking if values are in correct format.")
+            columnTypes = self.getColumnTypes(tableName)
+            tmp = self.getColumns(tableName)
+            columnNames = []
+            for column in tmp:
+                newColumn = str(column)
+                newColumn = newColumn[2:-3]
+                columnNames.append(newColumn)
+            for i in range(len(columnTypes)):
+                name = columnNames[i]
+                type = columnTypes[name]
+                value = values[i]
+                value = str(value)
+                if value in ('NULL', None, ''):
+                    continue
+                elif type == 'int':
+                    if not re.match('^[0-9]+$', value):
+                        raise Exception(f"Wrong {name}. Make sure {name} contains only digits.")
+                elif type == 'date':
+                    condition = self.executeStatement(f"SELECT (SELECT CURDATE()) < '{value}'")
+                    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', value):
+                        raise Exception(f"Wrong {name}. Make sure {name} is in 'YYYY-MM-DD' format.")
+                    elif condition == ((1,),):
+                        raise Exception(f"Wrong {name}. Date can't be from the future.")
+
             self.logger.debug("Creating addRecord statement.")
 
             """Create columns_str string to hold columns names ready to put into mysql question"""
-            columns = self.getColumns(tableName)
             columns_str = "("
-            for c in columns:
-                newColumn = str(c)
-                newColumn = "`" + newColumn[2:-3] + "`"
+            for column in columnNames:
+                newColumn = "`" + column + "`"
                 columns_str += newColumn + ", "
             columns_str = columns_str[:-2] + ")"
 
@@ -145,6 +171,31 @@ class Database:
         self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
 
         try:
+            """Check if values are in correct format"""
+            self.logger.debug("Checking if values are in correct format.")
+            columnTypes = self.getColumnTypes(tableName)
+            tmp = self.getColumns(tableName)
+            columnNames = []
+            for column in tmp:
+                newColumn = str(column)
+                newColumn = newColumn[2:-3]
+                columnNames.append(newColumn)
+            for i in range(len(columnTypes)):
+                name = columnNames[i]
+                type = columnTypes[name]
+                value = values[i]
+                value = str(value)
+                if value in ('NULL', None, ''):
+                    continue
+                elif type == 'int':
+                    if not re.match('^[0-9]+$', value):
+                        raise Exception(f"Wrong {name}. Make sure {name} contains only digits.")
+                elif type == 'date':
+                    condition = self.executeStatement(f"SELECT (SELECT CURDATE()) < '{value}'")
+                    if not re.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$', value):
+                        raise Exception(f"Wrong {name}. Make sure {name} is in 'YYYY-MM-DD' format.")
+                    elif condition == ((1,),):
+                        raise Exception(f"Wrong {name}. Date can't be from the future.")
             self.logger.debug("Creating modifyRecord statement.")
 
             """Create columns names ready to put into mysql question"""
