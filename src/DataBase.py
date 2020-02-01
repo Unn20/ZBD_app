@@ -33,7 +33,6 @@ class Database:
         self.logger.debug("Creating global cursor.")
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
-
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -74,14 +73,22 @@ class Database:
     def getColumnTypes(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
-        statement = "SELECT data_type FROM information_schema.columns WHERE table_name = " + tableName + ";"
-        return self.executeStatement(statement)
+        statement = "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        columns = self.executeStatement(statement)
+        res = {}
+        for column in columns:
+            res[column[0]] = column[1]
+        return res
 
     def getColumnKeys(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
-        statement = "SELECT column_key FROM information_schema.columns WHERE table_name = " + tableName + ";"
-        return self.executeStatement(statement)
+        statement = "SELECT column_name, column_key FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        columns = self.executeStatement(statement)
+        res = {}
+        for column in columns:
+            res[column[0]] = column[1]
+        return res
 
     def getData(self, tableName):
         """ Gets data and return it in dict form """
