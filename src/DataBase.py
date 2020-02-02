@@ -317,7 +317,7 @@ class Database:
 
         names = ['Piotr', 'Maciej', 'Jan', 'Jakub', 'Karol', 'Joanna', 'Marta', 'Magda', 'Natalia', 'Olga']
         surnames = ['Krol', 'Nowak', 'Zima', 'Leszczyk', 'Karol', 'Nowaczyk', 'Kowalczyk', 'Wozniak', 'Mazur', 'Krawczyk']
-        dates = ['1997-05-05', '1993-12-25', '1991-08-01', '1988-07-17', '1992-10-11', '1991-01-22', '1987-03-30', '1997-11-28', '1990-09-03', '1980-04-14']
+        dates = ['1970-05-05', '1971-12-25', '1972-08-01', '1973-07-17', '1974-10-11', '1975-01-22', '1976-03-30', '1977-11-28', '1978-09-03', '1979-04-14']
         libraryNames = ['Czytam_ksiazki', 'Czytanie_jest_fajne', 'Ksiazki_sa_super', 'Biblioteka_dziecieca', 'Biblioteka_szkolna', 'Biblioteka_miejska', 'Warto_czytac', 'Super_Biblioteka', 'Biblioteka_na_rynku', 'Biblioteka_na_Kwiatowej']
         adresses = ['Kwiatowa_10', 'Rzeczypospolitej_5', 'Dluga_4', 'Krutka_1', 'Poznanska_12', 'Wroclawska_43', 'Zawila_3', 'Czysta_21', 'Powstancow_2', 'Brudna_31']
         genres = ['fantasy', 'horror', 'klasyka', 'kryminal', 'sensacja', 'thriller', 'literatura_mlodziezowa', 'literatura_obyczajowa', 'romans', 'powiesc_historyczna']
@@ -336,7 +336,17 @@ class Database:
             name = random.choice(names)
             surname = surnames[i]
             birthday = random.choice(dates)
-            deathday = random.choice(['NULL', random.choice(dates)])
+            tmp = random.choice([True, False])
+            if tmp:
+                deathday = 'NULL'
+            else:
+                deathYear = birthday[:4]
+                deathYear = int(deathYear)
+                tmp = random.randint(1,40)
+                deathYear = deathYear + tmp
+                deathYear = str(deathYear)
+                tmp = random.choice(dates)
+                deathday = deathYear + tmp[4:]
             values = [author_id, name, surname, birthday, deathday]
             self.addRecord('autorzy', values)
         self.logger.debug("Authors records put into 'autorzy' table succesfully.")
@@ -345,7 +355,7 @@ class Database:
         self.logger.debug("Generating libraries. Putting records to `biblioteki` table.")
         for i in range(10):
             name = libraryNames[i]
-            adres = random.choice(adresses)
+            adres = adresses[i]
             values = [name, adres]
             self.addRecord('biblioteki', values)
         self.logger.debug("Libraries records put into 'biblioteki' table succesfully.")
@@ -406,13 +416,13 @@ class Database:
         for i in range(10):
             nip = tmp + i
             if random.randint(0,1) == 1:
-                firmName = random.choice(firmNames)
+                firmName = firmNames[i]
                 name = 'NULL'
                 surname = 'NULL'
             else:
                 firmName = 'NULL'
                 name = random.choice(names)
-                surname = random.choice(surnames)
+                surname = surnames[i]
             values = [nip, firmName, name, surname]
             self.addRecord('wlasciciele', values)
         self.logger.debug("Ovners records put into 'wlasciciele' table succesfully.")
