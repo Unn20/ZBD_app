@@ -1,0 +1,4 @@
+- Correct findBestBook function. It looks for the best book in specimens table and that is wrong.
+- Correct addRecord frontend function. It need to set id values.
+- Correct getCollumnKey function. It need to return connected tables too.
+- Add new errors handling.
