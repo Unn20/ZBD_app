@@ -35,6 +35,8 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+        print(self.getColumnKeys('historia_operacji'))
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -82,14 +84,26 @@ class Database:
             res[column[0]] = column[1]
         return res
 
+    """Create dictionary res[columnName] = [keyType, refTable, refColumn]"""
     def getColumnKeys(self, tableName):
-        """Create and execute statement"""
         tableName = "'" + tableName + "'"
         statement = "SELECT column_name, column_key FROM information_schema.columns WHERE table_name = " + tableName + ";"
         columns = self.executeStatement(statement)
         res = {}
         for column in columns:
-            res[column[0]] = column[1]
+            name = column[0]
+            key = column[1]
+            if key == 'MUL':
+                statement = "SELECT referenced_table_name, referenced_column_name FROM information_schema.key_column_usage WHERE table_name = " + tableName + " AND column_name = " + "'" + name + "'" + ";"
+                tmp = self.executeStatement(statement)[0]
+                refTable = tmp[0]
+                refColumn = tmp[1]
+            else:
+                refTable = 'NULL'
+                refColumn = 'NULL'
+
+            res[name] = [key, refTable, refColumn]
+
         return res
 
     def getData(self, tableName):
