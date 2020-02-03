@@ -43,15 +43,17 @@ class ModifyController:
 
         else:
             for no, col in enumerate(self.colNames):
-                if col[0][-2:] == "id" and self.colKeys[col[0]] == 'PRI':
+                if col[0][-2:] == "id" and self.colKeys[col[0]][0] == 'PRI':
                     continue
                 Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
                 if self.colTypes[col[0]] == 'date':
                     entry = DateEntry(self.colFrame, date_pattern='y/mm/dd')
                     entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                 else:
-                    if self.colKeys[col[0]] == 'MUL':
-                        entry = Entry(self.colFrame, width=20)
+                    if self.colKeys[col[0]][0] == 'MUL':
+                        vals = self.database.executeStatement(
+                            f"SELECT {self.colKeys[col[0]][2]} FROM {self.colKeys[col[0]][1]}")
+                        entry = ttk.Combobox(self.colFrame, values=vals)
                         entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                     else:
                         entry = Entry(self.colFrame, width=20)
