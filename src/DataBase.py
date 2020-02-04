@@ -35,8 +35,6 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        print(self.getColumnKeys('historia_operacji'))
-
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -105,6 +103,12 @@ class Database:
             res[name] = [key, refTable, refColumn]
 
         return res
+
+    def getColumnNullable(self, tableName):
+        """Create and execute statement"""
+        tableName = "'" + tableName + "'"
+        statement = "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        return self.executeStatement(statement)
 
     def getData(self, tableName):
         """ Gets data and return it in dict form """
