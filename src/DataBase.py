@@ -107,8 +107,12 @@ class Database:
     def getColumnNullable(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
-        statement = "SELECT IS_NULLABLE FROM information_schema.columns WHERE table_name = " + tableName + ";"
-        return self.executeStatement(statement)
+        statement = "SELECT column_name, IS_NULLABLE FROM information_schema.columns WHERE table_name = " + tableName + ";"
+        columns = self.executeStatement(statement)
+        res = {}
+        for column in columns:
+            res[column[0]] = column[1]
+        return res
 
     def getData(self, tableName):
         """ Gets data and return it in dict form """
