@@ -22,9 +22,13 @@ class ModifyController:
         self.modifyWindow.protocol('WM_DELETE_WINDOW', self.goBack)
         self.modifyWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
+        self.newRecord = list()
+        self.emptyCols = 0
+
         self.colNames = self.database.getColumns(self.tableName)
         self.colTypes = self.database.getColumnTypes(self.tableName)
         self.colKeys = self.database.getColumnKeys(self.tableName)
+        self.colNulls = self.database.getColumnNullable(self.tableName)
         self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
                               height=self.themeWindow.winfo_height() - 40)
@@ -44,8 +48,13 @@ class ModifyController:
         else:
             for no, col in enumerate(self.colNames):
                 if col[0][-2:] == "id" and self.colKeys[col[0]][0] == 'PRI':
+                    self.emptyCols += 1
                     continue
-                Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
+                if self.colKeys[col[0]][0] == 'PRI':
+                    _text = self.colNames[no][0] + "*"
+                else:
+                    _text = self.colNames[no][0]
+                Label(self.colFrame, text=_text, font=("Arial Bold", 12)).grid(row=no, column=0)
                 if self.colTypes[col[0]] == 'date':
                     entry = DateEntry(self.colFrame, date_pattern='y/mm/dd')
                     entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
@@ -66,11 +75,6 @@ class ModifyController:
                         entry.insert(END, data[self.selectedRecord][col[0]])
                 self.entries.append(entry)
 
-
-
-
-
-
         self.oldRecord = list()
         for entry in self.entries:
             self.oldRecord.append(entry.get())
@@ -85,20 +89,34 @@ class ModifyController:
         self.cancelButton.pack(side=LEFT)
 
     def checkEntry(self):
-        newRecord = list()
+        self.newRecord.clear()
+        for i in range(self.emptyCols):
+            self.newRecord.append("")
         for entry in self.entries:
-            newRecord.append(entry.get())
+            value = entry.get()
+            if len(value) == 10 and value[4] == "/" and value[7] == "/":
+                value = value.replace("/", "-", 2)
+            self.newRecord.append(value)
         try:
-            self.database.modifyRecord(self.tableName, self.oldRecord, newRecord)
+            self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
-            errorNo = int(e.__str__().split()[0][1:-1])
-            if errorNo == 1048 or 1062:
-                messagebox.showerror("Can not delete selected records!",
+            try:
+                errorNo = int(e.__str__().split()[0][1:-1])
+            except:
+                errorNo = 0
+            if errorNo == 1048:
+                messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
-            else:
-                messagebox.showerror("Can not modify record in database!",
+            elif errorNo == 1062:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"Primary column value (with '*') is duplicate!")
+            elif errorNo == 0:
+                messagebox.showerror("Can not add a record to database!",
                                      f"{e}")
+            else:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e.__str__().split(',')[1][:-2]}")
             return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
