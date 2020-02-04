@@ -24,6 +24,7 @@ class ModifyController:
 
         self.newRecord = list()
         self.emptyCols = 0
+        self.emptyButton = IntVar()
 
         self.colNames = self.database.getColumns(self.tableName)
         self.colTypes = self.database.getColumnTypes(self.tableName)
@@ -58,6 +59,11 @@ class ModifyController:
                 if self.colTypes[col[0]] == 'date':
                     entry = DateEntry(self.colFrame, date_pattern='y/mm/dd')
                     entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                    if self.colNulls[col[0]] == 'YES':
+                        emptyButton = Checkbutton(self.colFrame, text="Empty", variable=self.emptyButton,
+                                                  command=self.clicked)
+                        emptyButton.grid(row=no, column=3)
+                        self.emptyDate = entry
                 else:
                     if self.colKeys[col[0]][0] == 'MUL':
                         vals = self.database.executeStatement(
@@ -88,6 +94,12 @@ class ModifyController:
         self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
         self.cancelButton.pack(side=LEFT)
 
+    def clicked(self):
+        if self.emptyButton.get() == 0:
+            self.emptyDate.configure(state='enabled')
+        else:
+            self.emptyDate.configure(state='disabled')
+
     def checkEntry(self):
         self.newRecord.clear()
         for i in range(self.emptyCols):
@@ -97,6 +109,21 @@ class ModifyController:
             if len(value) == 10 and value[4] == "/" and value[7] == "/":
                 value = value.replace("/", "-", 2)
             self.newRecord.append(value)
+        for no, col in enumerate(self.colNulls.values()):
+            if col == 'YES':
+                if self.emptyButton.get() == 1:
+                    self.newRecord[no] = ""
+                self.oldRecord[no-1] = ""
+
+        if self.emptyCols == 1:
+            self.newRecord[0] = self.database.executeStatement("SELECT `autor_id` FROM `autorzy`" +
+                                                               f"WHERE `imie` = \"{self.oldRecord[0]}\" AND" +
+                                                               f"`nazwisko` = \"{self.oldRecord[1]}\"")[0][0]
+            self.oldRecord.insert(0, self.database.executeStatement("SELECT `autor_id` FROM `autorzy`" +
+                                                               f"WHERE `imie` = \"{self.oldRecord[0]}\" AND" +
+                                                               f"`nazwisko` = \"{self.oldRecord[1]}\"")[0][0])
+        print(self.oldRecord)
+        print(self.newRecord)
         try:
             self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
         except Exception as e:

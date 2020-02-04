@@ -26,6 +26,8 @@ class AddController:
         self.colKeys = self.database.getColumnKeys(self.tableName)
         self.colNulls = self.database.getColumnNullable(self.tableName)
         self.emptyCols = 0
+        self.emptyButton = IntVar()
+
         print(self.colNames)
         print(self.colTypes)
         print(self.colKeys)
@@ -58,6 +60,11 @@ class AddController:
                 if self.colTypes[col[0]] == 'date':
                     entry = DateEntry(self.colFrame, date_pattern='y/mm/dd')
                     entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                    if self.colNulls[col[0]] == 'YES':
+                        emptyButton = Checkbutton(self.colFrame, text="Empty", variable=self.emptyButton,
+                                                  command=self.clicked)
+                        emptyButton.grid(row=no, column=3)
+                        self.emptyDate = entry
                 else:
                     if self.colKeys[col[0]][0] == 'MUL':
                         vals = self.database.executeStatement(f"SELECT {self.colKeys[col[0]][2]} FROM {self.colKeys[col[0]][1]}")
@@ -80,6 +87,12 @@ class AddController:
     def goBack(self):
         self.addWindow.event_generate("<<back>>")
 
+    def clicked(self):
+        if self.emptyButton.get() == 0:
+            self.emptyDate.configure(state='enabled')
+        else:
+            self.emptyDate.configure(state='disabled')
+
     def checkEntry(self):
         self.newRecord.clear()
         for i in range(self.emptyCols):
@@ -89,6 +102,9 @@ class AddController:
             if len(value) == 10 and value[4] == "/" and value[7] == "/":
                 value = value.replace("/", "-", 2)
             self.newRecord.append(value)
+        for no, col in enumerate(self.colNulls.values()):
+            if col == 'YES' and self.emptyButton.get() == 1:
+                self.newRecord[no] = ""
         try:
             self.database.addRecord(self.tableName, self.newRecord)
         except Exception as e:
