@@ -27,7 +27,7 @@ SET time_zone = "+00:00";
 --
 DROP PROCEDURE IF EXISTS `borrowBook`;
 DROP FUNCTION IF EXISTS `findBestBookBorrowCount`;
-DROP FUNCTION IF EXISTS `findBestBookID`;
+DROP FUNCTION IF EXISTS `findBestBookTitle`;
 
 DELIMITER $$
 --
@@ -106,65 +106,34 @@ END$$
 --
 CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookBorrowCount` (`bookDateYear` INT) RETURNS INT(11) BEGIN
     RETURN(
-        SELECT count(*) as borCount
-        FROM (
-            SELECT(
-                SELECT ksiazka_id
-                FROM egzemplarze AS e
-                WHERE e.egzemplarz_id = h.egzemplarz_id
-            ) as ksiazka
-            FROM historia_operacji AS h
-            WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
-        ) as tab1
-        GROUP BY ksiazka
-        HAVING borCount = (
-            SELECT MAX(borCount)
-            FROM(
-                SELECT ksiazka, count(*) as borCount
-                FROM (
-                    SELECT(
-                        SELECT ksiazka_id
-                        FROM egzemplarze AS e
-                        WHERE e.egzemplarz_id = h.egzemplarz_id
-                    ) as ksiazka
-                    FROM historia_operacji AS h
-                    WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
-                ) as tab1
-                GROUP BY ksiazka
-            ) as tab2
-        ) LIMIT 1
+        WITH
+            bookOperations AS (
+                SELECT k.tytul as bookTitle, count(*) as borrowCount
+                FROM historia_operacji AS h JOIN egzemplarze AS e ON h.egzemplarz_id = e.egzemplarz_id
+                        JOIN ksiazki AS k ON e.ksiazka_id = k.ksiazka_id
+                WHERE rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                group by bookTitle
+            )
+        SELECT MAX(borrowCount)
+        FROM bookOperations
+        LIMIT 1
     );
 END$$
 
-CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookID` (`bookDateYear` INT) RETURNS INT(11) BEGIN
+CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookTitle` (`bookDateYear` INT) RETURNS varchar(100) BEGIN
     RETURN(
-        SELECT ksiazka
-        FROM (
-            SELECT(
-                SELECT ksiazka_id
-                FROM egzemplarze AS e
-                WHERE e.egzemplarz_id = h.egzemplarz_id
-            ) as ksiazka
-            FROM historia_operacji AS h
-            WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
-        ) as tab1
-        GROUP BY ksiazka
-        HAVING count(*) = (
-            SELECT MAX(borCount)
-            FROM(
-                SELECT ksiazka, count(*) as borCount
-                FROM (
-                    SELECT(
-                        SELECT ksiazka_id
-                        FROM egzemplarze AS e
-                        WHERE e.egzemplarz_id = h.egzemplarz_id
-                    ) as ksiazka
-                    FROM historia_operacji AS h
-                    WHERE h.rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
-                ) as tab1
-                GROUP BY ksiazka
-            ) as tab2
-        ) LIMIT 1
+        WITH
+            bookOperations AS (
+                SELECT k.tytul as bookTitle, count(*) as borrowCount
+                FROM historia_operacji AS h JOIN egzemplarze AS e ON h.egzemplarz_id = e.egzemplarz_id
+                        JOIN ksiazki AS k ON e.ksiazka_id = k.ksiazka_id
+                WHERE rodzaj_operacji = 'wypozyczenie' AND (SELECT YEAR(h.data)) = bookDateYear
+                group by bookTitle
+            )
+        SELECT bookTitle
+        FROM bookOperations
+        HAVING MAX(borrowCount)
+        LIMIT 1
     );
 END$$
 
@@ -280,11 +249,14 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `authorsUpdateTriger` BEFORE UPDATE ON `autorzy` FOR EACH ROW BEGIN
     SET @name = NEW.imie;
+    SET @oldName = OLD.imie;
+    SET @oldSurname = OLD.nazwisko;
     SET @surname = NEW.nazwisko;
     SET @birthDay = NEW.data_urodzenia;
     SET @deathDay = NEW.data_smierci;
 
-    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname)) THEN
+    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname)
+        AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This author already exists.";
 
     ELSEIF @name IS NULL THEN
@@ -351,8 +323,9 @@ CREATE TRIGGER `author_bookAddTriger` BEFORE INSERT ON `autor_ksiazka` FOR EACH 
     SET @autor_id = NEW.autorzy_autor_id;
     SET @ksiazka_id = NEW.ksiazki_ksiazka_id;
 
-    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id)) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by some author.";
+    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id)
+            AND autorzy_autor_id = @author_id) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by this author.";
 
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @autor_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Author with this author_id dosn't exist.";
@@ -371,11 +344,13 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `author_bookUpdateTriger` BEFORE UPDATE ON `autor_ksiazka` FOR EACH ROW BEGIN
     SET @autor_id = NEW.autorzy_autor_id;
+    SET @oldAutor_id = OLD.autorzy_autor_id;
     SET @ksiazka_id = NEW.ksiazki_ksiazka_id;
+    SET @oldKsiazka_id = OLD.ksiazki_ksiazka_id;
 
-    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id)
-            AND @ksiazka_id <> OLD.ksiazki_ksiazka_id) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by some author.";
+    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id AND autorzy_autor_id = @author_id)
+            AND @ksiazka_id <> @oldKsiazka_id AND @autor_id <> @oldAutor_id) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by this author.";
 
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @autor_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Author with this author_id dosn't exist.";
@@ -531,9 +506,12 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `readersUpdateTriger` BEFORE UPDATE ON `czytelnicy` FOR EACH ROW BEGIN
     SET @name = NEW.imie;
+    SET @oldName = OLD.imie;
     SET @surname = NEW.nazwisko;
+    SET @oldSurname = OLD.nazwisko;
 
-    IF (SELECT EXISTS (SELECT * FROM czytelnicy WHERE imie = @name AND nazwisko = @surname)) THEN
+    IF (SELECT EXISTS (SELECT * FROM czytelnicy WHERE imie = @name AND nazwisko = @surname)
+            AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Reader with this name and surname already exists.";
 
     ELSEIF @name IS NULL THEN
@@ -741,8 +719,9 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `genresUpdateTriger` BEFORE UPDATE ON `gatunki` FOR EACH ROW BEGIN
     SET @name = NEW.gatunek;
+    SET @oldName = OLD.gatunek;
 
-    IF (SELECT EXISTS (SELECT * FROM gatunki WHERE gatunek = @name)) THEN
+    IF (SELECT EXISTS (SELECT * FROM gatunki WHERE gatunek = @name) AND @name <> @oldName) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Genre with this name already exists.";
 
     ELSEIF @name IS NULL THEN
@@ -843,17 +822,28 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `operationsUpdateTriger` BEFORE UPDATE ON `historia_operacji` FOR EACH ROW BEGIN
     SET @date = NEW.data;
+    SET @oldDate = OLD.data;
     SET @libraryName = NEW.biblioteka_nazwa;
+    SET @oldLibraryName = OLD.biblioteka_nazwa;
     SET @worker_id = NEW.pracownik_id;
+    SET @oldWorker_id = OLD.pracownik_id;
     SET @reader_id = NEW.czytelnik_id;
+    SET @oldReader_id = OLD.czytelnik_id;
     SET @specimen_id = NEW.egzemplarz_id;
+    SET @oldSpecimen_id = OLD.egzemplarz_id;
     SET @operationType = NEW.rodzaj_operacji;
+    SET @oldOperationType = OLD.rodzaj_operacji;
     SET @delay = NEW.opoznienie;
+    SET @oldDelay = OLD.opoznienie;
     SET @comments = NEW.uwagi;
+    SET @oldComments = OLD.uwagi;
 
     IF (SELECT EXISTS (SELECT * FROM historia_operacji WHERE data = @date AND biblioteka_nazwa = @libraryName
             AND pracownik_id = @worker_id AND czytelnik_id = @reader_id AND egzemplarz_id = @specimen_id
-            AND rodzaj_operacji = @operationType AND opoznienie = @delay AND uwagi = @comments)) THEN
+            AND rodzaj_operacji = @operationType AND opoznienie = @delay AND uwagi = @comments
+            AND @date <> @oldDate AND @libraryName <> @oldLibraryName AND @worker_id <> @oldWorker_id
+            AND @reader_id <> @oldReader_id AND @specimen_id <> @oldSpecimen_id AND @operationType <> @oldOperationType
+            AND @delay <> @oldDelay AND @comments <> @oldComments)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This operation already exists.";
 
     ELSEIF @date IS NULL THEN
@@ -954,10 +944,11 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `booksUpdateTriger` BEFORE UPDATE ON `ksiazki` FOR EACH ROW BEGIN
     SET @title = NEW.tytul;
+    SET @oldTitle = OLD.tytul;
     SET @date = NEW.data_opublikowania;
     SET @genre = NEW.gatunek;
 
-    IF (SELECT EXISTS (SELECT * FROM ksiazki WHERE tytul = @title)) THEN
+    IF (SELECT EXISTS (SELECT * FROM ksiazki WHERE tytul = @title) AND @title <> @oldTitle) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Book with this title already exists.";
 
     ELSEIF @title IS NULL THEN
@@ -1047,10 +1038,13 @@ DELIMITER $$
 CREATE TRIGGER `workersUpdateTriger` BEFORE UPDATE ON `pracownicy` FOR EACH ROW BEGIN
     SET @boss_id = NEW.szef_id;
     SET @name = NEW.imie;
+    SET @oldName = OLD.imie;
     SET @surname = NEW.nazwisko;
+    SET @oldSurname = OLD.nazwisko;
     SET @function = NEW.funkcja;
 
-    IF (SELECT EXISTS (SELECT * FROM pracownicy WHERE imie = @name AND nazwisko = @surname)) THEN
+    IF (SELECT EXISTS (SELECT * FROM pracownicy WHERE imie = @name AND nazwisko = @surname)
+            AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Worker with this name and surname already exists.";
 
     ELSEIF @boss_id IS NOT NULL AND (SELECT NOT EXISTS (SELECT * FROM pracownicy WHERE pracownik_id = @boss_id)) THEN
@@ -1220,15 +1214,21 @@ DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `ovnersUpdateTriger` BEFORE UPDATE ON `wlasciciele` FOR EACH ROW BEGIN
     SET @nip = NEW.nip;
+    SET @oldNip = OLD.nip;
     SET @companyName = NEW.nazwa_firmy;
+    SET @oldCompanyName = OLD.nazwa_firmy;
     SET @name = NEW.imie;
+    SET @oldName = OLD.imie;
     SET @surname = NEW.nazwisko;
+    SET @oldSurname = OLD.nazwisko;
 
-    IF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE nip = @nip)) THEN
+    IF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE nip = @nip) AND @nip <> @oldNip) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this nip already exists.";
-    ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE nazwa_firmy = @companyName AND nazwa_firmy IS NOT NULL)) THEN
+    ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE nazwa_firmy = @companyName AND nazwa_firmy IS NOT NULL)
+            AND @companyName <> @oldCompanyName) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this company name already exists.";
-    ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname AND nazwisko IS NOT NULL)) THEN
+    ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname
+            AND nazwisko IS NOT NULL) AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
 
     ELSEIF @nip IS NULL THEN
@@ -1306,8 +1306,10 @@ DELIMITER $$
 CREATE TRIGGER `ovner_libraryUpdateTriger` BEFORE UPDATE ON `wlasciciel_biblioteka` FOR EACH ROW BEGIN
     SET @ovner_nip = NEW.wlasciciel_nip;
     SET @library_name = NEW.biblioteka_nazwa;
+    SET @oldLibrary_name = OLD.biblioteka_nazwa;
 
-    IF (SELECT EXISTS (SELECT * FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @library_name)) THEN
+    IF (SELECT EXISTS (SELECT * FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @library_name)
+            AND @library_name <> @oldLibrary_name) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong library name. This library has its ovner.";
 
     ELSEIF @ovner_nip IS NULL THEN
