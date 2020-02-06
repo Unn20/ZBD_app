@@ -190,7 +190,7 @@ class Database:
             raise Exception(e)
 
     def modifyRecord(self, tableName, oldValues, values):
-        self.logger.debug(f"Modifying record {oldValues[0]} from {tableName}. New values = {values}")
+        self.logger.debug(f"Modifying record {oldValues} from {tableName}. New values = {values}")
 
         try:
             """Check if values are in correct format"""
@@ -326,9 +326,9 @@ class Database:
 
         try:
             bestBookBorrowCount = self.executeStatement(f"SELECT findBestBookBorrowCount({bookDateYear});")
-            bestBookID = self.executeStatement(f"SELECT findBestBookID({bookDateYear});")
-            self.logger.debug(f"Book found succesfully. BookID = {bestBookID}. Count = {bestBookBorrowCount}")
-            return [bestBookID, bestBookBorrowCount]
+            bestBookTitle = self.executeStatement(f"SELECT findBestBookTitle({bookDateYear});")
+            self.logger.debug(f"Book found succesfully. BookID = {bestBookTitle}. Count = {bestBookBorrowCount}")
+            return [bestBookTitle, bestBookBorrowCount]
 
         except Exception as e:
             self.logger.error(f"Could not realize an findBestBook function. Error = {e}")
