@@ -20,7 +20,7 @@ class FunctionController:
         self.functionWindow.bind("<<back>>", lambda _: self.backEvent())
 
         self.data = self.database.findBestBook(self.year)
-        values = self.database.executeStatement(f"SELECT * FROM `ksiazki` WHERE `ksiazka_id` = {self.data[0][0][0]}")
+        values = self.database.executeStatement(f"SELECT * FROM `ksiazki` WHERE `tytul` = '{self.data[0][0][0]}'")
         self.finalData = dict()
         self.finalData["Title"] = values[0][1]
         self.finalData["Date"] = str(values[0][2])
