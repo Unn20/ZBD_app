@@ -22,6 +22,8 @@ class ModifyController:
         self.modifyWindow.protocol('WM_DELETE_WINDOW', self.goBack)
         self.modifyWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
+        self.helpWindow = None
+
         self.newRecord = list()
         self.emptyCols = 0
         self.emptyButton = IntVar()
@@ -37,11 +39,24 @@ class ModifyController:
 
         self.entries = list()
 
-        if self.tableName in ["autor_ksiazka", "wlasciciel_biblioteka"]:
+        if self.tableName in ["wlasciciel_biblioteka"]:
             for no, col in enumerate(self.colNames):
                 Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
                 combo = ttk.Combobox(self.colFrame, values=self.initComboValues(self.tableName, col[0]))
                 combo.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                if data[self.selectedRecord][col[0]] is not None:
+                    combo.set(data[self.selectedRecord][col[0]])
+                self.entries.append(combo)
+
+        elif self.tableName in ["autor_ksiazka"]:
+            for no, col in enumerate(self.colNames):
+                Label(self.colFrame, text=col, font=("Arial Bold", 12)).grid(row=no, column=0)
+                vals = self.initComboValues(self.tableName, col[0])
+                combo = ttk.Combobox(self.colFrame, values=vals)
+                combo.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
+                valueHelper = Button(self.colFrame, text="?", command=lambda b=col[0], c=combo:
+                                                                            self.showHelp(b, c))
+                valueHelper.grid(row=no, column=3)
                 if data[self.selectedRecord][col[0]] is not None:
                     combo.set(data[self.selectedRecord][col[0]])
                 self.entries.append(combo)
@@ -164,3 +179,50 @@ class ModifyController:
 
     def initComboValues(self, tableName, col):
         return self.database.executeStatement(f"SELECT DISTINCT `{col}` FROM `{tableName}`")
+
+    def showHelp(self, column, combo):
+        if self.helpWindow is not None:
+            return
+
+        def select():
+            atr = self.listbox.get(self.listbox.curselection())
+            if self.column == "autorzy_autor_id":
+                atr = atr.split(" ")
+                id = self.database.executeStatement(f"SELECT `autor_id` " +
+                                                    f"FROM `autorzy` WHERE `imie` = \"{atr[0]}\" " +
+                                                    f"AND `nazwisko` = \"{atr[1]}\" ")
+            else:
+                id = self.database.executeStatement(f"SELECT `ksiazka_id` " +
+                                                    f"FROM `ksiazki` WHERE `tytul` = \"{atr}\" ")
+            self.combo.set(id)
+            exit()
+            return
+
+        def exit():
+            self.helpWindow.destroy()
+            self.helpWindow = None
+
+        self.column = column
+        self.combo = combo
+
+        self.helpWindow = Toplevel(self.modifyWindow)
+        self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
+
+        vals = list()
+        if self.column == "autorzy_autor_id":
+            temp_vals = self.database.executeStatement(f"SELECT `imie`, `nazwisko` FROM `autorzy`")
+            for val1, val2 in temp_vals:
+                vals.append(val1 + " " + val2)
+        else:
+            temp_vals = self.database.executeStatement(f"SELECT `tytul` FROM `ksiazki`")
+            for val1 in temp_vals:
+                vals.append(val1[0])
+
+        self.listbox = Listbox(self.helpWindow)
+        self.listbox.pack(side=TOP)
+
+        for val in vals:
+            self.listbox.insert("end", val)
+
+        self.button = Button(self.helpWindow, text="Select", command=select)
+        self.button.pack(side=TOP)
