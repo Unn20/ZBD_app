@@ -85,6 +85,12 @@ class ModifyController:
         for entry in self.entries:
             self.oldRecord.append(entry.get())
 
+        print(self.colNames)
+        if self.emptyCols > 0:
+            self.oldRecord.insert(0, self.database.executeStatement(f"SELECT `{self.colNames[0][0]}` FROM `{self.tableName}`" +
+                                                                 f"WHERE `{self.colNames[1][0]}` = \"{self.oldRecord[0]}\" AND" +
+                                                                 f"`{self.colNames[2][0]}` = \"{self.oldRecord[1]}\"")[0][0])
+
         self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
                                  height=40)
@@ -113,17 +119,14 @@ class ModifyController:
             if col == 'YES':
                 if self.emptyButton.get() == 1:
                     self.newRecord[no] = ""
-                self.oldRecord[no-1] = ""
+
 
         if self.emptyCols == 1:
-            self.newRecord[0] = self.database.executeStatement("SELECT `autor_id` FROM `autorzy`" +
-                                                               f"WHERE `imie` = \"{self.oldRecord[0]}\" AND" +
-                                                               f"`nazwisko` = \"{self.oldRecord[1]}\"")[0][0]
-            self.oldRecord.insert(0, self.database.executeStatement("SELECT `autor_id` FROM `autorzy`" +
-                                                               f"WHERE `imie` = \"{self.oldRecord[0]}\" AND" +
-                                                               f"`nazwisko` = \"{self.oldRecord[1]}\"")[0][0])
-        print(self.oldRecord)
-        print(self.newRecord)
+            self.newRecord[0] = self.oldRecord[0]
+
+        if self.tableName == "autorzy" and self.database.executeStatement(f"SELECT `data_smierci`" +
+                                                                          f"FROM `autorzy` WHERE `autor_id` = \"{self.newRecord[0]}\"")[0][0] == None:
+            self.oldRecord[-1] = ""
         try:
             self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
         except Exception as e:
@@ -144,6 +147,7 @@ class ModifyController:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.newRecord = list()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
