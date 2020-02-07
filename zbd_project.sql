@@ -320,17 +320,17 @@ INSERT INTO `autor_ksiazka` (`autorzy_autor_id`, `ksiazki_ksiazka_id`) VALUES
 --
 DELIMITER $$
 CREATE TRIGGER `author_bookAddTriger` BEFORE INSERT ON `autor_ksiazka` FOR EACH ROW BEGIN
-    SET @autor_id = NEW.autorzy_autor_id;
+    SET @author_id = NEW.autorzy_autor_id;
     SET @ksiazka_id = NEW.ksiazki_ksiazka_id;
 
-    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id)
-            AND autorzy_autor_id = @author_id) THEN
+    IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE autorzy_autor_id = @author_id
+            AND ksiazki_ksiazka_id = @ksiazka_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by this author.";
 
-    ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @autor_id)) THEN
+    ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @author_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Author with this author_id dosn't exist.";
-    ELSEIF @autor_id IS NULL THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong autor_id. You need to set autor_id it can't be none.";
+    ELSEIF @author_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong author_id. You need to set autor_id it can't be none.";
 
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM ksiazki WHERE ksiazka_id = @ksiazka_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Book with this book_id dosn't exist.";
@@ -343,19 +343,19 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `author_bookUpdateTriger` BEFORE UPDATE ON `autor_ksiazka` FOR EACH ROW BEGIN
-    SET @autor_id = NEW.autorzy_autor_id;
-    SET @oldAutor_id = OLD.autorzy_autor_id;
+    SET @author_id = NEW.autorzy_autor_id;
+    SET @oldAuthor_id = OLD.autorzy_autor_id;
     SET @ksiazka_id = NEW.ksiazki_ksiazka_id;
     SET @oldKsiazka_id = OLD.ksiazki_ksiazka_id;
 
     IF (SELECT EXISTS (SELECT * FROM autor_ksiazka WHERE ksiazki_ksiazka_id = @ksiazka_id AND autorzy_autor_id = @author_id)
-            AND @ksiazka_id <> @oldKsiazka_id AND @autor_id <> @oldAutor_id) THEN
+            AND @ksiazka_id <> @oldKsiazka_id AND @author_id <> @oldAuthor_id) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This book has already been written by this author.";
 
-    ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @autor_id)) THEN
+    ELSEIF (SELECT NOT EXISTS (SELECT * FROM autorzy WHERE autor_id = @author_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Author with this author_id dosn't exist.";
-    ELSEIF @autor_id IS NULL THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong autor_id. You need to set autor_id it can't be none.";
+    ELSEIF @author_id IS NULL THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong author_id. You need to set autor_id it can't be none.";
 
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM ksiazki WHERE ksiazka_id = @ksiazka_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Book with this book_id dosn't exist.";
@@ -840,10 +840,9 @@ CREATE TRIGGER `operationsUpdateTriger` BEFORE UPDATE ON `historia_operacji` FOR
 
     IF (SELECT EXISTS (SELECT * FROM historia_operacji WHERE data = @date AND biblioteka_nazwa = @libraryName
             AND pracownik_id = @worker_id AND czytelnik_id = @reader_id AND egzemplarz_id = @specimen_id
-            AND rodzaj_operacji = @operationType AND opoznienie = @delay AND uwagi = @comments
-            AND @date <> @oldDate AND @libraryName <> @oldLibraryName AND @worker_id <> @oldWorker_id
-            AND @reader_id <> @oldReader_id AND @specimen_id <> @oldSpecimen_id AND @operationType <> @oldOperationType
-            AND @delay <> @oldDelay AND @comments <> @oldComments)) THEN
+            AND rodzaj_operacji = @operationType
+            AND (@date <> @oldDate OR @libraryName <> @oldLibraryName OR @worker_id <> @oldWorker_id
+            OR @reader_id <> @oldReader_id OR @specimen_id <> @oldSpecimen_id OR @operationType <> @oldOperationType))) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This operation already exists.";
 
     ELSEIF @date IS NULL THEN
