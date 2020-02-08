@@ -25,6 +25,7 @@ class AddController:
         self.colTypes = self.database.getColumnTypes(self.tableName)
         self.colKeys = self.database.getColumnKeys(self.tableName)
         self.colNulls = self.database.getColumnNullable(self.tableName)
+        self.colConstraints = self.database.getTableCheckConstraint(self.tableName)
         self.emptyCols = 0
         self.emptyButton = IntVar()
 
@@ -79,6 +80,8 @@ class AddController:
                         entry = ttk.Combobox(self.colFrame, values=vals)
                         entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                     else:
+                        #print(f"deb1 = {col}")
+                        #print(f"deb2 = {self.colConstraints[0][0]}")
                         entry = Entry(self.colFrame, width=20)
                         entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                 self.entries.append(entry)

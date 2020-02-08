@@ -100,11 +100,18 @@ class ModifyController:
         for entry in self.entries:
             self.oldRecord.append(entry.get())
 
-        print(self.colNames)
         if self.emptyCols > 0:
-            self.oldRecord.insert(0, self.database.executeStatement(f"SELECT `{self.colNames[0][0]}` FROM `{self.tableName}`" +
-                                                                 f"WHERE `{self.colNames[1][0]}` = \"{self.oldRecord[0]}\" AND" +
-                                                                 f"`{self.colNames[2][0]}` = \"{self.oldRecord[1]}\"")[0][0])
+            if self.tableName == "pracownicy":
+                self.oldRecord.insert(0, self.database.executeStatement(
+                    f"SELECT `{self.colNames[0][0]}` FROM `{self.tableName}`" +
+                    f"WHERE `{self.colNames[2][0]}` = \"{self.oldRecord[1]}\" AND" +
+                    f"`{self.colNames[3][0]}` = \"{self.oldRecord[2]}\"")[0][0])
+
+            else:
+                self.oldRecord.insert(0, self.database.executeStatement(
+                    f"SELECT `{self.colNames[0][0]}` FROM `{self.tableName}`" +
+                    f"WHERE `{self.colNames[1][0]}` = \"{self.oldRecord[0]}\" AND" +
+                    f"`{self.colNames[2][0]}` = \"{self.oldRecord[1]}\"")[0][0])
 
         self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
