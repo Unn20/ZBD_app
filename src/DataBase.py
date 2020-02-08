@@ -35,6 +35,8 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+        self.getTableCheckConstraint('historia_operacji')
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -113,6 +115,12 @@ class Database:
         for column in columns:
             res[column[0]] = column[1]
         return res
+
+    def getTableCheckConstraint(self, tableName):
+        """Create and execute statement"""
+        tableName = "'" + tableName + "'"
+        statement = "SELECT check_clause FROM information_schema.check_constraints WHERE table_name = " + tableName + ";"
+        return self.executeStatement(statement)
 
     def getData(self, tableName):
         """ Gets data and return it in dict form """

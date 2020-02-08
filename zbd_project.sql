@@ -746,6 +746,7 @@ CREATE TABLE `historia_operacji` (
   `czytelnik_id` int(11) NOT NULL,
   `egzemplarz_id` int(11) NOT NULL,
   `rodzaj_operacji` text CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL,
+        CONSTRAINT operationType CHECK (rodzaj_operacji in ('wypozyczenie', 'zwrot', 'przedluzenie')),
   `opoznienie` int(11) DEFAULT NULL,
   `uwagi` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
@@ -813,7 +814,7 @@ CREATE TRIGGER `operationsAddTriger` BEFORE INSERT ON `historia_operacji` FOR EA
     ELSEIF @operationType IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong operation type. You need to set operation type it can't be none.";
     ELSEIF @operationType NOT IN ('zwrot', 'wypozyczenie', 'przedluzenie') THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong operation type. You need to set operation type to 'zwrot', 'wypozyczenie' or 'przedluzenie'.";
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set operation type to 'zwrot', 'wypozyczenie' or 'przedluzenie'.";
 
     END IF;
 END
@@ -1101,11 +1102,15 @@ INSERT INTO `regaly` (`numer`, `pojemnosc`, `liczba_ksiazek`, `dzial_nazwa`) VAL
 --
 DELIMITER $$
 CREATE TRIGGER `bookstandsAddTriger` BEFORE INSERT ON `regaly` FOR EACH ROW BEGIN
+    SET @number = NEW.numer;
     SET @capacity = NEW.pojemnosc;
     SET @booksCount = NEW.liczba_ksiazek;
     SET @sectionName = NEW.dzial_nazwa;
 
-    IF @capacity IS NULL THEN
+    IF (SELECT EXISTS (SELECT * FROM regaly WHERE numer = @number)) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Bookstand with this number already exists.";
+
+    ELSEIF @capacity IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong capacity. You need to set capacity it can't be none.";
 
     ELSEIF @booksCount IS NULL THEN
@@ -1153,7 +1158,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `wlasciciele` (
-  `nip` int(11) NOT NULL CHECK (`nip` between 1000000000 and 9999999999),
+  `nip` varchar(50) NOT NULL,
   `nazwa_firmy` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `imie` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `nazwisko` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
@@ -1191,10 +1196,13 @@ CREATE TRIGGER `ovnersAddTriger` BEFORE INSERT ON `wlasciciele` FOR EACH ROW BEG
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this company name already exists.";
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname AND nazwisko IS NOT NULL)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
+    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
+            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
 
     ELSEIF @nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
-    ELSEIF NOT @nip BETWEEN 1000000000 AND 9999999999 THEN
+    ELSEIF NOT (@nip REGEXP '^[0-9]{10}$') THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. Make sure nip has 10 digits.";
 
     ELSEIF NOT @companyName REGEXP BINARY '^[A-Z]{1}' AND @companyName IS NOT NULL THEN
@@ -1224,15 +1232,18 @@ CREATE TRIGGER `ovnersUpdateTriger` BEFORE UPDATE ON `wlasciciele` FOR EACH ROW 
     IF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE nip = @nip) AND @nip <> @oldNip) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this nip already exists.";
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE nazwa_firmy = @companyName AND nazwa_firmy IS NOT NULL)
-            AND @companyName <> @oldCompanyName) THEN
+            AND IFNULL(@companyName <> @oldCompanyName, 1) ) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this company name already exists.";
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname
             AND nazwisko IS NOT NULL) AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
+    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
+            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
 
     ELSEIF @nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
-    ELSEIF NOT @nip BETWEEN 1000000000 AND 9999999999 THEN
+    ELSEIF NOT (@nip REGEXP '^[0-9]{10}$') THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. Make sure nip has 10 digits.";
 
     ELSEIF NOT @companyName REGEXP BINARY '^[A-Z]{1}' AND @companyName IS NOT NULL THEN
@@ -1256,7 +1267,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `wlasciciel_biblioteka` (
-  `wlasciciel_nip` int(11) NOT NULL,
+  `wlasciciel_nip` varchar(50) NOT NULL,
   `biblioteka_nazwa` varchar(50) CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
 
@@ -1505,7 +1516,7 @@ ALTER TABLE `ksiazki`
 -- Ograniczenia dla tabeli `pracownicy`
 --
 ALTER TABLE `pracownicy`
-  ADD CONSTRAINT `pracownik_szef_fk` FOREIGN KEY (`pracownik_id`) REFERENCES `pracownicy` (`szef_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `pracownik_szef_fk` FOREIGN KEY (`szef_id`) REFERENCES `pracownicy` (`pracownik_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Ograniczenia dla tabeli `regaly`
