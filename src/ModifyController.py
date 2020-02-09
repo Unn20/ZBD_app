@@ -32,6 +32,8 @@ class ModifyController:
         self.colTypes = self.database.getColumnTypes(self.tableName)
         self.colKeys = self.database.getColumnKeys(self.tableName)
         self.colNulls = self.database.getColumnNullable(self.tableName)
+        self.colConstraints = self.database.getTableCheckConstraint(self.tableName)
+        print(f"DEBUG = {self.colConstraints}")
         self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
                               height=self.themeWindow.winfo_height() - 40)
@@ -86,7 +88,10 @@ class ModifyController:
                         entry = ttk.Combobox(self.colFrame, values=vals)
                         entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
                     else:
-                        entry = Entry(self.colFrame, width=20)
+                        if col[0] in self.colConstraints.keys():
+                            entry = ttk.Combobox(self.colFrame, values=self.colConstraints[col[0]])
+                        else:
+                            entry = Entry(self.colFrame, width=20)
                         entry.grid(row=no, column=1, columnspan=2, padx=20, pady=10)
 
                 if data[self.selectedRecord][col[0]] is not None:
