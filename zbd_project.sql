@@ -745,8 +745,7 @@ CREATE TABLE `historia_operacji` (
   `pracownik_id` int(11) NOT NULL,
   `czytelnik_id` int(11) NOT NULL,
   `egzemplarz_id` int(11) NOT NULL,
-  `rodzaj_operacji` text CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL,
-        CONSTRAINT operationType CHECK (rodzaj_operacji in ('wypozyczenie', 'zwrot', 'przedluzenie')),
+  `rodzaj_operacji` text CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL CHECK (rodzaj_operacji IN ('wypozyczenie', 'zwrot', 'przedluzenie')),
   `opoznienie` int(11) DEFAULT NULL,
   `uwagi` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
