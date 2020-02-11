@@ -137,34 +137,34 @@ class ProcedureController:
         for lab, en in self.entries.items():
             if lab == "Reader's surname":
                 if en.get() is not "":
-                    val = self.database.executeStatement(f"SELECT `imie` FROM `czytelnicy` " +
+                    val = self.database.executeStatement(f"SELECT DISTINCT `imie` FROM `czytelnicy` " +
                                                          f"WHERE `nazwisko` = \"{en.get()}\"")
                 else:
-                    val = self.database.executeStatement(f"SELECT `imie` FROM `czytelnicy`")
+                    val = self.database.executeStatement(f"SELECT DISTINCT `imie` FROM `czytelnicy`")
                 self.entries["Reader's name"].configure(values=([""] + list(val)))
                 #self.entries[lab].set("")
             elif lab == "Reader's name":
                 if en.get() is not "":
-                    val = self.database.executeStatement(f"SELECT `nazwisko` FROM `czytelnicy` " +
+                    val = self.database.executeStatement(f"SELECT DISTINCT `nazwisko` FROM `czytelnicy` " +
                                                          f"WHERE `imie` = \"{en.get()}\"")
                 else:
-                    val = self.database.executeStatement(f"SELECT `nazwisko` FROM `czytelnicy`")
+                    val = self.database.executeStatement(f"SELECT DISTINCT `nazwisko` FROM `czytelnicy`")
                 self.entries["Reader's surname"].configure(values=([""] + list(val)))
                 # self.entries[lab].set("")
             elif lab == "Employee's surname":
                 if en.get() is not "":
-                    val = self.database.executeStatement(f"SELECT `imie` FROM `pracownicy` " +
+                    val = self.database.executeStatement(f"SELECT DISTINCT `imie` FROM `pracownicy` " +
                                                          f"WHERE `nazwisko` = \"{en.get()}\"")
                 else:
-                    val = self.database.executeStatement(f"SELECT `imie` FROM `pracownicy`")
+                    val = self.database.executeStatement(f"SELECT DISTINCT `imie` FROM `pracownicy`")
                 self.entries["Employee's name"].configure(values=([""] + list(val)))
                 # self.entries[lab].set("")
             elif lab == "Employee's name":
                 if en.get() is not "":
-                    val = self.database.executeStatement(f"SELECT `nazwisko` FROM `pracownicy` " +
+                    val = self.database.executeStatement(f"SELECT DISTINCT `nazwisko` FROM `pracownicy` " +
                                                          f"WHERE `imie` = \"{en.get()}\"")
                 else:
-                    val = self.database.executeStatement(f"SELECT `nazwisko` FROM `pracownicy`")
+                    val = self.database.executeStatement(f"SELECT DISTINCT `nazwisko` FROM `pracownicy`")
                 self.entries["Employee's surname"].configure(values=([""] + list(val)))
                 # self.entries[lab].set("")
 

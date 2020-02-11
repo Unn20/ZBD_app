@@ -3,8 +3,19 @@ from tkinter import ttk
 from tkinter import messagebox
 from src.Logger import Logger
 from src.TableController import TableController
+from src.BooksController import BooksController
 from src.ProcedureController import ProcedureController
 from src.FunctionController import FunctionController
+from enum import Enum
+
+
+class Tables(Enum):
+    Books = 1
+    History = 2
+    Readers = 3
+    Employees = 4
+    Libraries = 5
+    Owners = 6
 
 
 class MainController:
@@ -17,11 +28,7 @@ class MainController:
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("MainController logger has started.")
         # Read table names from database object
-        self.tableNames = self.database.getTableNames()
-        if len(self.tableNames) != 0:
-            self.logger.debug("Table names are loaded")
-        else:
-            self.logger.warning("No table names has been loaded!")
+        self.tableNames = [member.name for member in Tables]
 
         self.procedureController = None
         self.functionController = None
@@ -33,7 +40,7 @@ class MainController:
                              width=self.themeWindow.winfo_width() - 80, height=self.themeWindow.winfo_height() - 80)
         self.content.place(x=40, y=40)
         self.content.grid(row=0, column=0)
-        self.content.bind("<<signout>>", lambda _: logoutEvent(None))
+        self.content.bind("<<signout>>", lambda _=None: logoutEvent(_))
         self.content.update()
 
         self.listFrame = Frame(self.content, bg="white", bd=1, relief=FLAT,
@@ -145,9 +152,28 @@ class MainController:
     def viewTable(self):
         """ Go to selected table screen """
         self.content.grid_forget()
-        self.tableController = TableController(self.tableNames[self.selectionVar.get()],
-                                               self.database, self.themeWindow, self.chooseTableEvent)
+        tabName = self.tableNames[self.selectionVar.get()]
+        if tabName == "Books":
+            self.tableController = BooksController(self.database, self.themeWindow, self.chooseTableEvent)
+        elif tabName == "History":
+            #self.tableController = BooksController()
+            pass
+        elif tabName == "Readers":
+            #self.tableController = BooksController()
+            pass
+        elif tabName == "Employees":
+            #self.tableController = BooksController()
+            pass
+        elif tabName == "Libraries":
+            #self.tableController = BooksController()
+            pass
+        elif tabName == "Owners":
+            #self.tableController = BooksController()
+            pass
+
+        '''self.tableController = TableController(self.tableNames[self.selectionVar.get()],
+                                               self.database, self.themeWindow, self.chooseTableEvent)'''
 
     def chooseTableEvent(self, _):
-        self.tableController.content.destroy()
+        #self.tableController.content.destroy()
         self.content.grid(row=0, column=0)
