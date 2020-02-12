@@ -5,6 +5,7 @@ from src.Logger import Logger
 from src.TableController import TableController
 from src.BooksController import BooksController
 from src.LibraryController import LibraryController
+from src.EmployeeController import EmployeeController
 from src.ProcedureController import ProcedureController
 from src.FunctionController import FunctionController
 from enum import Enum
@@ -163,16 +164,14 @@ class MainController:
             #self.tableController = BooksController()
             pass
         elif tabName == "Employees":
-            #self.tableController = BooksController()
-            pass
+            self.tableController = EmployeeController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Libraries_Owners":
-            self.tableController = LibraryController()
-            pass
+            self.tableController = LibraryController(self.database, self.themeWindow, self.chooseTableEvent)
 
 
         '''self.tableController = TableController(self.tableNames[self.selectionVar.get()],
                                                self.database, self.themeWindow, self.chooseTableEvent)'''
 
     def chooseTableEvent(self, _):
-        #self.tableController.content.destroy()
+        self.tableController.content.destroy()
         self.content.grid(row=0, column=0)
