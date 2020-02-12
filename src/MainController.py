@@ -4,18 +4,19 @@ from tkinter import messagebox
 from src.Logger import Logger
 from src.TableController import TableController
 from src.BooksController import BooksController
+from src.LibraryController import LibraryController
 from src.ProcedureController import ProcedureController
 from src.FunctionController import FunctionController
 from enum import Enum
 
 
 class Tables(Enum):
-    Books = 1
+    Books_Authors = 1
     History = 2
     Readers = 3
     Employees = 4
-    Libraries = 5
-    Owners = 6
+    Libraries_Owners = 5
+
 
 
 class MainController:
@@ -153,7 +154,7 @@ class MainController:
         """ Go to selected table screen """
         self.content.grid_forget()
         tabName = self.tableNames[self.selectionVar.get()]
-        if tabName == "Books":
+        if tabName == "Books_Authors":
             self.tableController = BooksController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "History":
             #self.tableController = BooksController()
@@ -164,12 +165,10 @@ class MainController:
         elif tabName == "Employees":
             #self.tableController = BooksController()
             pass
-        elif tabName == "Libraries":
-            #self.tableController = BooksController()
+        elif tabName == "Libraries_Owners":
+            self.tableController = LibraryController()
             pass
-        elif tabName == "Owners":
-            #self.tableController = BooksController()
-            pass
+
 
         '''self.tableController = TableController(self.tableNames[self.selectionVar.get()],
                                                self.database, self.themeWindow, self.chooseTableEvent)'''
