@@ -8,7 +8,7 @@ from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
 
 
-class EmployeeController:
+class ReaderController:
     def __init__(self, database, themeWindow, returnEvent):
         self.database = database
         self.themeWindow = themeWindow
@@ -20,7 +20,7 @@ class EmployeeController:
         self.modifyWindow = None
         self.table = None
 
-        tableName = "pracownicy"
+        tableName = "czytelnicy"
         self.tableName = tableName
 
         self.tableData = self.database.getRawData(tableName)
@@ -109,14 +109,8 @@ class EmployeeController:
             recName = self.model.getRecName(i)
             deletedRecord = list()
             deletedRecord.append(self.data[recName]["ID"])
-            if self.data[recName]["Nazwisko przełożonego"] == "":
-                deletedRecord.append("")
-            else:
-                # TODO: boss_id = self.database.getBossId(name, surname)
-                deletedRecord.append("")
             deletedRecord.append(self.data[recName]["Imię"])
             deletedRecord.append(self.data[recName]["Nazwisko"])
-            deletedRecord.append(self.data[recName]["Funkcja"])
             try:
                 print(f"Deleted record = {deletedRecord}")
                 self.database.deleteRecord(tableName, deletedRecord)
@@ -147,23 +141,12 @@ class EmployeeController:
         for no, record in enumerate(self.tableData):
             self.data[f"rec {no}"] = dict()
             self.data[f"rec {no}"]["ID"] = record[0]
-            self.data[f"rec {no}"]["Imię"] = record[2]
-            self.data[f"rec {no}"]["Nazwisko"] = record[3]
-            self.data[f"rec {no}"]["Funkcja"] = record[4]
-            # If there's boss
-            if record[1] is not None:
-                # TODO: boss = self.database.getBossNameSurname(ID_boss)
-                self.data[f"rec {no}"]["Imię przełożonego"] = "Jan"  # boss[0]
-                self.data[f"rec {no}"]["Nazwisko przełożonego"] = "Kowalski"  # boss[1]
-            else:
-                self.data[f"rec {no}"]["Imię przełożonego"] = ""
-                self.data[f"rec {no}"]["Nazwisko przełożonego"] = ""
+            self.data[f"rec {no}"]["Imię"] = record[1]
+            self.data[f"rec {no}"]["Nazwisko"] = record[2]
 
         self.model.importDict(self.data)
         if self.table is not None:
             self.table.redraw()
-
-        #TODO: Sprawdzic dlaczego usuniecie pracownika o id=7 usuwa również pracownika o id=9 ??????
 
 class AddController:
     def __init__(self, themeWindow, tableName, database, backEvent):
@@ -201,19 +184,6 @@ class AddController:
         entry.grid(row=1, column=1, columnspan=2)
         self.entries.append(entry)
 
-        Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=2, column=1, columnspan=2)
-        self.entries.append(entry)
-
-        Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
-        entry = Entry(self.colFrame, width=20, state="readonly")
-        entry.grid(row=3, column=1, columnspan=2)
-        self.entries.append(entry)
-        #TODO: PRZELOZONY NIE MOZE BYC SOBA SAMYM, POTRZEBNA PROCEDURA WYZWALANA
-        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
-        valueHelper.grid(row=3, column=3)
-
         self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
                                  height=40)
@@ -223,60 +193,17 @@ class AddController:
         self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
         self.cancelButton.pack(side=LEFT)
 
-    def showHelp(self, entry):
-        if self.helpWindow is not None:
-            return
-
-        def select():
-            atr = self.listbox.get(self.listbox.curselection())
-            if atr == "<brak>":
-                boss_id = ""
-            else:
-                boss_id = atr.split(" ")[0]
-            entry.config(state="normal")
-            entry.delete("0", "end")
-            entry.insert("end", boss_id)
-            entry.config(state="disabled")
-            exit()
-            return
-
-        def exit():
-            self.helpWindow.destroy()
-            self.helpWindow = None
-
-        self.helpWindow = Toplevel(self.addWindow)
-        self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
-
-        vals = list()
-        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
-        for val1, val2, val3 in temp_vals:
-            vals.append(f"{val1} {val2} {val3}")
-
-        self.listbox = Listbox(self.helpWindow)
-        self.listbox.pack(side=TOP)
-        self.listbox.insert("end", "<brak>")
-
-        for val in vals:
-            self.listbox.insert("end", val)
-
-        self.button = Button(self.helpWindow, text="Select", command=select)
-        self.button.pack(side=TOP)
-
     def goBack(self):
         self.addWindow.event_generate("<<back>>")
 
     def checkEntry(self):
         self.newRecord.clear()
-        # Employee's id
+        # Reader's id
         self.newRecord.append("")
-        # Employee's boss_id
-        self.newRecord.append(self.entries[3].get())
-        # Employee's name
+        # Reader's name
         self.newRecord.append(self.entries[0].get())
-        # Employee's surname
+        # Reader's surname
         self.newRecord.append(self.entries[1].get())
-        # Employee's function
-        self.newRecord.append(self.entries[2].get())
 
         try:
             self.database.addRecord(self.tableName, self.newRecord)
@@ -313,17 +240,12 @@ class ModifyController:
     def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
 
         self.oldRecord = list()
-        # Employee's id
+        # Reader's id
         self.oldRecord.append(data[selectedRecord]["ID"])
-        # Employee's boss_id
-        #TODO: Metoda getBossID(name, surname)
-        self.oldRecord.append("")
-        # Employee's name
+        # Reader's name
         self.oldRecord.append(data[selectedRecord]["Imię"])
-        # Employee's surname
+        # Reader's surname
         self.oldRecord.append(data[selectedRecord]["Nazwisko"])
-        # Employee's function
-        self.oldRecord.append(data[selectedRecord]["Funkcja"])
 
         self.themeWindow = themeWindow
         self.tableName = tableName
@@ -352,30 +274,14 @@ class ModifyController:
         Label(self.colFrame, text="Imię", font=("Arial Bold", 12)).grid(row=0, column=0)
         entry = Entry(self.colFrame, width=20)
         entry.grid(row=0, column=1, columnspan=2)
-        entry.insert(END, self.oldRecord[2])
+        entry.insert(END, self.oldRecord[1])
         self.entries.append(entry)
 
         Label(self.colFrame, text="Nazwisko", font=("Arial Bold", 12)).grid(row=1, column=0)
         entry = Entry(self.colFrame, width=20)
         entry.grid(row=1, column=1, columnspan=2)
-        entry.insert(END, self.oldRecord[3])
+        entry.insert(END, self.oldRecord[2])
         self.entries.append(entry)
-
-        Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=2, column=1, columnspan=2)
-        entry.insert(END, self.oldRecord[4])
-        self.entries.append(entry)
-
-        Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
-        entry = Entry(self.colFrame, width=20, state="normal")
-        entry.insert(END, self.oldRecord[1])
-        entry.config(state="readonly")
-        entry.grid(row=3, column=1, columnspan=2)
-        self.entries.append(entry)
-        # TODO: PRZELOZONY NIE MOZE BYC SOBA SAMYM, POTRZEBNA PROCEDURA WYZWALANA
-        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
-        valueHelper.grid(row=3, column=3)
 
         self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
@@ -389,16 +295,12 @@ class ModifyController:
 
     def checkEntry(self):
         self.newRecord.clear()
-        # Employee's id
+        # Reader's id
         self.newRecord.append(self.oldRecord[0])
-        # Employee's boss_id
-        self.newRecord.append(self.entries[3].get())
-        # Employee's name
+        # Reader's name
         self.newRecord.append(self.entries[0].get())
-        # Employee's surname
+        # Reader's surname
         self.newRecord.append(self.entries[1].get())
-        # Employee's function
-        self.newRecord.append(self.entries[2].get())
 
         try:
             print(f"old record = {self.oldRecord}")
@@ -436,42 +338,3 @@ class ModifyController:
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
-
-    def showHelp(self, entry):
-        if self.helpWindow is not None:
-            return
-
-        def select():
-            atr = self.listbox.get(self.listbox.curselection())
-            if atr == "<brak>":
-                boss_id = ""
-            else:
-                boss_id = atr.split(" ")[0]
-            entry.config(state="normal")
-            entry.delete("0", "end")
-            entry.insert("end", boss_id)
-            entry.config(state="disabled")
-            exit()
-            return
-
-        def exit():
-            self.helpWindow.destroy()
-            self.helpWindow = None
-
-        self.helpWindow = Toplevel(self.modifyWindow)
-        self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
-
-        vals = list()
-        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
-        for val1, val2, val3 in temp_vals:
-            vals.append(f"{val1} {val2} {val3}")
-
-        self.listbox = Listbox(self.helpWindow)
-        self.listbox.pack(side=TOP)
-        self.listbox.insert("end", "<brak>")
-
-        for val in vals:
-            self.listbox.insert("end", val)
-
-        self.button = Button(self.helpWindow, text="Select", command=select)
-        self.button.pack(side=TOP)

@@ -4,8 +4,6 @@ from src.Logger import Logger
 from tkintertable.Tables import TableCanvas
 from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
-from src.AddController import AddController
-from src.ModifyController import ModifyController
 import datetime
 
 

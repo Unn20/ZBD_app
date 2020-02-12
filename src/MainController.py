@@ -2,10 +2,10 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from src.Logger import Logger
-from src.TableController import TableController
 from src.BooksController import BooksController
 from src.LibraryController import LibraryController
 from src.EmployeeController import EmployeeController
+from src.ReaderController import ReaderController
 from src.ProcedureController import ProcedureController
 from src.FunctionController import FunctionController
 from enum import Enum
@@ -161,8 +161,7 @@ class MainController:
             #self.tableController = BooksController()
             pass
         elif tabName == "Readers":
-            #self.tableController = BooksController()
-            pass
+            self.tableController = ReaderController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Employees":
             self.tableController = EmployeeController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Libraries_Owners":
