@@ -8,6 +8,7 @@ from src.EmployeeController import EmployeeController
 from src.ReaderController import ReaderController
 from src.ProcedureController import ProcedureController
 from src.FunctionController import FunctionController
+from src.HistoryController import HistoryController
 from enum import Enum
 
 
@@ -158,8 +159,7 @@ class MainController:
         if tabName == "Books_Authors":
             self.tableController = BooksController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "History":
-            #self.tableController = BooksController()
-            pass
+            self.tableController = HistoryController()
         elif tabName == "Readers":
             self.tableController = ReaderController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Employees":
