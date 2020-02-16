@@ -48,8 +48,13 @@ class LibraryController:
 
         self.backButton = Button(self.topCanvas, text=" < ", command=self.back, width=9)
         self.backButton.pack(fill='both', side=LEFT)
+        self.findButton = Button(self.topCanvas, text="Owners", command=self.checkOwners, width=22)
+        self.findButton.pack(fill='both', side=LEFT)
         self.showButton = Button(self.topCanvas, text="Refresh table", command=self.refreshTable, width=22)
         self.showButton.pack(fill='both', side=LEFT)
+        self.findButton = Button(self.topCanvas, text="Find by owner", command=self.findByOwner, width=22)
+        self.findButton.pack(fill='both', side=LEFT)
+
 
         # Canvas with data
         self.middleFrame = Frame(self.content)
@@ -139,6 +144,88 @@ class LibraryController:
         self.model.importDict(self.data)
         if self.table is not None:
             self.table.redraw()
+
+    def refreshTableWithOwner(self, nip):
+        self.model.createEmptyModel()
+        self.tableData = self.database.getLibraryDataByOwner(nip)
+        self.data = dict()
+
+        self.data = self.tableData
+        self.model.importDict(self.data)
+        if self.table is not None:
+            self.table.redraw()
+        self.findWindow.destroy()
+
+    def findByOwner(self):
+        self.findWindow = Toplevel(self.themeWindow)
+        self.findWindow.title("Search libraries by Owner's NIP.")
+        self.findWindow.protocol('WM_DELETE_WINDOW', self.findWindow.destroy)
+
+        vals = list()
+        temp_vals = self.database.executeStatement("SELECT * FROM `wlasciciele`")
+        for val1, val2, val3, val4 in temp_vals:
+            owner = f"{val1}"
+            if val2 is not None:
+                owner += f" {val2}"
+            if val3 is not None:
+                owner += f" {val3}"
+            if val4 is not None:
+                owner += f" {val4}"
+            vals.append(owner)
+
+        self.listbox = Listbox(self.findWindow, width=50)
+        self.listbox.pack(side=TOP)
+
+        for val in vals:
+            self.listbox.insert("end", val)
+
+        self.button = Button(self.findWindow, text="Select",
+                             command=lambda: self.refreshTableWithOwner(self.listbox.get(self.listbox.curselection()).split(" ")[0]))
+        self.button.pack(side=TOP)
+
+    def checkOwners(self):
+        if self.table.startrow != self.table.endrow:
+            messagebox.showwarning('Owners', 'Please select only one record!')
+            return
+
+        recName = self.model.getRecName(self.table.currentrow)
+        self.ownersWindow = Toplevel(self.themeWindow)
+        self.ownersWindow.title(f"Owners of library {self.data[recName]['nazwa']}")
+        self.ownersWindow.protocol('WM_DELETE_WINDOW', self.ownersWindow.destroy)
+
+        Label(self.ownersWindow, text=f"Owners of {self.data[recName]['nazwa']}").pack(side=TOP)
+
+        owners = self.database.executeStatement(f"SELECT w.`nip`, w.`imie`, w.`nazwisko`, w.`nazwa_firmy` "
+                                                f"FROM `wlasciciele` w "
+                                                f"JOIN `wlasciciel_biblioteka` wb ON w.`nip` = wb.`wlasciciel_nip` "
+                                                f"WHERE wb.`biblioteka_nazwa` = \"{self.data[recName]['nazwa']}\"")
+        ownersModel = TableModel()
+        ownersModel.createEmptyModel()
+        ownersData = dict()
+        for no, owner in enumerate(owners):
+            ownersData[f"rec {no+1}"] = dict()
+            ownersData[f"rec {no + 1}"]["NIP"] = owner[0]
+            if owner[1] is None:
+                ownersData[f"rec {no + 1}"]["Imię"] = ""
+            else:
+                ownersData[f"rec {no + 1}"]["Imię"] = owner[1]
+            if owner[2] is None:
+                ownersData[f"rec {no + 1}"]["Nazwisko"] = ""
+            else:
+                ownersData[f"rec {no + 1}"]["Nazwisko"] = owner[2]
+            if owner[3] is None:
+                ownersData[f"rec {no + 1}"]["Nazwa Firmy"] = ""
+            else:
+                ownersData[f"rec {no + 1}"]["Nazwa Firmy"] = owner[3]
+
+        ownersModel.importDict(ownersData)
+        ownersFrame = Frame(self.ownersWindow)
+        ownersFrame.pack(fill='both', side=TOP)
+        ownersTable = CustomTable(ownersFrame, model=ownersModel)
+        ownersTable.show()
+
+        Button(self.ownersWindow, text="Close", command=self.ownersWindow.destroy).pack(side=TOP)
+
 
     class AddController:
         def __init__(self, themeWindow, tableName, database, backEvent):

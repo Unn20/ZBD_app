@@ -17,7 +17,7 @@ class Tables(Enum):
     History = 2
     Readers = 3
     Employees = 4
-    Libraries_Owners = 5
+    Libraries = 5
 
 
 
@@ -164,7 +164,7 @@ class MainController:
             self.tableController = ReaderController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Employees":
             self.tableController = EmployeeController(self.database, self.themeWindow, self.chooseTableEvent)
-        elif tabName == "Libraries_Owners":
+        elif tabName == "Libraries":
             self.tableController = LibraryController(self.database, self.themeWindow, self.chooseTableEvent)
 
 

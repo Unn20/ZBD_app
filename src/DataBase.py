@@ -203,8 +203,8 @@ class Database:
     def getLibraryDataByOwner(self, owner):
         """ Owner by NIP """
         rowData = self.executeStatement(f"SELECT `nazwa`, `lokalizacja` FROM `biblioteki` b "
-                                        f"JOIN `wlasciciel_biblioteka` wb ON b.`nazwa` = wb.`wlasciciel_nazwa` "
-                                        f"WHERE wb.`wlasciciel_NIP` = \"{owner}\"")
+                                        f"JOIN `wlasciciel_biblioteka` wb ON b.`nazwa` = wb.`biblioteka_nazwa` "
+                                        f"WHERE wb.`wlasciciel_nip` = \"{owner}\"")
         columns = ["nazwa", "lokalizacja"]
         result = dict()
         for noR, row in enumerate(rowData):
