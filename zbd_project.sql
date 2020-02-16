@@ -1022,6 +1022,8 @@ CREATE TRIGGER `workersAddTriger` BEFORE INSERT ON `pracownicy` FOR EACH ROW BEG
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker with this worker_id dosn't exist.";
     ELSEIF @boss_id IS NOT NULL AND (SELECT funkcja FROM pracownicy WHERE pracownik_id = @boss_id) <> 'szef' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss has to have 'szef' function.";
+    ELSEIF @boss_id = NEW.pracownik_id THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker can't be the boss for himself.";
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
@@ -1057,6 +1059,8 @@ CREATE TRIGGER `workersUpdateTriger` BEFORE UPDATE ON `pracownicy` FOR EACH ROW 
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker with this worker_id dosn't exist.";
     ELSEIF @boss_id IS NOT NULL AND (SELECT funkcja FROM pracownicy WHERE pracownik_id = @boss_id) <> 'szef' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss has to have 'szef' function.";
+    ELSEIF @boss_id = NEW.pracownik_id THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker can't be the boss for himself.";
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
