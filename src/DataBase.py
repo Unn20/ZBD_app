@@ -222,6 +222,18 @@ class Database:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
+    def getWorkerByName(self, worker):
+        name = worker[0]
+        surname = worker[1]
+        try:
+            ans = self.executeStatement(f"SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`"
+                                         f"WHERE `imie` = \"{name}\" AND"
+                                         f"`nazwisko` = \"{surname}\"")
+            return ans
+        except Exception as e:
+            self.logger.error(f"Could not realize an getWorkerByName function. Error = {e}")
+            raise Exception(e)
+
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
 
