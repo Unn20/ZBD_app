@@ -4,6 +4,7 @@ from tkinter import ttk
 from tkcalendar import *
 from src.Logger import Logger
 from tkintertable.Tables import TableCanvas
+from tkinter import scrolledtext
 from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
 
@@ -19,11 +20,9 @@ class HistoryController:
         self.addWindow = None
         self.modifyWindow = None
         self.table = None
+        self.helpWindow = None
 
-        tableName = "historia_operacji"
-        self.tableName = tableName
-
-        self.tableData = self.database.getRawData(tableName)
+        self.tableData = self.database.getHistoryData()
         self.data = dict()
         self.model = TableModel()
 
@@ -64,12 +63,12 @@ class HistoryController:
                                    width=int(self.content.winfo_width()),
                                    height=int(self.content.winfo_height() / 5))
         self.bottomCanvas.pack(fill='both', side=TOP)
-        self.buttonAdd = Button(self.bottomCanvas, text=" ADD ", command=self.add, width=24, height=3, bd=5)
-        self.buttonAdd.pack(side=LEFT)
+        # self.buttonAdd = Button(self.bottomCanvas, text=" ADD ", command=self.add, width=24, height=3, bd=5)
+        # self.buttonAdd.pack(side=LEFT)
         self.buttonModify = Button(self.bottomCanvas, text=" MODIFY ", command=self.modify, width=25, height=3, bd=5)
         self.buttonModify.pack(side=LEFT)
         self.buttonDelete = Button(self.bottomCanvas, text=" DELETE ",
-                                   command=lambda: self.delete(self.tableName), width=25, height=3, bd=5)
+                                   command=lambda: self.delete(), width=25, height=3, bd=5)
         self.buttonDelete.pack(side=LEFT)
 
     def back(self):
@@ -89,7 +88,7 @@ class HistoryController:
         """ Go to add window """
         if self.addWindow is None:
             self.logger.debug("Starting add window.")
-            self.addWindow = AddController(self.themeWindow, self.tableName, self.database, self.backEvent)
+            self.addWindow = AddController(self.themeWindow, self.database, self.backEvent)
 
     def modify(self):
         """ Go to modify window """
@@ -99,27 +98,17 @@ class HistoryController:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
                 self.logger.debug("Starting modify window.")
-                self.modifyWindow = ModifyController(self.themeWindow, self.tableName, self.database,
+                self.modifyWindow = ModifyController(self.themeWindow, self.database,
                                                      self.model.getRecName(selectedRow),
                                                      self.data, self.backEvent)
 
-    def delete(self, tableName):
+    def delete(self, tableName="historia_operacji"):
         """ Delete selected records """
-        # TODO: do zrobenia (Maciek)
         for no, i in enumerate(self.table.multiplerowlist):
             recName = self.model.getRecName(i)
-            deletedRecord = list()
-            deletedRecord.append(self.data[recName]["ID"])
-            if self.data[recName]["Nazwisko przełożonego"] == "":
-                deletedRecord.append("")
-            else:
-                deletedRecord.append("")
-            deletedRecord.append(self.data[recName]["Imię"])
-            deletedRecord.append(self.data[recName]["Nazwisko"])
-            deletedRecord.append(self.data[recName]["Funkcja"])
             try:
-                print(f"Deleted record = {deletedRecord}")
-                self.database.deleteRecord(tableName, deletedRecord)
+                print(f"Deleted record = {self.data[recName]['operacja_id']}")
+                self.database.deleteHistoryRecord(self.data[recName]['operacja_id'])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
@@ -142,194 +131,27 @@ class HistoryController:
 
     def refreshTable(self):
         self.model.createEmptyModel()
-        self.tableData = self.database.getRawData(self.tableName)
+        self.tableData = self.database.getHistoryData()
         self.data = dict()
-        ''' Tutaj trzeba dopasowac wlasciwe dane z krotki do kolumn '''
-        for no, record in enumerate(self.tableData):
-            self.data[f"rec {no}"] = dict()
-            # self.data[f"rec {no}"]["Data"] = record[0]
-            # self.data[f"rec {no}"]["Rodzaj"] = record[2]
-            # self.data[f"rec {no}"]["Opoźnienie"] = record[3]
-            # self.data[f"rec {no}"]["Uwagi"] = record[4]
-            # self.data[f"rec {no}"]["Tytuł książki"] = record[4]
-            # self.data[f"rec {no}"]["ID egzemplarza"] = record[4]
-            # self.data[f"rec {no}"]["Nazwa działu"] = record[4]
-            # self.data[f"rec {no}"]["Numer regału"] = record[4]
-            # self.data[f"rec {no}"]["Imię pracownika"] = record[4]
-            # self.data[f"rec {no}"]["Nazwisko pracownika"] = record[4]
-            # self.data[f"rec {no}"]["Imię czytelnika"] = record[4]
-            # self.data[f"rec {no}"]["Nazwisko czytelnika"] = record[4]
-            # self.data[f"rec {no}"]["Nazwa biblioteki"] = record[4]
 
-
+        for key in self.tableData.keys():
+            self.tableData[key]["data"] = str(self.tableData[key]["data"])
+            del self.tableData[key]["pracownik_id"]
+            del self.tableData[key]["czytelnik_id"]
+        self.data = self.tableData
         self.model.importDict(self.data)
         if self.table is not None:
             self.table.redraw()
 
 
-
-#TODO: Ponizej do zrobienia jak juz bedzie data model
-class AddController:
-    def __init__(self, themeWindow, tableName, database, backEvent):
-        self.themeWindow = themeWindow
-        self.tableName = tableName
-        self.database = database
-        self.backEvent = backEvent
-        # Start logger
-        self.logger = Logger(__name__, loggingLevel="debug")
-        self.logger.debug("AddController logger has started.")
-
-        self.addWindow = Toplevel(self.themeWindow)
-        self.addWindow.title("Add a new record to database.")
-        self.addWindow.protocol('WM_DELETE_WINDOW', self.goBack)
-        self.addWindow.bind("<<back>>", lambda _: self.backEvent(None))
-
-        self.newRecord = list()
-
-        self.helpWindow = None
-
-        self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
-                              width=self.themeWindow.winfo_width(),
-                              height=self.themeWindow.winfo_height() - 40)
-        self.colFrame.pack(fill='both', side=TOP)
-
-        self.entries = list()
-
-        Label(self.colFrame, text="Imię", font=("Arial Bold", 12)).grid(row=0, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=0, column=1, columnspan=2)
-        self.entries.append(entry)
-
-        Label(self.colFrame, text="Nazwisko", font=("Arial Bold", 12)).grid(row=1, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=1, column=1, columnspan=2)
-        self.entries.append(entry)
-
-        Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=2, column=1, columnspan=2)
-        self.entries.append(entry)
-
-        Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
-        entry = Entry(self.colFrame, width=20, state="readonly")
-        entry.grid(row=3, column=1, columnspan=2)
-        self.entries.append(entry)
-        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
-        valueHelper.grid(row=3, column=3)
-
-        self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
-                                 width=self.themeWindow.winfo_width(),
-                                 height=40)
-        self.buttonFrame.pack(fill='both', side=TOP)
-        self.addButton = Button(self.buttonFrame, text="Add", command=self.checkEntry)
-        self.addButton.pack(side=LEFT)
-        self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
-        self.cancelButton.pack(side=LEFT)
-
-    def showHelp(self, entry):
-        if self.helpWindow is not None:
-            return
-
-        def select():
-            atr = self.listbox.get(self.listbox.curselection())
-            if atr == "<brak>":
-                boss_id = ""
-            else:
-                boss_id = atr.split(" ")[0]
-            entry.config(state="normal")
-            entry.delete("0", "end")
-            entry.insert("end", boss_id)
-            entry.config(state="disabled")
-            exit()
-            return
-
-        def exit():
-            self.helpWindow.destroy()
-            self.helpWindow = None
-
-        self.helpWindow = Toplevel(self.addWindow)
-        self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
-
-        vals = list()
-        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
-        for val1, val2, val3 in temp_vals:
-            vals.append(f"{val1} {val2} {val3}")
-
-        self.listbox = Listbox(self.helpWindow)
-        self.listbox.pack(side=TOP)
-        self.listbox.insert("end", "<brak>")
-
-        for val in vals:
-            self.listbox.insert("end", val)
-
-        self.button = Button(self.helpWindow, text="Select", command=select)
-        self.button.pack(side=TOP)
-
-    def goBack(self):
-        self.addWindow.event_generate("<<back>>")
-
-    def checkEntry(self):
-        self.newRecord.clear()
-        # Employee's id
-        self.newRecord.append("")
-        # Employee's boss_id
-        self.newRecord.append(self.entries[3].get())
-        # Employee's name
-        self.newRecord.append(self.entries[0].get())
-        # Employee's surname
-        self.newRecord.append(self.entries[1].get())
-        # Employee's function
-        self.newRecord.append(self.entries[2].get())
-
-        try:
-            self.database.addRecord(self.tableName, self.newRecord)
-        except Exception as e:
-            self.logger.error(f"Exception! e = {e}")
-            try:
-                errorNo = int(e.__str__().split()[0][1:-1])
-            except:
-                errorNo = 0
-            if errorNo == 1048:
-                messagebox.showerror("Can not add a record to database!",
-                                     f"{e.__str__().split(',')[1][:-2]}")
-            elif errorNo == 1062:
-                messagebox.showerror("Can not add a record to database!",
-                                     f"Primary column value (with '*') is duplicate!")
-            elif errorNo == 0:
-                messagebox.showerror("Can not add a record to database!",
-                                     f"{e}")
-            else:
-                messagebox.showerror("Can not add a record to database!",
-                                     f"{e.__str__().split(',')[1][:-2]}")
-            return
-        confirm = messagebox.askyesno("Add record confirmation",
-                                      "Are You sure that You want to add this record to database?")
-
-        if confirm:
-            self.database.connection.commit()
-            self.goBack()
-        else:
-            self.database.connection.rollback()
-            self.themeWindow.focus_set()
-
 class ModifyController:
-    def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
+    def __init__(self, themeWindow, database, selectedRecord, data, backEvent):
 
         self.oldRecord = list()
-        # Employee's id
-        self.oldRecord.append(data[selectedRecord]["ID"])
-        # Employee's boss_id
-        #TODO: Metoda getBossID(name, surname)
-        self.oldRecord.append("")
-        # Employee's name
-        self.oldRecord.append(data[selectedRecord]["Imię"])
-        # Employee's surname
-        self.oldRecord.append(data[selectedRecord]["Nazwisko"])
-        # Employee's function
-        self.oldRecord.append(data[selectedRecord]["Funkcja"])
+        self.data = data
+        self.oldRecord.append(data[selectedRecord]["operacja_id"])
 
         self.themeWindow = themeWindow
-        self.tableName = tableName
         self.database = database
         self.backEvent = backEvent
         # Start logger
@@ -352,32 +174,83 @@ class ModifyController:
 
         self.entries = list()
 
-        Label(self.colFrame, text="Imię", font=("Arial Bold", 12)).grid(row=0, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=0, column=1, columnspan=2)
-        entry.insert(END, self.oldRecord[2])
-        self.entries.append(entry)
+        self.delay = IntVar()
+        self.delay.set(int(self.data[selectedRecord]["opoznienie"]))
 
-        Label(self.colFrame, text="Nazwisko", font=("Arial Bold", 12)).grid(row=1, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=1, column=1, columnspan=2)
-        entry.insert(END, self.oldRecord[3])
-        self.entries.append(entry)
+        rowNo = 0
 
-        Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-        entry = Entry(self.colFrame, width=20)
-        entry.grid(row=2, column=1, columnspan=2)
-        entry.insert(END, self.oldRecord[4])
+        Label(self.colFrame, text="Opoźnienie", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        entry = Spinbox(self.colFrame, from_=0, to=365, width=20, textvariable=self.delay)
+        entry.grid(row=rowNo, column=1, columnspan=2)
         self.entries.append(entry)
+        rowNo += 1
 
-        Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
+        """ Not used
+        books = self.database.executeStatement("SELECT `tytul` FROM `ksiazki`")
+        Label(self.colFrame, text="Tytuł książki", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        entry = ttk.Combobox(self.colFrame, width=20, values=books)
+        entry.grid(row=rowNo, column=1, columnspan=2)
+        entry.set(self.data[selectedRecord]["ksiazka_tytul"])
+        self.entries.append(entry)
+        rowNo += 1
+
+        Label(self.colFrame, text="Dział", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
         entry = Entry(self.colFrame, width=20, state="normal")
-        entry.insert(END, self.oldRecord[1])
+        entry.insert(END, self.data[selectedRecord]["dzial_nazwa"])
         entry.config(state="readonly")
-        entry.grid(row=3, column=1, columnspan=2)
+        entry.grid(row=rowNo, column=1, columnspan=2)
         self.entries.append(entry)
-        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
-        valueHelper.grid(row=3, column=3)
+        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_, "department"))
+        valueHelper.grid(row=rowNo, column=4)
+        rowNo += 1
+
+        self.department = self.data[selectedRecord]['dzial_nazwa']
+        self.racks = self.database.executeStatement(f"SELECT `numer` FROM `regaly` WHERE "
+                                                    f"`dzial_nazwa` = \"{self.department}\"")
+        Label(self.colFrame, text="Numer regału", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        self.rackEntry = ttk.Combobox(self.colFrame, width=20, values=self.racks)
+        entry = self.rackEntry
+        entry.grid(row=rowNo, column=1, columnspan=2)
+        entry.set(self.data[selectedRecord]["regal_numer"])
+        self.entries.append(entry)
+        rowNo += 1
+        """
+
+        Label(self.colFrame, text="Pracownik", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        entry = Entry(self.colFrame, width=20, state="normal")
+        entry.insert(END, self.data[selectedRecord]["pracownik_imie"] + " " + self.data[selectedRecord]["pracownik_nazwisko"])
+        entry.config(state="readonly")
+        entry.grid(row=rowNo, column=1, columnspan=2)
+        self.entries.append(entry)
+        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_, "employee"))
+        valueHelper.grid(row=rowNo, column=4)
+        rowNo += 1
+
+        Label(self.colFrame, text="Czytelnik", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        entry = Entry(self.colFrame, width=20, state="normal")
+        entry.insert(END, self.data[selectedRecord]["czytelnik_imie"] + " " + self.data[selectedRecord]["czytelnik_nazwisko"])
+        entry.config(state="readonly")
+        entry.grid(row=rowNo, column=1, columnspan=2)
+        self.entries.append(entry)
+        valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_, "reader"))
+        valueHelper.grid(row=rowNo, column=4)
+        rowNo += 1
+
+        libraries = self.database.executeStatement("SELECT `nazwa` FROM `biblioteki`")
+        Label(self.colFrame, text="Nazwa biblioteki", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        entry = ttk.Combobox(self.colFrame, width=20, values=libraries)
+        entry.grid(row=rowNo, column=1, columnspan=2)
+        entry.set(self.data[selectedRecord]["biblioteka_nazwa"])
+        self.entries.append(entry)
+        rowNo += 1
+
+        Label(self.colFrame, text="Uwagi", font=("Arial Bold", 12)).grid(row=rowNo, column=0)
+        #entry = scrolledtext.ScrolledText(self.colFrame, width=40, height=10)
+        entry = Entry(self.colFrame, width=40)
+        entry.grid(row=rowNo, column=1, columnspan=2)
+        entry.insert(END, self.data[selectedRecord]["uwagi"])
+        self.entries.append(entry)
+        rowNo += 1
 
         self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                                  width=self.themeWindow.winfo_width(),
@@ -391,21 +264,29 @@ class ModifyController:
 
     def checkEntry(self):
         self.newRecord.clear()
-        # Employee's id
-        self.newRecord.append(self.oldRecord[0])
-        # Employee's boss_id
+
+        # Delay
+        self.newRecord.append(int(self.entries[0].get()))
+        # Employee Id
+        ns = self.entries[1].get().split(" ")
+        id = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
+                                            f"WHERE `imie` = \"{ns[0]}\" AND `nazwisko` = \"{ns[1]}\"")
+        self.newRecord.append(id[0][0])
+        # Reader
+        ns = self.entries[2].get().split(" ")
+        id = self.database.executeStatement(f"SELECT `czytelnik_id` FROM `czytelnicy` "
+                                            f"WHERE `imie` = \"{ns[0]}\" AND `nazwisko` = \"{ns[1]}\"")
+        self.newRecord.append(id[0][0])
+        # Library Name
         self.newRecord.append(self.entries[3].get())
-        # Employee's name
-        self.newRecord.append(self.entries[0].get())
-        # Employee's surname
-        self.newRecord.append(self.entries[1].get())
-        # Employee's function
-        self.newRecord.append(self.entries[2].get())
+        # Comment
+        #self.newRecord.append(self.entries[4].get('1.0', 'end'))
+        self.newRecord.append(self.entries[4].get())
 
         try:
             print(f"old record = {self.oldRecord}")
             print(f"new record = {self.newRecord}")
-            self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
+            self.database.modifyHistoryRecord(self.oldRecord, self.newRecord)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:
@@ -439,20 +320,24 @@ class ModifyController:
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
 
-    def showHelp(self, entry):
+    def showHelp(self, entry, table):
         if self.helpWindow is not None:
             return
 
         def select():
             atr = self.listbox.get(self.listbox.curselection())
-            if atr == "<brak>":
-                boss_id = ""
-            else:
-                boss_id = atr.split(" ")[0]
             entry.config(state="normal")
             entry.delete("0", "end")
-            entry.insert("end", boss_id)
-            entry.config(state="disabled")
+            if table != "department":
+                entry.insert("end", atr.split(" ")[1] + " " + atr.split(" ")[2])
+            else:
+                entry.insert("end", atr.split(" ")[0])
+                self.department = atr.split(" ")[0]
+                self.racks = self.database.executeStatement(f"SELECT `numer` FROM `regaly` WHERE "
+                                                            f"`dzial_nazwa` = \"{self.department}\"")
+                self.rackEntry.configure(values=self.racks)
+                self.rackEntry.set("")
+            entry.config(state="readonly")
             exit()
             return
 
@@ -464,14 +349,21 @@ class ModifyController:
         self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
 
         vals = list()
-        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
-        for val1, val2, val3 in temp_vals:
-            vals.append(f"{val1} {val2} {val3}")
+        if table == "employee":
+            temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
+            for val1, val2, val3 in temp_vals:
+                vals.append(f"{val1} {val2} {val3}")
+        elif table == "reader":
+            temp_vals = self.database.executeStatement("SELECT `czytelnik_id`, `imie`, `nazwisko` FROM `czytelnicy`")
+            for val1, val2, val3 in temp_vals:
+                vals.append(f"{val1} {val2} {val3}")
+        else:
+            temp_vals = self.database.executeStatement("SELECT `nazwa`, `lokalizacja` FROM `dzialy`")
+            for val1, val2 in temp_vals:
+                vals.append(f"{val1} {val2}")
 
         self.listbox = Listbox(self.helpWindow)
         self.listbox.pack(side=TOP)
-        self.listbox.insert("end", "<brak>")
-
         for val in vals:
             self.listbox.insert("end", val)
 

@@ -22,11 +22,16 @@ class LibraryController:
 
         tableName = "biblioteki"
         self.tableName = tableName
+        tableName2 = "wlasciciele"
+        self.tableName2 = tableName2
 
         self.columnNames = self.database.getColumns(tableName)
         self.tableData = self.database.getRawData(tableName)
         self.data = self.database.getData(tableName)
-        self.model = TableModel()
+        self.model1 = TableModel()
+        self.model2 = TableModel()
+
+        self.model = self.model1
 
         if len(self.data) == 0:
             messagebox.showwarning("Empty table", "This table has no records!")

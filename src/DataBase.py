@@ -141,6 +141,55 @@ class Database:
                 result[f"rec{noR + 1}"][f"{column[0]}"] = row[noC]
         return result
 
+    def getHistoryData(self):
+        columns = ["operacja_id", "data", "opoznienie", "uwagi", "ksiazka_tytul", "egzemplarz_id", "regal_numer",
+                    "dzial_nazwa", "dzial_lokalizacja", "pracownik_id", "pracownik_imie", "pracownik_nazwisko",
+                    "czytelnik_id", "czytelnik_imie", "czytelnik_nazwisko", "biblioteka_nazwa"]
+        rowData = self.executeStatement("SELECT h.`operacja_id`, h.`data`, h.`opoznienie`, h.`uwagi`, "
+                                        "k.`tytul` AS `ksiazka_tytul`, e.`egzemplarz_id`, r.`numer` AS `regal_numer`, "
+                                        "d.`nazwa` AS `dzial_nazwa`, d.`lokalizacja` AS `dzial_lokalizacja`, "
+                                        "p.`pracownik_id`, p.`imie` AS `pracownik_imie`, p.`nazwisko` AS `pracownik_nazwisko`, "
+                                        "c.`czytelnik_id`, c.`imie` AS `czytelnik_imie`, c.`nazwisko` AS `czytelnik_nazwisko`, "
+                                        "b.`nazwa` AS `biblioteka_nazwa`"
+                                        "FROM `historia_operacji` h "
+                                            "JOIN `egzemplarze` e ON h.`egzemplarz_id` = e.`egzemplarz_id` "
+                                            "JOIN `ksiazki` k ON e.`ksiazka_id` = k.`ksiazka_id` "
+                                            "JOIN `regaly` r ON e.`regal_numer` = r.`numer` "
+                                            "JOIN `dzialy` d ON r.`dzial_nazwa` = d.`nazwa` "
+                                            "JOIN `pracownicy` p ON h.`pracownik_id` = p.`pracownik_id` "
+                                            "JOIN `czytelnicy` c ON h.`czytelnik_id` = c.`czytelnik_id` "
+                                            "JOIN `biblioteki` b ON h.`biblioteka_nazwa` = b.`nazwa` "
+                                        "ORDER BY h.`data` DESC")
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
+    def deleteHistoryRecord(self, operationId):
+        try:
+            self.executeStatement(f"DELETE FROM `historia_operacji`"
+                                  f"WHERE `operacja_id` = {operationId}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def modifyHistoryRecord(self, oldRecord, newRecord):
+        try:
+            self.executeStatement(f"UPDATE `historia_operacji` "
+                                  f"SET `opoznienie` = {newRecord[0]}, "
+                                  f"`pracownik_id` = {newRecord[1]}, "
+                                  f"`czytelnik_id` = {newRecord[2]}, "
+                                  f"`biblioteka_nazwa` = \"{newRecord[3]}\", "
+                                  f"`uwagi` = \"{newRecord[4]}\" "
+                                  f"WHERE `operacja_id` = {oldRecord[0]}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
 

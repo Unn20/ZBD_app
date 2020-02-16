@@ -13,7 +13,7 @@ from enum import Enum
 
 
 class Tables(Enum):
-    Books_Authors = 1
+    Books = 1
     History = 2
     Readers = 3
     Employees = 4
@@ -156,10 +156,10 @@ class MainController:
         """ Go to selected table screen """
         self.content.grid_forget()
         tabName = self.tableNames[self.selectionVar.get()]
-        if tabName == "Books_Authors":
+        if tabName == "Books":
             self.tableController = BooksController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "History":
-            self.tableController = HistoryController()
+            self.tableController = HistoryController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Readers":
             self.tableController = ReaderController(self.database, self.themeWindow, self.chooseTableEvent)
         elif tabName == "Employees":
