@@ -190,6 +190,38 @@ class Database:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
+    def getLibraryData(self):
+        rowData = self.getRawData("biblioteki")
+        columns = ["nazwa", "lokalizacja"]
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
+    def getLibraryDataByOwner(self, owner):
+        """ Owner by NIP """
+        rowData = self.executeStatement(f"SELECT `nazwa`, `lokalizacja` FROM `biblioteki` b "
+                                        f"JOIN `wlasciciel_biblioteka` wb ON b.`nazwa` = wb.`wlasciciel_nazwa` "
+                                        f"WHERE wb.`wlasciciel_NIP` = \"{owner}\"")
+        columns = ["nazwa", "lokalizacja"]
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
+    def deleteLibraryRecord(self, libraryName):
+        try:
+            self.executeStatement(f"DELETE FROM `biblioteki`"
+                                  f"WHERE `nazwa` = \"{libraryName}\"")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
 

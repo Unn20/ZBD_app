@@ -330,13 +330,13 @@ class ModifyController:
             entry.delete("0", "end")
             if table != "department":
                 entry.insert("end", atr.split(" ")[1] + " " + atr.split(" ")[2])
-            else:
-                entry.insert("end", atr.split(" ")[0])
-                self.department = atr.split(" ")[0]
-                self.racks = self.database.executeStatement(f"SELECT `numer` FROM `regaly` WHERE "
-                                                            f"`dzial_nazwa` = \"{self.department}\"")
-                self.rackEntry.configure(values=self.racks)
-                self.rackEntry.set("")
+            # else:
+            #     entry.insert("end", atr.split(" ")[0])
+            #     self.department = atr.split(" ")[0]
+            #     self.racks = self.database.executeStatement(f"SELECT `numer` FROM `regaly` WHERE "
+            #                                                 f"`dzial_nazwa` = \"{self.department}\"")
+            #     #self.rackEntry.configure(values=self.racks)
+            #     #self.rackEntry.set("")
             entry.config(state="readonly")
             exit()
             return
