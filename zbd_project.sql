@@ -93,11 +93,6 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `borrowBook` (IN `libraryName` VARCH
     */
     UPDATE regaly SET liczba_ksiazek = liczba_ksiazek - 1 WHERE numer = bookstandNumber;
 
-    /*
-    Delete specimen
-    */
-    DELETE FROM egzemplarze WHERE egzemplarz_id = specimen_id;
-
     SET FOREIGN_KEY_CHECKS = 1;
 END$$
 
@@ -815,6 +810,11 @@ CREATE TRIGGER `operationsAddTriger` BEFORE INSERT ON `historia_operacji` FOR EA
     ELSEIF @operationType NOT IN ('zwrot', 'wypozyczenie', 'przedluzenie') THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set operation type to 'zwrot', 'wypozyczenie' or 'przedluzenie'.";
 
+    ELSEIF @delay IS NOT NULL AND @delay < 0 THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong delay. You need to set positive delay.";
+    ELSEIF @delay IS NOT NULL AND 1000 < @delay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong delay. You need to set less then 1000.";
+
     END IF;
 END
 $$
@@ -874,6 +874,11 @@ CREATE TRIGGER `operationsUpdateTriger` BEFORE UPDATE ON `historia_operacji` FOR
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong operation type. You need to set operation type it can't be none.";
     ELSEIF @operationType NOT IN ('zwrot', 'wypozyczenie', 'przedluzenie') THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong operation type. You need to set operation type to 'zwrot', 'wypozyczenie' or 'przedluzenie'.";
+
+    ELSEIF @delay IS NOT NULL AND @delay < 0 THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong delay. You need to set positive delay.";
+    ELSEIF @delay IS NOT NULL AND 1000 < @delay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong delay. You need to set less then 1000.";
 
     END IF;
 END
@@ -989,15 +994,15 @@ CREATE TABLE `pracownicy` (
 --
 
 INSERT INTO `pracownicy` (`pracownik_id`, `szef_id`, `imie`, `nazwisko`, `funkcja`) VALUES
-(1, NULL, 'Jakub', 'Krol', 'obsluga_bazy'),
+(1, 6, 'Jakub', 'Krol', 'obsluga_bazy'),
 (2, NULL, 'Olga', 'Nowak', 'kucharz'),
 (3, NULL, 'Natalia', 'Zima', 'kucharz'),
-(4, NULL, 'Jakub', 'Leszczyk', 'obsluga_bazy'),
+(4, 6, 'Jakub', 'Leszczyk', 'obsluga_bazy'),
 (5, NULL, 'Joanna', 'Karol', 'obsluga_bazy'),
 (6, NULL, 'Karol', 'Nowaczyk', 'szef'),
 (7, NULL, 'Magda', 'Kowalczyk', 'kucharz'),
-(8, 4, 'Piotr', 'Wozniak', 'kucharz'),
-(9, 7, 'Natalia', 'Mazur', 'kucharz'),
+(8, NULL, 'Piotr', 'Wozniak', 'kucharz'),
+(9, NULL, 'Natalia', 'Mazur', 'kucharz'),
 (10, NULL, 'Piotr', 'Krawczyk', 'obsluga_bazy');
 
 --
@@ -1015,6 +1020,10 @@ CREATE TRIGGER `workersAddTriger` BEFORE INSERT ON `pracownicy` FOR EACH ROW BEG
 
     ELSEIF @boss_id IS NOT NULL AND (SELECT NOT EXISTS (SELECT * FROM pracownicy WHERE pracownik_id = @boss_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker with this worker_id dosn't exist.";
+    ELSEIF @boss_id IS NOT NULL AND (SELECT funkcja FROM pracownicy WHERE pracownik_id = @boss_id) <> 'szef' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss has to have 'szef' function.";
+    ELSEIF @boss_id = NEW.pracownik_id THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker can't be the boss for himself.";
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
@@ -1048,6 +1057,10 @@ CREATE TRIGGER `workersUpdateTriger` BEFORE UPDATE ON `pracownicy` FOR EACH ROW 
 
     ELSEIF @boss_id IS NOT NULL AND (SELECT NOT EXISTS (SELECT * FROM pracownicy WHERE pracownik_id = @boss_id)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker with this worker_id dosn't exist.";
+    ELSEIF @boss_id IS NOT NULL AND (SELECT funkcja FROM pracownicy WHERE pracownik_id = @boss_id) <> 'szef' THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss has to have 'szef' function.";
+    ELSEIF @boss_id = NEW.pracownik_id THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker can't be the boss for himself.";
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
