@@ -93,11 +93,6 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `borrowBook` (IN `libraryName` VARCH
     */
     UPDATE regaly SET liczba_ksiazek = liczba_ksiazek - 1 WHERE numer = bookstandNumber;
 
-    /*
-    Delete specimen
-    */
-    DELETE FROM egzemplarze WHERE egzemplarz_id = specimen_id;
-
     SET FOREIGN_KEY_CHECKS = 1;
 END$$
 
@@ -814,6 +809,11 @@ CREATE TRIGGER `operationsAddTriger` BEFORE INSERT ON `historia_operacji` FOR EA
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong operation type. You need to set operation type it can't be none.";
     ELSEIF @operationType NOT IN ('zwrot', 'wypozyczenie', 'przedluzenie') THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set operation type to 'zwrot', 'wypozyczenie' or 'przedluzenie'.";
+
+    ELSEIF @delay IS NOT NULL AND @delay < 0 THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong delay. You need to set positive delay.";
+    ELSEIF @delay IS NOT NULL AND 1000 < @delay THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong delay. You need to set less then 1000.";
 
     END IF;
 END
