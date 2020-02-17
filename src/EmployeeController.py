@@ -112,8 +112,10 @@ class EmployeeController:
             if self.data[recName]["Nazwisko przełożonego"] == "":
                 deletedRecord.append("")
             else:
-                # TODO: boss_id = self.database.getBossId(name, surname)
-                deletedRecord.append("")
+                boss_id = self.database.executeStatement(f"SELECT p1.`pracownik_id` FROM `pracownicy` p1 "
+                                                         f"JOIN `pracownicy` p2 ON p1.`pracownik_id` = p2.`szef_id` "
+                                                         f"WHERE p2.`pracownik_id` = \"{self.data[recName]['ID']}\"")
+                deletedRecord.append(boss_id[0][0])
             deletedRecord.append(self.data[recName]["Imię"])
             deletedRecord.append(self.data[recName]["Nazwisko"])
             deletedRecord.append(self.data[recName]["Funkcja"])
@@ -152,9 +154,10 @@ class EmployeeController:
             self.data[f"rec {no}"]["Funkcja"] = record[4]
             # If there's boss
             if record[1] is not None:
-                # TODO: boss = self.database.getBossNameSurname(ID_boss)
-                self.data[f"rec {no}"]["Imię przełożonego"] = "Jan"  # boss[0]
-                self.data[f"rec {no}"]["Nazwisko przełożonego"] = "Kowalski"  # boss[1]
+                boss = self.database.executeStatement(f"SELECT `imie`, `nazwisko` FROM `pracownicy` "
+                                                      f"WHERE `pracownik_id` = {record[1]}")
+                self.data[f"rec {no}"]["Imię przełożonego"] = boss[0][0]
+                self.data[f"rec {no}"]["Nazwisko przełożonego"] = boss[0][1]
             else:
                 self.data[f"rec {no}"]["Imię przełożonego"] = ""
                 self.data[f"rec {no}"]["Nazwisko przełożonego"] = ""
@@ -210,7 +213,6 @@ class AddController:
         entry = Entry(self.colFrame, width=20, state="readonly")
         entry.grid(row=3, column=1, columnspan=2)
         self.entries.append(entry)
-        #TODO: PRZELOZONY NIE MOZE BYC SOBA SAMYM, POTRZEBNA PROCEDURA WYZWALANA
         valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
         valueHelper.grid(row=3, column=3)
 
@@ -311,13 +313,22 @@ class AddController:
 
 class ModifyController:
     def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
+        self.themeWindow = themeWindow
+        self.tableName = tableName
+        self.database = database
+        self.backEvent = backEvent
 
         self.oldRecord = list()
         # Employee's id
         self.oldRecord.append(data[selectedRecord]["ID"])
         # Employee's boss_id
-        #TODO: Metoda getBossID(name, surname)
-        self.oldRecord.append("")
+        boss_id = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
+                                                 f"WHERE `imie` = \"{data[selectedRecord]['Imię przełożonego']}\" "
+                                                 f"AND `nazwisko` = \"{data[selectedRecord]['Nazwisko przełożonego']}\"")
+        if len(boss_id) != 0:
+            self.oldRecord.append(boss_id[0][0])
+        else:
+            self.oldRecord.append("")
         # Employee's name
         self.oldRecord.append(data[selectedRecord]["Imię"])
         # Employee's surname
@@ -325,10 +336,7 @@ class ModifyController:
         # Employee's function
         self.oldRecord.append(data[selectedRecord]["Funkcja"])
 
-        self.themeWindow = themeWindow
-        self.tableName = tableName
-        self.database = database
-        self.backEvent = backEvent
+
         # Start logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("ModifyController logger has started.")

@@ -92,7 +92,7 @@ class LibraryController:
         """ Go to add window """
         if self.addWindow is None:
             self.logger.debug("Starting add window.")
-            self.addWindow = AddController(self.themeWindow, self.tableName, self.database, self.backEvent)
+            self.addWindow = AddController(self.themeWindow, self.database, self.backEvent)
 
     def modify(self):
         """ Go to modify window """
@@ -102,7 +102,7 @@ class LibraryController:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
                 self.logger.debug("Starting modify window.")
-                self.modifyWindow = ModifyController(self.themeWindow, self.tableName, self.database,
+                self.modifyWindow = ModifyController(self.themeWindow, self.database,
                                                      self.model.getRecName(selectedRow),
                                                      self.data, self.backEvent)
 
@@ -227,312 +227,382 @@ class LibraryController:
         Button(self.ownersWindow, text="Close", command=self.ownersWindow.destroy).pack(side=TOP)
 
 
-    class AddController:
-        def __init__(self, themeWindow, tableName, database, backEvent):
-            self.themeWindow = themeWindow
-            self.tableName = tableName
-            self.database = database
-            self.backEvent = backEvent
-            # Start logger
-            self.logger = Logger(__name__, loggingLevel="debug")
-            self.logger.debug("AddController logger has started.")
+class AddController:
+    def __init__(self, themeWindow, database, backEvent):
+        self.themeWindow = themeWindow
+        self.database = database
+        self.backEvent = backEvent
+        # Start logger
+        self.logger = Logger(__name__, loggingLevel="debug")
+        self.logger.debug("AddController logger has started.")
 
-            self.addWindow = Toplevel(self.themeWindow)
-            self.addWindow.title("Add a new record to database.")
-            self.addWindow.protocol('WM_DELETE_WINDOW', self.goBack)
-            self.addWindow.bind("<<back>>", lambda _: self.backEvent(None))
+        self.addWindow = Toplevel(self.themeWindow)
+        self.addWindow.title("Add a new record to database.")
+        self.addWindow.protocol('WM_DELETE_WINDOW', self.goBack)
+        self.addWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
-            self.newRecord = list()
+        self.newRecord = list()
 
-            self.helpWindow = None
+        self.helpWindow = None
 
-            self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
-                                  width=self.themeWindow.winfo_width(),
-                                  height=self.themeWindow.winfo_height() - 40)
-            self.colFrame.pack(fill='both', side=TOP)
+        self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
+                              width=self.themeWindow.winfo_width(),
+                              height=self.themeWindow.winfo_height() - 40)
+        self.colFrame.pack(fill='both', side=TOP)
 
-            self.entries = list()
+        self.entries = list()
 
-            Label(self.colFrame, text="Imię", font=("Arial Bold", 12)).grid(row=0, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=0, column=1, columnspan=2)
-            self.entries.append(entry)
+        Label(self.colFrame, text="Nazwa", font=("Arial Bold", 12)).grid(row=0, column=0)
+        entry = Entry(self.colFrame, width=20)
+        entry.grid(row=0, column=1, columnspan=2)
+        self.entries.append(entry)
 
-            Label(self.colFrame, text="Nazwisko", font=("Arial Bold", 12)).grid(row=1, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=1, column=1, columnspan=2)
-            self.entries.append(entry)
+        Label(self.colFrame, text="Lokalizacja", font=("Arial Bold", 12)).grid(row=1, column=0)
+        entry = Entry(self.colFrame, width=20)
+        entry.grid(row=1, column=1, columnspan=2)
+        self.entries.append(entry)
 
-            Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=2, column=1, columnspan=2)
-            self.entries.append(entry)
+        self.button = Button(self.colFrame, text="Assign owners", command=self.assignOwners)
+        self.button.grid(row=2, column=1)
 
-            Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
-            entry = Entry(self.colFrame, width=20, state="readonly")
-            entry.grid(row=3, column=1, columnspan=2)
-            self.entries.append(entry)
-            # TODO: PRZELOZONY NIE MOZE BYC SOBA SAMYM, POTRZEBNA PROCEDURA WYZWALANA
-            valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
-            valueHelper.grid(row=3, column=3)
+        self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
+                                 width=self.themeWindow.winfo_width(),
+                                 height=40)
+        self.buttonFrame.pack(fill='both', side=TOP)
+        self.addButton = Button(self.buttonFrame, text="Add", command=self.checkEntry)
+        self.addButton.pack(side=LEFT)
+        self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
+        self.cancelButton.pack(side=LEFT)
 
-            self.buttonFrame = Frame(self.addWindow, bd=4, relief=RAISED,
-                                     width=self.themeWindow.winfo_width(),
-                                     height=40)
-            self.buttonFrame.pack(fill='both', side=TOP)
-            self.addButton = Button(self.buttonFrame, text="Add", command=self.checkEntry)
-            self.addButton.pack(side=LEFT)
-            self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
-            self.cancelButton.pack(side=LEFT)
+    def assignOwners(self):
+        def refresh():
+            self.vals = list()
+            temp_vals = self.database.executeStatement("SELECT * FROM `wlasciciele`")
+            for val1, val2, val3, val4 in temp_vals:
+                owner = f"{val1}"
+                if val2 is not None:
+                    owner += f" {val2}"
+                if val3 is not None:
+                    owner += f" {val3}"
+                if val4 is not None:
+                    owner += f" {val4}"
+                self.vals.append(owner)
 
-        def showHelp(self, entry):
-            if self.helpWindow is not None:
-                return
+            self.listboxUnAssigned.delete(0,'end')
+            self.listboxAssigned.delete(0, 'end')
 
-            def select():
-                atr = self.listbox.get(self.listbox.curselection())
-                if atr == "<brak>":
-                    boss_id = ""
-                else:
-                    boss_id = atr.split(" ")[0]
-                entry.config(state="normal")
-                entry.delete("0", "end")
-                entry.insert("end", boss_id)
-                entry.config(state="disabled")
-                exit()
-                return
+            unAssigment = [val for val in self.vals if val not in self.assigments]
+            for val in unAssigment:
+                self.listboxUnAssigned.insert("end", val)
+            for val in self.assigments:
+                self.listboxAssigned.insert("end", val)
 
-            def exit():
-                self.helpWindow.destroy()
-                self.helpWindow = None
+        self.assigments = list()
 
-            self.helpWindow = Toplevel(self.addWindow)
-            self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
+        self.assignWindow = Toplevel(self.themeWindow)
+        self.assignWindow.title("Assign owners.")
+        self.assignWindow.protocol('WM_DELETE_WINDOW', self.assignWindow.destroy)
+        self.vals = list()
 
-            vals = list()
-            temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
-            for val1, val2, val3 in temp_vals:
-                vals.append(f"{val1} {val2} {val3}")
+        self.listboxAssigned = Listbox(self.assignWindow, width=50, bd=4)
+        self.listboxAssigned.pack(side=LEFT)
 
-            self.listbox = Listbox(self.helpWindow)
-            self.listbox.pack(side=TOP)
-            self.listbox.insert("end", "<brak>")
+        self.listboxUnAssigned = Listbox(self.assignWindow, width=50)
+        self.listboxUnAssigned.pack(side=LEFT)
 
-            for val in vals:
-                self.listbox.insert("end", val)
+        refresh()
 
-            self.button = Button(self.helpWindow, text="Select", command=select)
-            self.button.pack(side=TOP)
+        buttonFrame = Frame(self.assignWindow)
+        buttonFrame.pack(side=RIGHT)
 
-        def goBack(self):
-            self.addWindow.event_generate("<<back>>")
+        addButton = Button(buttonFrame, text="Add owner", command=lambda: self.newOwner(refresh))
+        addButton.pack(side=TOP)
+        assignButton = Button(buttonFrame, text=" < Assign", command=lambda: self.assignOwner(refresh))
+        assignButton.pack(side=TOP)
+        assignButton = Button(buttonFrame, text=" > Unassign", command=lambda: self.unAssignOwner(refresh))
+        assignButton.pack(side=TOP)
+        assignButton = Button(buttonFrame, text="Delete owner", command=lambda: self.deleteOwner(refresh))
+        assignButton.pack(side=TOP)
 
-        def checkEntry(self):
-            self.newRecord.clear()
-            # Employee's id
-            self.newRecord.append("")
-            # Employee's boss_id
-            self.newRecord.append(self.entries[3].get())
-            # Employee's name
-            self.newRecord.append(self.entries[0].get())
-            # Employee's surname
-            self.newRecord.append(self.entries[1].get())
-            # Employee's function
-            self.newRecord.append(self.entries[2].get())
+        Button(buttonFrame, text="Accept", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
 
+    def newOwner(self, func):
+        def addOwner():
+            func()
+        window = Toplevel(self.assignWindow)
+        window.title("New owner.")
+        window.protocol('WM_DELETE_WINDOW', window.destroy)
+
+        Label(window, text="NIP").grid(row=0, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=0, column=1)
+        Label(window, text="Imię").grid(row=1, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=1, column=1)
+        Label(window, text="Nazwisko").grid(row=2, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=2, column=1)
+        Label(window, text="Nazwa Firmy").grid(row=3, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=3, column=1)
+
+        Button(window, text="Add", command=addOwner).grid(row=4, column=0)
+        Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
+
+
+    def assignOwner(self, func):
+        if len(self.listboxUnAssigned.curselection()) == 0:
+            return
+        self.assigments.append(self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()))
+        func()
+
+    def unAssignOwner(self, func):
+        if len(self.listboxAssigned.curselection()) == 0:
+            return
+        self.assigments.remove(self.listboxAssigned.get(self.listboxAssigned.curselection()))
+        func()
+
+    def deleteOwner(self, func):
+        pass
+
+
+    def goBack(self):
+        self.addWindow.event_generate("<<back>>")
+
+    def checkEntry(self):
+        self.newRecord.clear()
+        # Library name
+        self.newRecord.append(self.entries[0].get())
+        # Library localization
+        self.newRecord.append(self.entries[1].get())
+        # Assigments
+        # ...
+
+
+        try:
+            pass
+            #self.database.addRecord(self.tableName, self.newRecord)
+        except Exception as e:
+            self.logger.error(f"Exception! e = {e}")
             try:
-                self.database.addRecord(self.tableName, self.newRecord)
-            except Exception as e:
-                self.logger.error(f"Exception! e = {e}")
-                try:
-                    errorNo = int(e.__str__().split()[0][1:-1])
-                except:
-                    errorNo = 0
-                if errorNo == 1048:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"{e.__str__().split(',')[1][:-2]}")
-                elif errorNo == 1062:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"Primary column value (with '*') is duplicate!")
-                elif errorNo == 0:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"{e}")
-                else:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"{e.__str__().split(',')[1][:-2]}")
-                return
-            confirm = messagebox.askyesno("Add record confirmation",
-                                          "Are You sure that You want to add this record to database?")
-
-            if confirm:
-                self.database.connection.commit()
-                self.goBack()
+                errorNo = int(e.__str__().split()[0][1:-1])
+            except:
+                errorNo = 0
+            if errorNo == 1048:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e.__str__().split(',')[1][:-2]}")
+            elif errorNo == 1062:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"Primary column value (with '*') is duplicate!")
+            elif errorNo == 0:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e}")
             else:
-                self.database.connection.rollback()
-                self.themeWindow.focus_set()
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e.__str__().split(',')[1][:-2]}")
+            return
+        confirm = messagebox.askyesno("Add record confirmation",
+                                      "Are You sure that You want to add this record to database?")
 
-    class ModifyController:
-        def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
+        if confirm:
+            self.database.connection.commit()
+            self.goBack()
+        else:
+            self.database.connection.rollback()
+            self.themeWindow.focus_set()
 
-            self.oldRecord = list()
-            # Employee's id
-            self.oldRecord.append(data[selectedRecord]["ID"])
-            # Employee's boss_id
-            # TODO: Metoda getBossID(name, surname)
-            self.oldRecord.append("")
-            # Employee's name
-            self.oldRecord.append(data[selectedRecord]["Imię"])
-            # Employee's surname
-            self.oldRecord.append(data[selectedRecord]["Nazwisko"])
-            # Employee's function
-            self.oldRecord.append(data[selectedRecord]["Funkcja"])
+class ModifyController:
+    def __init__(self, themeWindow, database, selectedRecord, data, backEvent):
+        self.oldRecord = list()
+        self.data = data
+        self.oldRecord.append(self.data[selectedRecord]["nazwa"])
+        self.themeWindow = themeWindow
+        self.database = database
+        self.backEvent = backEvent
+        # Start logger
+        self.logger = Logger(__name__, loggingLevel="debug")
+        self.logger.debug("AddController logger has started.")
 
-            self.themeWindow = themeWindow
-            self.tableName = tableName
-            self.database = database
-            self.backEvent = backEvent
-            # Start logger
-            self.logger = Logger(__name__, loggingLevel="debug")
-            self.logger.debug("ModifyController logger has started.")
+        self.modifyWindow = Toplevel(self.themeWindow)
+        self.modifyWindow.title("Add a new record to database.")
+        self.modifyWindow.protocol('WM_DELETE_WINDOW', self.goBack)
+        self.modifyWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
-            self.modifyWindow = Toplevel(self.themeWindow)
-            self.modifyWindow.title("Modify an existing record.")
-            self.modifyWindow.protocol('WM_DELETE_WINDOW', self.goBack)
-            self.modifyWindow.bind("<<back>>", lambda _: self.backEvent(None))
+        self.newRecord = list()
 
-            self.newRecord = list()
+        self.helpWindow = None
 
-            self.helpWindow = None
+        self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
+                              width=self.themeWindow.winfo_width(),
+                              height=self.themeWindow.winfo_height() - 40)
+        self.colFrame.pack(fill='both', side=TOP)
 
-            self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
-                                  width=self.themeWindow.winfo_width(),
-                                  height=self.themeWindow.winfo_height() - 40)
-            self.colFrame.pack(fill='both', side=TOP)
+        self.entries = list()
 
-            self.entries = list()
+        Label(self.colFrame, text="Nazwa", font=("Arial Bold", 12)).grid(row=0, column=0)
+        entry = Entry(self.colFrame, width=20)
+        entry.grid(row=0, column=1, columnspan=2)
+        entry.insert(END, self.data[selectedRecord]["nazwa"])
+        self.entries.append(entry)
 
-            Label(self.colFrame, text="Imię", font=("Arial Bold", 12)).grid(row=0, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=0, column=1, columnspan=2)
-            entry.insert(END, self.oldRecord[2])
-            self.entries.append(entry)
+        Label(self.colFrame, text="Lokalizacja", font=("Arial Bold", 12)).grid(row=1, column=0)
+        entry = Entry(self.colFrame, width=20)
+        entry.grid(row=1, column=1, columnspan=2)
+        entry.insert(END, self.data[selectedRecord]["lokalizacja"])
+        self.entries.append(entry)
 
-            Label(self.colFrame, text="Nazwisko", font=("Arial Bold", 12)).grid(row=1, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=1, column=1, columnspan=2)
-            entry.insert(END, self.oldRecord[3])
-            self.entries.append(entry)
+        self.button = Button(self.colFrame, text="Assign owners", command=self.assignOwners)
+        self.button.grid(row=2, column=1)
 
-            Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-            entry = Entry(self.colFrame, width=20)
-            entry.grid(row=2, column=1, columnspan=2)
-            entry.insert(END, self.oldRecord[4])
-            self.entries.append(entry)
+        self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
+                                 width=self.themeWindow.winfo_width(),
+                                 height=40)
+        self.buttonFrame.pack(fill='both', side=TOP)
+        self.addButton = Button(self.buttonFrame, text="Add", command=self.checkEntry)
+        self.addButton.pack(side=LEFT)
+        self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
+        self.cancelButton.pack(side=LEFT)
 
-            Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
-            entry = Entry(self.colFrame, width=20, state="normal")
-            entry.insert(END, self.oldRecord[1])
-            entry.config(state="readonly")
-            entry.grid(row=3, column=1, columnspan=2)
-            self.entries.append(entry)
-            # TODO: PRZELOZONY NIE MOZE BYC SOBA SAMYM, POTRZEBNA PROCEDURA WYZWALANA
-            valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
-            valueHelper.grid(row=3, column=3)
+    def assignOwners(self):
+        def refresh():
+            self.vals = list()
+            temp_vals = self.database.executeStatement("SELECT * FROM `wlasciciele`")
+            for val1, val2, val3, val4 in temp_vals:
+                owner = f"{val1}"
+                if val2 is not None:
+                    owner += f" {val2}"
+                if val3 is not None:
+                    owner += f" {val3}"
+                if val4 is not None:
+                    owner += f" {val4}"
+                self.vals.append(owner)
 
-            self.buttonFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
-                                     width=self.themeWindow.winfo_width(),
-                                     height=40)
-            self.buttonFrame.pack(fill='both', side=TOP)
-            self.modifyButton = Button(self.buttonFrame, text="Modify", command=self.checkEntry)
-            self.modifyButton.pack(side=LEFT)
-            self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
-            self.cancelButton.pack(side=LEFT)
+            self.listboxUnAssigned.delete(0, 'end')
+            self.listboxAssigned.delete(0, 'end')
 
-        def checkEntry(self):
-            self.newRecord.clear()
-            # Employee's id
-            self.newRecord.append(self.oldRecord[0])
-            # Employee's boss_id
-            self.newRecord.append(self.entries[3].get())
-            # Employee's name
-            self.newRecord.append(self.entries[0].get())
-            # Employee's surname
-            self.newRecord.append(self.entries[1].get())
-            # Employee's function
-            self.newRecord.append(self.entries[2].get())
+            unAssigment = [val for val in self.vals if val not in self.assigments]
+            for val in unAssigment:
+                self.listboxUnAssigned.insert("end", val)
+            for val in self.assigments:
+                self.listboxAssigned.insert("end", val)
 
+        self.assigments = list()
+
+        self.assignWindow = Toplevel(self.themeWindow)
+        self.assignWindow.title("Assign owners.")
+        self.assignWindow.protocol('WM_DELETE_WINDOW', self.assignWindow.destroy)
+        self.vals = list()
+
+        self.listboxAssigned = Listbox(self.assignWindow, width=50, bd=4)
+        self.listboxAssigned.pack(side=LEFT)
+
+        self.listboxUnAssigned = Listbox(self.assignWindow, width=50)
+        self.listboxUnAssigned.pack(side=LEFT)
+
+        refresh()
+
+        buttonFrame = Frame(self.assignWindow)
+        buttonFrame.pack(side=RIGHT)
+
+        addButton = Button(buttonFrame, text="Add owner", command=lambda: self.newOwner(refresh))
+        addButton.pack(side=TOP)
+        assignButton = Button(buttonFrame, text="< Assign", command=lambda: self.assignOwner(refresh))
+        assignButton.pack(side=TOP)
+        assignButton = Button(buttonFrame, text="> Unassign", command=lambda: self.unAssignOwner(refresh))
+        assignButton.pack(side=TOP)
+        assignButton = Button(buttonFrame, text="Delete owner", command=lambda: self.deleteOwner(refresh))
+        assignButton.pack(side=TOP)
+
+        Button(buttonFrame, text="Accept", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
+
+    def newOwner(self, func):
+        def addOwner():
+            func()
+
+        window = Toplevel(self.assignWindow)
+        window.title("New owner.")
+        window.protocol('WM_DELETE_WINDOW', window.destroy)
+
+        Label(window, text="NIP").grid(row=0, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=0, column=1)
+        Label(window, text="Imię").grid(row=1, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=1, column=1)
+        Label(window, text="Nazwisko").grid(row=2, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=2, column=1)
+        Label(window, text="Nazwa Firmy").grid(row=3, column=0)
+        entry1 = Entry(window)
+        entry1.grid(row=3, column=1)
+
+        Button(window, text="Add", command=addOwner).grid(row=4, column=0)
+        Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
+
+    def assignOwner(self, func):
+        if len(self.listboxUnAssigned.curselection()) == 0:
+            return
+        self.assigments.append(self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()))
+        func()
+
+    def unAssignOwner(self, func):
+        if len(self.listboxAssigned.curselection()) == 0:
+            return
+        self.assigments.remove(self.listboxAssigned.get(self.listboxAssigned.curselection()))
+        func()
+
+    def deleteOwner(self, func):
+        pass
+
+    def checkEntry(self):
+        self.newRecord.clear()
+        # Employee's id
+        self.newRecord.append(self.oldRecord[0])
+        # Employee's boss_id
+        self.newRecord.append(self.entries[3].get())
+        # Employee's name
+        self.newRecord.append(self.entries[0].get())
+        # Employee's surname
+        self.newRecord.append(self.entries[1].get())
+        # Employee's function
+        self.newRecord.append(self.entries[2].get())
+
+        try:
+            print(f"old record = {self.oldRecord}")
+            print(f"new record = {self.newRecord}")
+            #self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
+        except Exception as e:
+            self.logger.error(f"Exception! e = {e}")
             try:
-                print(f"old record = {self.oldRecord}")
-                print(f"new record = {self.newRecord}")
-                self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
-            except Exception as e:
-                self.logger.error(f"Exception! e = {e}")
-                try:
-                    errorNo = int(e.__str__().split()[0][1:-1])
-                except:
-                    errorNo = 0
-                if errorNo == 1048:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"{e.__str__().split(',')[1][:-2]}")
-                elif errorNo == 1062:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"Primary column value (with '*') is duplicate!")
-                elif errorNo == 0:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"{e}")
-                else:
-                    messagebox.showerror("Can not add a record to database!",
-                                         f"{e.__str__().split(',')[1][:-2]}")
-                self.newRecord = list()
-                return
-            confirm = messagebox.askyesno("Modify record confirmation",
-                                          "Are You sure that You want to modify this record in database?")
-
-            if confirm:
-                self.database.connection.commit()
-                self.goBack()
+                errorNo = int(e.__str__().split()[0][1:-1])
+            except:
+                errorNo = 0
+            if errorNo == 1048:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e.__str__().split(',')[1][:-2]}")
+            elif errorNo == 1062:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"Primary column value (with '*') is duplicate!")
+            elif errorNo == 0:
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e}")
             else:
-                self.database.connection.rollback()
-                self.themeWindow.focus_set()
+                messagebox.showerror("Can not add a record to database!",
+                                     f"{e.__str__().split(',')[1][:-2]}")
+            self.newRecord = list()
+            return
+        confirm = messagebox.askyesno("Modify record confirmation",
+                                      "Are You sure that You want to modify this record in database?")
 
-        def goBack(self):
-            self.modifyWindow.event_generate("<<back>>")
+        if confirm:
+            self.database.connection.commit()
+            self.goBack()
+        else:
+            self.database.connection.rollback()
+            self.themeWindow.focus_set()
 
-        def showHelp(self, entry):
-            if self.helpWindow is not None:
-                return
+    def goBack(self):
+        self.modifyWindow.event_generate("<<back>>")
 
-            def select():
-                atr = self.listbox.get(self.listbox.curselection())
-                if atr == "<brak>":
-                    boss_id = ""
-                else:
-                    boss_id = atr.split(" ")[0]
-                entry.config(state="normal")
-                entry.delete("0", "end")
-                entry.insert("end", boss_id)
-                entry.config(state="disabled")
-                exit()
-                return
-
-            def exit():
-                self.helpWindow.destroy()
-                self.helpWindow = None
-
-            self.helpWindow = Toplevel(self.modifyWindow)
-            self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
-
-            vals = list()
-            temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
-            for val1, val2, val3 in temp_vals:
-                vals.append(f"{val1} {val2} {val3}")
-
-            self.listbox = Listbox(self.helpWindow)
-            self.listbox.pack(side=TOP)
-            self.listbox.insert("end", "<brak>")
-
-            for val in vals:
-                self.listbox.insert("end", val)
-
-            self.button = Button(self.helpWindow, text="Select", command=select)
-            self.button.pack(side=TOP)
