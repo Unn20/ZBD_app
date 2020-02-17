@@ -35,7 +35,7 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        print(self.getBooksData())
+        self.isSaveDeleteLibrary("Super_Bibliotekas")
 
     def __del__(self):
         """ Close connection with database """
@@ -442,6 +442,24 @@ class Database:
 
         except Exception as e:
             self.logger.error(f"Could not realize an borrowBook function. Error = {e}")
+            raise Exception(e)
+
+    def isSaveDeleteOvner(self, nip):
+        try:
+            ans = self.executeStatement(f"SELECT deleteOvner('{nip}');")
+            return ans
+
+        except Exception as e:
+            self.logger.error(f"Could not realize an isSaveDeleteOvner function. Error = {e}")
+            raise Exception(e)
+
+    def isSaveDeleteLibrary(self, libraryName):
+        try:
+            ans = self.executeStatement(f"SELECT deleteLibrary('{libraryName}');")
+            return ans
+
+        except Exception as e:
+            self.logger.error(f"Could not realize an isSaveDeleteLibrary function. Error = {e}")
             raise Exception(e)
 
     def findBestBook(self, bookDateYear):

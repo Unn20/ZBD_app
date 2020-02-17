@@ -28,6 +28,8 @@ SET time_zone = "+00:00";
 DROP PROCEDURE IF EXISTS `borrowBook`;
 DROP FUNCTION IF EXISTS `findBestBookBorrowCount`;
 DROP FUNCTION IF EXISTS `findBestBookTitle`;
+DROP FUNCTION IF EXISTS `deleteOvner`;
+DROP FUNCTION IF EXISTS `deleteLibrary`;
 
 DELIMITER $$
 --
@@ -132,6 +134,36 @@ CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookTitle` (`bookDateYear` I
     );
 END$$
 
+CREATE DEFINER=`root`@`localhost` FUNCTION `deleteOvner` (`nip` varchar(50)) RETURNS INT BEGIN
+    RETURN(
+        SELECT NOT (EXISTS(
+            SELECT * FROM wlasciciele AS w JOIN wlasciciel_biblioteka AS wb ON w.nip = wb.wlasciciel_nip
+                JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
+            WHERE wb.wlasciciel_nip = nip AND (NOT EXISTS(
+                SELECT * FROM wlasciciele AS w1 JOIN wlasciciel_biblioteka AS wb1 ON w1.nip = wb1.wlasciciel_nip
+                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
+                WHERE wb1.biblioteka_nazwa = wb.biblioteka_nazwa AND
+                    wb1.wlasciciel_nip <> nip
+            ))
+        ))
+    );
+END$$
+
+CREATE DEFINER=`root`@`localhost` FUNCTION `deleteLibrary` (`libraryName` varchar(50)) RETURNS INT BEGIN
+    RETURN(
+        SELECT NOT (EXISTS(
+            SELECT * FROM wlasciciele AS w JOIN wlasciciel_biblioteka AS wb ON w.nip = wb.wlasciciel_nip
+                JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
+            WHERE wb.biblioteka_nazwa = libraryName AND (NOT EXISTS(
+                SELECT * FROM wlasciciele AS w1 JOIN wlasciciel_biblioteka AS wb1 ON w1.nip = wb1.wlasciciel_nip
+                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
+                WHERE wb1.wlasciciel_nip = wb.wlasciciel_nip AND
+                    wb1.biblioteka_nazwa <> libraryName
+            ))
+        ))
+    );
+END$$
+
 DELIMITER ;
 
 -- --------------------------------------------------------
@@ -151,6 +183,7 @@ DROP TRIGGER IF EXISTS `author_bookAddTriger`;
 DROP TRIGGER IF EXISTS `author_bookUpdateTriger`;
 DROP TRIGGER IF EXISTS `librariesAddTriger`;
 DROP TRIGGER IF EXISTS `librariesUpdateTriger`;
+DROP TRIGGER IF EXISTS `librariesDeleteTriger`;
 DROP TRIGGER IF EXISTS `readersAddTriger`;
 DROP TRIGGER IF EXISTS `readersUpdateTriger`;
 DROP TRIGGER IF EXISTS `sectionsAddTriger`;
@@ -169,8 +202,11 @@ DROP TRIGGER IF EXISTS `bookstandsAddTriger`;
 DROP TRIGGER IF EXISTS `bookstandsUpdateTriger`;
 DROP TRIGGER IF EXISTS `ovnersAddTriger`;
 DROP TRIGGER IF EXISTS `ovnersUpdateTriger`;
+DROP TRIGGER IF EXISTS `ovnersDeleteTriger`;
 DROP TRIGGER IF EXISTS `ovner_libraryAddTriger`;
 DROP TRIGGER IF EXISTS `ovner_libraryUpdateTriger`;
+DROP TRIGGER IF EXISTS `ovner_libraryDeleteTriger`;
+
 
 --
 -- Struktura tabeli dla tabeli `autorzy`
@@ -441,6 +477,28 @@ CREATE TRIGGER `librariesUpdateTriger` BEFORE UPDATE ON `biblioteki` FOR EACH RO
 
     END IF;
 
+END
+$$
+DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `librariesDeleteTriger` AFTER DELETE ON `biblioteki` FOR EACH ROW BEGIN
+    SET FOREIGN_KEY_CHECKS = 0;
+    
+    SET @libraryName = OLD.nazwa;
+    DELETE FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @libraryName;
+
+    DELETE FROM wlasciciele WHERE nip in (
+        SELECT wb.wlasciciel_nip FROM wlasciciele AS w JOIN wlasciciel_biblioteka AS wb ON w.nip = wb.wlasciciel_nip
+                JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
+            WHERE wb.biblioteka_nazwa = @libraryName AND (NOT EXISTS(
+                SELECT * FROM wlasciciele AS w1 JOIN wlasciciel_biblioteka AS wb1 ON w1.nip = wb1.wlasciciel_nip
+                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
+                WHERE wb1.wlasciciel_nip = wb.wlasciciel_nip AND
+                    wb1.biblioteka_nazwa <> @libraryName
+            ))
+    );
+
+    SET FOREIGN_KEY_CHECKS = 1;
 END
 $$
 DELIMITER ;
@@ -1271,6 +1329,28 @@ CREATE TRIGGER `ovnersUpdateTriger` BEFORE UPDATE ON `wlasciciele` FOR EACH ROW 
 END
 $$
 DELIMITER ;
+DELIMITER $$
+CREATE TRIGGER `ovnersDeleteTriger` AFTER DELETE ON `wlasciciele` FOR EACH ROW BEGIN
+    SET FOREIGN_KEY_CHECKS = 0;
+
+    SET @nip = OLD.nip;
+    DELETE FROM wlasciciel_biblioteka WHERE wlasciciel_nip = @nip;
+
+    DELETE FROM biblioteki WHERE nazwa in (
+        SELECT wb.biblioteka_nazwa FROM wlasciciel_biblioteka AS wb
+            JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
+            WHERE wb.wlasciciel_nip = @nip AND (NOT EXISTS(
+                SELECT * FROM wlasciciel_biblioteka AS wb1
+                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
+                WHERE wb1.biblioteka_nazwa = wb.biblioteka_nazwa AND
+                    wb1.wlasciciel_nip <> @nip
+            ))
+    );
+
+    SET FOREIGN_KEY_CHECKS = 1;
+END
+$$
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -1288,15 +1368,15 @@ CREATE TABLE `wlasciciel_biblioteka` (
 --
 
 INSERT INTO `wlasciciel_biblioteka` (`wlasciciel_nip`, `biblioteka_nazwa`) VALUES
-(1899339748, 'Biblioteka_miejska'),
-(1899339748, 'Ksiazki_sa_super'),
-(1899339750, 'Warto_czytac'),
-(1899339751, 'Biblioteka_na_rynku'),
-(1899339751, 'Biblioteka_szkolna'),
-(1899339752, 'Biblioteka_na_Kwiatowej'),
-(1899339754, 'Biblioteka_dziecieca'),
-(1899339754, 'Super_Biblioteka'),
-(1899339755, 'Czytam_ksiazki'),
+(1899339746, 'Biblioteka_miejska'),
+(1899339747, 'Ksiazki_sa_super'),
+(1899339748, 'Warto_czytac'),
+(1899339749, 'Biblioteka_na_rynku'),
+(1899339750, 'Biblioteka_szkolna'),
+(1899339751, 'Biblioteka_na_Kwiatowej'),
+(1899339752, 'Biblioteka_dziecieca'),
+(1899339753, 'Super_Biblioteka'),
+(1899339754, 'Czytam_ksiazki'),
 (1899339755, 'Czytanie_jest_fajne');
 
 --
@@ -1307,10 +1387,7 @@ CREATE TRIGGER `ovner_libraryAddTriger` BEFORE INSERT ON `wlasciciel_biblioteka`
     SET @ovner_nip = NEW.wlasciciel_nip;
     SET @library_name = NEW.biblioteka_nazwa;
 
-    IF (SELECT EXISTS (SELECT * FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @library_name)) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong library name. This library has its ovner.";
-
-    ELSEIF @ovner_nip IS NULL THEN
+    IF @ovner_nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM wlasciciele WHERE nip = @ovner_nip)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this nip dosn't exist.";
@@ -1330,11 +1407,7 @@ CREATE TRIGGER `ovner_libraryUpdateTriger` BEFORE UPDATE ON `wlasciciel_bibliote
     SET @library_name = NEW.biblioteka_nazwa;
     SET @oldLibrary_name = OLD.biblioteka_nazwa;
 
-    IF (SELECT EXISTS (SELECT * FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @library_name)
-            AND @library_name <> @oldLibrary_name) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong library name. This library has its ovner.";
-
-    ELSEIF @ovner_nip IS NULL THEN
+    IF @ovner_nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM wlasciciele WHERE nip = @ovner_nip)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this nip dosn't exist.";
@@ -1513,10 +1586,10 @@ ALTER TABLE `egzemplarze`
 -- Ograniczenia dla tabeli `historia_operacji`
 --
 ALTER TABLE `historia_operacji`
-  ADD CONSTRAINT `historia_biblioteka_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `historia_czytelnik_fk` FOREIGN KEY (`czytelnik_id`) REFERENCES `czytelnicy` (`czytelnik_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `historia_egzemplarz_fk` FOREIGN KEY (`egzemplarz_id`) REFERENCES `egzemplarze` (`egzemplarz_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `historia_pracownik_fk` FOREIGN KEY (`pracownik_id`) REFERENCES `pracownicy` (`pracownik_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `historia_biblioteka_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `historia_czytelnik_fk` FOREIGN KEY (`czytelnik_id`) REFERENCES `czytelnicy` (`czytelnik_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `historia_egzemplarz_fk` FOREIGN KEY (`egzemplarz_id`) REFERENCES `egzemplarze` (`egzemplarz_id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `historia_pracownik_fk` FOREIGN KEY (`pracownik_id`) REFERENCES `pracownicy` (`pracownik_id`) ON UPDATE CASCADE;
 
 --
 -- Ograniczenia dla tabeli `ksiazki`
@@ -1540,8 +1613,8 @@ ALTER TABLE `regaly`
 -- Ograniczenia dla tabeli `wlasciciel_biblioteka`
 --
 ALTER TABLE `wlasciciel_biblioteka`
-  ADD CONSTRAINT `wlasciciel_biblioteka_b_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `wlasciciel_biblioteka_w_fk` FOREIGN KEY (`wlasciciel_nip`) REFERENCES `wlasciciele` (`nip`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `wlasciciel_biblioteka_b_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `wlasciciel_biblioteka_w_fk` FOREIGN KEY (`wlasciciel_nip`) REFERENCES `wlasciciele` (`nip`) ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
