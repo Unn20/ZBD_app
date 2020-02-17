@@ -35,7 +35,7 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        self.isSaveDeleteLibrary("Super_Bibliotekas")
+        #self.isSaveDeleteLibrary("Super_Bibliotekas")
 
     def __del__(self):
         """ Close connection with database """
@@ -234,6 +234,47 @@ class Database:
             return ans
         except Exception as e:
             self.logger.error(f"Could not realize an getWorkerByName function. Error = {e}")
+            raise Exception(e)
+
+    def addOwner(self, nip, name="", surname="", companyName=""):
+        if name != "":
+            name = "\"" + name + "\""
+        else:
+            name = "NULL"
+        if surname != "":
+            surname = "\"" + surname + "\""
+        else:
+            surname = "NULL"
+        if companyName != "":
+            companyName = "\"" + companyName + "\""
+        else:
+            companyName = "NULL"
+        try:
+            self.executeStatement(f"INSERT INTO `wlasciciele` "
+                                  f"VALUES ({nip}, {name}, {companyName}, {surname})")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def deleteOwner(self, nip):
+        try:
+            self.executeStatement(f"DELETE FROM `wlasciciele` "
+                                  f"WHERE `nip` = {nip}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def addLibrary(self, name, localization, nip_assigments):
+        try:
+            #self.executeStatement(f"INSERT INTO `wlasciciele` "
+            #                      f"VALUES ({name}, {localization})")
+            for assign in nip_assigments:
+                print(f"assign = {assign}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
     def getBooksData(self):

@@ -251,6 +251,7 @@ class AddController:
         self.colFrame.pack(fill='both', side=TOP)
 
         self.entries = list()
+        self.oldAssigments = list()
 
         Label(self.colFrame, text="Nazwa", font=("Arial Bold", 12)).grid(row=0, column=0)
         entry = Entry(self.colFrame, width=20)
@@ -275,6 +276,10 @@ class AddController:
         self.cancelButton.pack(side=LEFT)
 
     def assignOwners(self):
+        def acceptOwners():
+            self.oldAssigments = self.assigments.copy()
+            self.assignWindow.destroy()
+
         def refresh():
             self.vals = list()
             temp_vals = self.database.executeStatement("SELECT * FROM `wlasciciele`")
@@ -297,7 +302,7 @@ class AddController:
             for val in self.assigments:
                 self.listboxAssigned.insert("end", val)
 
-        self.assigments = list()
+        self.assigments = self.oldAssigments.copy()
 
         self.assignWindow = Toplevel(self.themeWindow)
         self.assignWindow.title("Assign owners.")
@@ -324,12 +329,25 @@ class AddController:
         assignButton = Button(buttonFrame, text="Delete owner", command=lambda: self.deleteOwner(refresh))
         assignButton.pack(side=TOP)
 
-        Button(buttonFrame, text="Accept", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Accept", command=acceptOwners).pack(side=BOTTOM)
         Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
 
     def newOwner(self, func):
         def addOwner():
+            if entry1.get() == "" or (entry4.get() == "" and (entry2.get() == "" or entry3.get() == "")):
+                messagebox.showerror("Error", "Please fill all mandatory fields!")
+                return
+            if len(entry1.get()) != 10 or not entry1.get().isdigit():
+                messagebox.showerror("Error", "NIP field must contains 10 digits!")
+                return
+            confirm = messagebox.askyesno("New owner", "Are you sure that you want add new owner?")
+            if not confirm:
+                return
+            self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            self.database.connection.commit()
+            window.destroy()
             func()
+
         window = Toplevel(self.assignWindow)
         window.title("New owner.")
         window.protocol('WM_DELETE_WINDOW', window.destroy)
@@ -338,14 +356,14 @@ class AddController:
         entry1 = Entry(window)
         entry1.grid(row=0, column=1)
         Label(window, text="Imię").grid(row=1, column=0)
-        entry1 = Entry(window)
-        entry1.grid(row=1, column=1)
+        entry2 = Entry(window)
+        entry2.grid(row=1, column=1)
         Label(window, text="Nazwisko").grid(row=2, column=0)
-        entry1 = Entry(window)
-        entry1.grid(row=2, column=1)
+        entry3 = Entry(window)
+        entry3.grid(row=2, column=1)
         Label(window, text="Nazwa Firmy").grid(row=3, column=0)
-        entry1 = Entry(window)
-        entry1.grid(row=3, column=1)
+        entry4 = Entry(window)
+        entry4.grid(row=3, column=1)
 
         Button(window, text="Add", command=addOwner).grid(row=4, column=0)
         Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
@@ -360,11 +378,24 @@ class AddController:
     def unAssignOwner(self, func):
         if len(self.listboxAssigned.curselection()) == 0:
             return
-        self.assigments.remove(self.listboxAssigned.get(self.listboxAssigned.curselection()))
+        self.assigments.remove()
         func()
 
     def deleteOwner(self, func):
-        pass
+        if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
+            messagebox.showerror("Delete problem", "Please select an owner to remove!")
+            return
+        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected owner?")
+        if confirm:
+            if len(self.listboxAssigned.curselection()) != 0:
+                nip = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+            else:
+                nip = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+            self.database.deleteOwner(nip)
+            self.database.connection.commit()
+        else:
+            return
+        func()
 
 
     def goBack(self):
@@ -376,13 +407,9 @@ class AddController:
         self.newRecord.append(self.entries[0].get())
         # Library localization
         self.newRecord.append(self.entries[1].get())
-        # Assigments
-        # ...
-
 
         try:
-            pass
-            #self.database.addRecord(self.tableName, self.newRecord)
+            self.database.addLibrary(self.newRecord[0], self.newRecord[1], self.oldAssigments)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:
@@ -431,6 +458,22 @@ class ModifyController:
 
         self.newRecord = list()
 
+        ass = self.database.executeStatement(f"SELECT wb.`wlasciciel_nip`, w.`imie`, w.`nazwisko`, w.`nazwa_firmy` "
+                                             f"FROM `wlasciciel_biblioteka` wb "
+                                             f"JOIN `wlasciciele` w ON wb.`wlasciciel_nip` = w.`nip`"
+                                             f"WHERE wb.`biblioteka_nazwa` = \"{self.oldRecord[0]}\"")
+        self.oldAssigments = list()
+        for val1, val2, val3, val4 in ass:
+            owner = f"{val1}"
+            if val2 is not None:
+                owner += f" {val2}"
+            if val3 is not None:
+                owner += f" {val3}"
+            if val4 is not None:
+                owner += f" {val4}"
+            self.oldAssigments.append(owner)
+
+
         self.helpWindow = None
 
         self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
@@ -465,6 +508,10 @@ class ModifyController:
         self.cancelButton.pack(side=LEFT)
 
     def assignOwners(self):
+        def acceptOwners():
+            self.oldAssigments = self.assigments.copy()
+            self.assignWindow.destroy()
+
         def refresh():
             self.vals = list()
             temp_vals = self.database.executeStatement("SELECT * FROM `wlasciciele`")
@@ -487,7 +534,7 @@ class ModifyController:
             for val in self.assigments:
                 self.listboxAssigned.insert("end", val)
 
-        self.assigments = list()
+        self.assigments = self.oldAssigments.copy()
 
         self.assignWindow = Toplevel(self.themeWindow)
         self.assignWindow.title("Assign owners.")
@@ -514,11 +561,23 @@ class ModifyController:
         assignButton = Button(buttonFrame, text="Delete owner", command=lambda: self.deleteOwner(refresh))
         assignButton.pack(side=TOP)
 
-        Button(buttonFrame, text="Accept", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Accept", command=acceptOwners).pack(side=BOTTOM)
         Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
 
     def newOwner(self, func):
         def addOwner():
+            if entry1.get() == "" or (entry4.get() == "" and (entry2.get() == "" or entry3.get() == "")):
+                messagebox.showerror("Error", "Please fill all mandatory fields!")
+                return
+            if len(entry1.get()) != 10 or not entry1.get().isdigit():
+                messagebox.showerror("Error", "NIP field must contains 10 digits!")
+                return
+            confirm = messagebox.askyesno("New owner", "Are you sure that you want add new owner?")
+            if not confirm:
+                return
+            self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            self.database.connection.commit()
+            window.destroy()
             func()
 
         window = Toplevel(self.assignWindow)
@@ -529,14 +588,14 @@ class ModifyController:
         entry1 = Entry(window)
         entry1.grid(row=0, column=1)
         Label(window, text="Imię").grid(row=1, column=0)
-        entry1 = Entry(window)
-        entry1.grid(row=1, column=1)
+        entry2 = Entry(window)
+        entry2.grid(row=1, column=1)
         Label(window, text="Nazwisko").grid(row=2, column=0)
-        entry1 = Entry(window)
-        entry1.grid(row=2, column=1)
+        entry3 = Entry(window)
+        entry3.grid(row=2, column=1)
         Label(window, text="Nazwa Firmy").grid(row=3, column=0)
-        entry1 = Entry(window)
-        entry1.grid(row=3, column=1)
+        entry4 = Entry(window)
+        entry4.grid(row=3, column=1)
 
         Button(window, text="Add", command=addOwner).grid(row=4, column=0)
         Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
@@ -554,7 +613,20 @@ class ModifyController:
         func()
 
     def deleteOwner(self, func):
-        pass
+        if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
+            messagebox.showerror("Delete problem", "Please select an owner to remove!")
+            return
+        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected owner?")
+        if confirm:
+            if len(self.listboxAssigned.curselection()) != 0:
+                nip = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+            else:
+                nip = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+            self.database.deleteOwner(nip)
+            self.database.connection.commit()
+        else:
+            return
+        func()
 
     def checkEntry(self):
         self.newRecord.clear()
