@@ -35,6 +35,8 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
+        print(self.getBooksData())
+
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -233,6 +235,18 @@ class Database:
         except Exception as e:
             self.logger.error(f"Could not realize an getWorkerByName function. Error = {e}")
             raise Exception(e)
+
+    def getBooksData(self):
+        columns = ["tytul", "data_opublikowania", "gatunek", "liczba_ksiazek"]
+        rowData = self.executeStatement("SELECT k.`tytul`, k.`data_opublikowania`, k.`gatunek`, COUNT(egzemplarz_id) AS `liczba_ksiazek`"
+                                        "FROM `ksiazki` k LEFT JOIN `egzemplarze` e ON k.`ksiazka_id` = e.`ksiazka_id`"
+                                        "GROUP BY k.`tytul`")
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
 
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
