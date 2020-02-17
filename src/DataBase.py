@@ -267,8 +267,22 @@ class Database:
             raise Exception(e)
 
     def addLibrary(self, name, localization, nip_assigments):
+        # TODO: ZROBIC
         try:
             #self.executeStatement(f"INSERT INTO `wlasciciele` "
+            #                      f"VALUES ({name}, {localization})")
+            for assign in nip_assigments:
+                print(f"assign = {assign}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def modifyLibrary(self, old_name, name, localization, nip_assigments):
+        print(old_name, name, localization, nip_assigments)
+        # TODO: ZROBIC
+        try:
+            # self.executeStatement(f"INSERT INTO `wlasciciele` "
             #                      f"VALUES ({name}, {localization})")
             for assign in nip_assigments:
                 print(f"assign = {assign}")
@@ -302,7 +316,6 @@ class Database:
         for b in tmp_books:
             books.append(b[0])
 
-        print(books)
         rowData = self.executeStatement(
             f"SELECT k.`tytul`, k.`data_opublikowania`, k.`gatunek`, COUNT(egzemplarz_id) AS `liczba_ksiazek` "
             f"FROM `ksiazki` k LEFT JOIN `egzemplarze` e ON k.`ksiazka_id` = e.`ksiazka_id` "
@@ -314,6 +327,73 @@ class Database:
             for noC, column in enumerate(columns):
                 result[f"rec{noR + 1}"][column] = row[noC]
         return result
+
+    def deleteBookRecord(self, bookId):
+        try:
+            self.executeStatement(f"DELETE FROM `ksiazki`"
+                                  f"WHERE `ksiazka_id` = {bookId}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def addAuthor(self, name, surname, birthDate, deathDate):
+        if name != "":
+            name = "\"" + name + "\""
+        else:
+            return
+        if surname != "":
+            surname = "\"" + surname + "\""
+        else:
+            return
+        if birthDate != "":
+            birthDate = "\"" + birthDate + "\""
+        else:
+            return
+        if deathDate != "":
+            deathDate = "\"" + deathDate + "\""
+        else:
+            deathDate = "NULL"
+        try:
+            self.executeStatement(f"INSERT INTO `autorzy` "
+                                  f"VALUES (\"\", {name}, {surname}, {birthDate}, {deathDate})")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def deleteAuthor(self, authorId):
+        try:
+            self.executeStatement(f"DELETE FROM `autorzy` "
+                                  f"WHERE `autor_id` = {authorId}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def addBook(self, title, date, genre, author_assigments):
+        # TODO: ZROBIC
+        try:
+            print(f"{title} {date} {genre}")
+            #self.executeStatement(f"INSERT INTO `wlasciciele` "
+            #                      f"VALUES ({name}, {localization})")
+            for assign in author_assigments:
+                print(f"assign = {assign}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def modifyBook(self, old_id, title, date, genre, author_assigments):
+        print(old_id, title, date, genre, author_assigments)
+        #TODO: ZROBIC
+        try:
+            # self.executeStatement(f"INSERT INTO `wlasciciele` "
+            #                      f"VALUES ({name}, {localization})")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
 
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")

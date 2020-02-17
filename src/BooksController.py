@@ -76,7 +76,7 @@ class BooksController:
         self.buttonModify = Button(self.bottomCanvas, text=" MODIFY ", command=self.modify, width=25, height=3, bd=5)
         self.buttonModify.pack(side=LEFT)
         self.buttonDelete = Button(self.bottomCanvas, text=" DELETE ",
-                                   command=lambda: self.delete(None), width=25, height=3, bd=5)
+                                   command=lambda: self.delete(), width=25, height=3, bd=5)
         self.buttonDelete.pack(side=LEFT)
 
     def findByAuthor(self):
@@ -189,17 +189,16 @@ class BooksController:
                                                      self.currentModel.getRecName(selectedRow),
                                                      self.data, self.backEvent)
 
-    def delete(self, tableName):
+    def delete(self):
         """ Delete selected records """
         for no, i in enumerate(self.table.multiplerowlist):
             recName = self.currentModel.getRecName(i)
             deletedRecord = list()
-            deletedRecord.append(self.data[recName]["ID"])
-            deletedRecord.append(self.data[recName]["Imię"])
-            deletedRecord.append(self.data[recName]["Nazwisko"])
+            deletedRecord.append(self.data[recName]["Tytuł"])
+            id = self.database.executeStatement(f"SELECT `ksiazka_id` FROM `ksiazki` "
+                                                f"WHERE `tytul` = \"{deletedRecord[0]}\"")
             try:
-                print(f"Deleted record = {deletedRecord}")
-                self.database.deleteRecord(tableName, deletedRecord)
+                self.database.deleteBookRecord(id[0][0])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
@@ -250,6 +249,7 @@ class AddController:
         self.addWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
         self.newRecord = list()
+        self.oldAssigments = list()
 
         self.helpWindow = None
 
@@ -325,6 +325,10 @@ class AddController:
         self.button.pack(side=BOTTOM)
 
     def assignAuthors(self):
+        def acceptAuthors():
+            self.oldAssigments = self.assigments.copy()
+            self.assignWindow.destroy()
+
         def refresh():
             self.vals = list()
             temp_vals = self.database.executeStatement("SELECT `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
@@ -344,7 +348,7 @@ class AddController:
             for val in self.assigments:
                 self.listboxAssigned.insert("end", val)
 
-        self.assigments = list()
+        self.assigments = self.oldAssigments.copy()
 
         self.assignWindow = Toplevel(self.themeWindow)
         self.assignWindow.title("Assign owners.")
@@ -371,7 +375,7 @@ class AddController:
         assignButton = Button(buttonFrame, text="Delete author", command=lambda: self.deleteAuthor(refresh))
         assignButton.pack(side=TOP)
 
-        Button(buttonFrame, text="Accept", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Accept", command=acceptAuthors).pack(side=BOTTOM)
         Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
 
     def newAuthor(self, func):
@@ -383,6 +387,16 @@ class AddController:
                 entry4.config(state='normal')
 
         def addAuthor():
+            if entry1.get() == "" or entry2.get() == "" or entry3.get() == "":
+                messagebox.showerror("Error", "Please fill all mandatory fields!")
+                return
+
+            confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
+            if not confirm:
+                return
+            self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            self.database.connection.commit()
+            window.destroy()
             func()
 
         window = Toplevel(self.assignWindow)
@@ -421,23 +435,37 @@ class AddController:
         func()
 
     def deleteAuthor(self, func):
-        pass
+        if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
+            messagebox.showerror("Delete problem", "Please select an author to remove!")
+            return
+        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected author?")
+        if confirm:
+            if len(self.listboxAssigned.curselection()) != 0:
+                id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+            else:
+                id = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+            self.database.deleteAuthor(id)
+            self.database.connection.commit()
+        else:
+            return
+        func()
 
     def goBack(self):
         self.addWindow.event_generate("<<back>>")
 
     def checkEntry(self):
         self.newRecord.clear()
-        # Library name
+        # Book title
         self.newRecord.append(self.entries[0].get())
-        # Library localization
+        # Book date
         self.newRecord.append(self.entries[1].get())
+        # Book genre
+        self.newRecord.append(self.entries[2].get())
         # Assigments
         # ...
 
         try:
-            pass
-            # self.database.addRecord(self.tableName, self.newRecord)
+            self.database.addBook(self.newRecord[0], self.newRecord[1], self.newRecord[2], self.oldAssigments)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:
@@ -481,7 +509,7 @@ class ModifyController:
         # Book's id
         bookId = self.database.executeStatement(f"SELECT `ksiazka_id` FROM `ksiazki` "
                                                 f"WHERE `tytul` = \"{data[selectedRecord]['Tytuł']}\"")
-        self.oldRecord.append(bookId)
+        self.oldRecord.append(bookId[0][0])
 
         self.modifyWindow = Toplevel(self.themeWindow)
         self.modifyWindow.title("Add a new record to database.")
@@ -489,6 +517,21 @@ class ModifyController:
         self.modifyWindow.bind("<<back>>", lambda _: self.backEvent(None))
 
         self.newRecord = list()
+
+        ass = self.database.executeStatement(f"SELECT a.`imie`, a.`nazwisko`, a.`data_urodzenia`, a.`data_smierci` "
+                                             f"FROM `autor_ksiazka` ak "
+                                             f"JOIN `autorzy` a ON ak.`autorzy_autor_id` = a.`autor_id`"
+                                             f"WHERE ak.`ksiazki_ksiazka_id` = {self.oldRecord[0]}")
+        self.oldAssigments = list()
+        for val1, val2, val3, val4 in ass:
+            owner = f"{val1}"
+            if val2 is not None:
+                owner += f" {val2}"
+            if val3 is not None:
+                owner += f" {val3}"
+            if val4 is not None:
+                owner += f" {val4}"
+            self.oldAssigments.append(owner)
 
         self.helpWindow = None
 
@@ -567,6 +610,10 @@ class ModifyController:
         self.button.pack(side=BOTTOM)
 
     def assignAuthors(self):
+        def acceptAuthors():
+            self.oldAssigments = self.assigments.copy()
+            self.assignWindow.destroy()
+
         def refresh():
             self.vals = list()
             temp_vals = self.database.executeStatement("SELECT `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
@@ -586,7 +633,7 @@ class ModifyController:
             for val in self.assigments:
                 self.listboxAssigned.insert("end", val)
 
-        self.assigments = list()
+        self.assigments = self.oldAssigments.copy()
 
         self.assignWindow = Toplevel(self.themeWindow)
         self.assignWindow.title("Assign owners.")
@@ -613,7 +660,7 @@ class ModifyController:
         assignButton = Button(buttonFrame, text="Delete author", command=lambda: self.deleteAuthor(refresh))
         assignButton.pack(side=TOP)
 
-        Button(buttonFrame, text="Accept", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Accept", command=self.acceptAuthors).pack(side=BOTTOM)
         Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
 
 
@@ -626,6 +673,16 @@ class ModifyController:
                 entry4.config(state='normal')
 
         def addAuthor():
+            if entry1.get() == "" or entry2.get() == "" or entry3.get() == "":
+                messagebox.showerror("Error", "Please fill all mandatory fields!")
+                return
+
+            confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
+            if not confirm:
+                return
+            self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            self.database.connection.commit()
+            window.destroy()
             func()
 
         window = Toplevel(self.assignWindow)
@@ -665,30 +722,30 @@ class ModifyController:
         self.assigments.remove(self.listboxAssigned.get(self.listboxAssigned.curselection()))
         func()
 
-
     def deleteAuthor(self, func):
-        pass
+        if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
+            messagebox.showerror("Delete problem", "Please select an author to remove!")
+            return
+        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected author?")
+        if confirm:
+            if len(self.listboxAssigned.curselection()) != 0:
+                id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+            else:
+                id = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+            self.database.deleteAuthor(id)
+            self.database.connection.commit()
+        else:
+            return
+        func()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
 
     def checkEntry(self):
         self.newRecord.clear()
-        # Employee's id
-        self.newRecord.append(self.oldRecord[0])
-        # Employee's boss_id
-        self.newRecord.append(self.entries[3].get())
-        # Employee's name
-        self.newRecord.append(self.entries[0].get())
-        # Employee's surname
-        self.newRecord.append(self.entries[1].get())
-        # Employee's function
-        self.newRecord.append(self.entries[2].get())
-
         try:
-            print(f"old record = {self.oldRecord}")
-            print(f"new record = {self.newRecord}")
-            #self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
+            self.database.modifyBook(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(),
+                                     self.entries[2].get(), self.oldAssigments)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:

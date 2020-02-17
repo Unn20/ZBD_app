@@ -502,7 +502,7 @@ class ModifyController:
                                  width=self.themeWindow.winfo_width(),
                                  height=40)
         self.buttonFrame.pack(fill='both', side=TOP)
-        self.addButton = Button(self.buttonFrame, text="Add", command=self.checkEntry)
+        self.addButton = Button(self.buttonFrame, text="Modify", command=self.checkEntry)
         self.addButton.pack(side=LEFT)
         self.cancelButton = Button(self.buttonFrame, text="Cancel", command=self.goBack)
         self.cancelButton.pack(side=LEFT)
@@ -629,22 +629,10 @@ class ModifyController:
         func()
 
     def checkEntry(self):
-        self.newRecord.clear()
-        # Employee's id
-        self.newRecord.append(self.oldRecord[0])
-        # Employee's boss_id
-        self.newRecord.append(self.entries[3].get())
-        # Employee's name
-        self.newRecord.append(self.entries[0].get())
-        # Employee's surname
-        self.newRecord.append(self.entries[1].get())
-        # Employee's function
-        self.newRecord.append(self.entries[2].get())
-
         try:
             print(f"old record = {self.oldRecord}")
-            print(f"new record = {self.newRecord}")
-            #self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
+            print(f"new record = {self.entries[0].get()} {self.entries[1].get()} {self.oldAssigments}")
+            self.database.modifyLibrary(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(), self.oldAssigments)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:
