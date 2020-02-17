@@ -20,25 +20,12 @@ class BooksController:
         self.modifyWindow = None
         self.table = None
 
-
-        tableName = "ksiazki"
-        self.tableName = tableName
-
-        self.tableData = self.database.getRawData(tableName)
+        self.tableData = self.database.getBooksData()
         self.data = dict()
         self.booksModel = TableModel()
-        self.authorsModel = TableModel()
-        self.specimenModel = TableModel()
+        #self.specimenModel = TableModel()
 
         self.currentModel = self.booksModel
-
-        self.notebookWidget = ttk.Notebook(self.themeWindow)
-        self.booksTab = Frame(self.notebookWidget)
-        self.authorsTab = Frame(self.notebookWidget)
-
-        self.notebookWidget.add(self.booksTab, text="Książki")
-        self.notebookWidget.add(self.authorsTab, text="Autorzy")
-        #self.notebookWidget.pack(expand=1, fill='both')
 
         if len(self.tableData) == 0:
             messagebox.showwarning("Empty table", "This table has no records!")
@@ -65,6 +52,10 @@ class BooksController:
         self.backButton.pack(fill='both', side=LEFT)
         self.showButton = Button(self.topCanvas, text="Refresh table", command=self.refreshTable, width=22)
         self.showButton.pack(fill='both', side=LEFT)
+        self.showButton = Button(self.topCanvas, text="Authors", command=self.checkAuthors, width=22)
+        self.showButton.pack(fill='both', side=LEFT)
+        self.findButton = Button(self.topCanvas, text="Find by author", command=self.findByAuthor, width=22)
+        self.findButton.pack(fill='both', side=LEFT)
 
         # Canvas with data
         self.middleFrame = Frame(self.content)
@@ -82,8 +73,87 @@ class BooksController:
         self.buttonModify = Button(self.bottomCanvas, text=" MODIFY ", command=self.modify, width=25, height=3, bd=5)
         self.buttonModify.pack(side=LEFT)
         self.buttonDelete = Button(self.bottomCanvas, text=" DELETE ",
-                                   command=lambda: self.delete(self.tableName), width=25, height=3, bd=5)
+                                   command=lambda: self.delete(None), width=25, height=3, bd=5)
         self.buttonDelete.pack(side=LEFT)
+
+    def findByAuthor(self):
+        self.findWindow = Toplevel(self.themeWindow)
+        self.findWindow.title("Search book by author's personal data.")
+        self.findWindow.protocol('WM_DELETE_WINDOW', self.findWindow.destroy)
+
+        vals = list()
+        temp_vals = self.database.executeStatement("SELECT * FROM `autorzy`")
+        for val1, val2, val3, val4, val5 in temp_vals:
+            author = f"{val1} {val2} {val3} {val4}"
+            if val5 is not None:
+                author += f"-{val5}"
+            vals.append(author)
+
+        self.listbox = Listbox(self.findWindow, width=50)
+        self.listbox.pack(side=TOP)
+
+        for val in vals:
+            self.listbox.insert("end", val)
+
+        self.button = Button(self.findWindow, text="Select",
+                             command=lambda: self.refreshTableWithAuthor(
+                                 self.listbox.get(self.listbox.curselection()).split(" ")[0]))
+        self.button.pack(side=TOP)
+
+    def refreshTableWithAuthor(self, author):
+        self.currentModel.createEmptyModel()
+        self.tableData = self.database.getBooksDataByAuthor(author)
+        self.data = dict()
+        for no, key in enumerate(self.tableData.keys()):
+            self.data[f"rec {no + 1}"] = dict()
+            self.data[f"rec {no + 1}"]["Tytuł"] = self.tableData[key]["tytul"]
+            self.data[f"rec {no + 1}"]["Data opublikowania"] = str(self.tableData[key]["data_opublikowania"])
+            self.data[f"rec {no + 1}"]["Gatunek"] = self.tableData[key]["gatunek"]
+            self.data[f"rec {no + 1}"]["Liczba egzemplarzy"] = self.tableData[key]["liczba_ksiazek"]
+
+        self.currentModel.importDict(self.data)
+        if self.table is not None:
+            self.table.redraw()
+        self.findWindow.destroy()
+
+    def checkAuthors(self):
+        if self.table.startrow != self.table.endrow:
+            messagebox.showwarning('Authors', 'Please select only one record!')
+            return
+
+        recName = self.currentModel.getRecName(self.table.currentrow)
+        self.authorsWindow = Toplevel(self.themeWindow)
+        self.authorsWindow.title(f"Authors of book {self.data[recName]['Tytuł']}")
+        self.authorsWindow.protocol('WM_DELETE_WINDOW', self.authorsWindow.destroy)
+
+        Label(self.authorsWindow, text=f"Authors of {self.data[recName]['Tytuł']}").pack(side=TOP)
+
+        bookId = self.database.executeStatement(f"SELECT `ksiazka_id` FROM `ksiazki` "
+                                                f"WHERE `tytul` = \"{self.data[recName]['Tytuł']}\"")
+        authors = self.database.executeStatement(f"SELECT a.`imie`, a.`nazwisko`, a.`data_urodzenia`, a.`data_smierci` "
+                                                f"FROM `autorzy` a "
+                                                f"JOIN `autor_ksiazka` ak ON a.`autor_id` = ak.`autorzy_autor_id` "
+                                                f"WHERE ak.`ksiazki_ksiazka_id` = \"{bookId[0][0]}\"")
+        authorsModel = TableModel()
+        authorsModel.createEmptyModel()
+        authorsData = dict()
+        for no, author in enumerate(authors):
+            authorsData[f"rec {no+1}"] = dict()
+            authorsData[f"rec {no + 1}"]["Imię"] = author[0]
+            authorsData[f"rec {no + 1}"]["Nazwisko"] = author[1]
+            authorsData[f"rec {no + 1}"]["Data urodzenia"] = str(author[2])
+            if author[3] is None:
+                authorsData[f"rec {no + 1}"]["Data śmierci"] = ""
+            else:
+                authorsData[f"rec {no + 1}"]["Data śmierci"] = str(author[3])
+
+        authorsModel.importDict(authorsData)
+        authorsFrame = Frame(self.authorsWindow)
+        authorsFrame.pack(fill='both', side=TOP)
+        authorsTable = CustomTable(authorsFrame, model=authorsModel)
+        authorsTable.show()
+
+        Button(self.authorsWindow, text="Close", command=self.authorsWindow.destroy).pack(side=TOP)
 
     def back(self):
         """ Go back to main window """
@@ -149,13 +219,14 @@ class BooksController:
 
     def refreshTable(self):
         self.currentModel.createEmptyModel()
-        self.tableData = self.database.getRawData(self.tableName)
+        self.tableData = self.database.getBooksData()
         self.data = dict()
-        for no, record in enumerate(self.tableData):
-            self.data[f"rec {no}"] = dict()
-            self.data[f"rec {no}"]["Tytuł"] = record[0]
-            self.data[f"rec {no}"]["Rok napisania"] = str(record[1])
-            #self.data[f"rec {no}"]["Nazwisko"] = record[2]
+        for no, key in enumerate(self.tableData.keys()):
+            self.data[f"rec {no + 1}"] = dict()
+            self.data[f"rec {no + 1}"]["Tytuł"] = self.tableData[key]["tytul"]
+            self.data[f"rec {no + 1}"]["Data opublikowania"] = str(self.tableData[key]["data_opublikowania"])
+            self.data[f"rec {no + 1}"]["Gatunek"] = self.tableData[key]["gatunek"]
+            self.data[f"rec {no + 1}"]["Liczba egzemplarzy"] = self.tableData[key]["liczba_ksiazek"]
 
         self.currentModel.importDict(self.data)
         if self.table is not None:

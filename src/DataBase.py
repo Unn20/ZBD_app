@@ -248,6 +248,32 @@ class Database:
                 result[f"rec{noR + 1}"][column] = row[noC]
         return result
 
+    def getBooksDataByAuthor(self, author):
+        """ Book by author """
+        columns = ["tytul", "data_opublikowania", "gatunek", "liczba_ksiazek"]
+        tmp_books = self.executeStatement(f"SELECT k.`tytul` FROM `ksiazki` k "
+                                      f"JOIN `autor_ksiazka` ak ON k.`ksiazka_id` = ak.`ksiazki_ksiazka_id` "
+                                      f"WHERE ak.`autorzy_autor_id` = {author}")
+
+        if len(tmp_books) == 0:
+            return
+        books = list()
+        for b in tmp_books:
+            books.append(b[0])
+
+        print(books)
+        rowData = self.executeStatement(
+            f"SELECT k.`tytul`, k.`data_opublikowania`, k.`gatunek`, COUNT(egzemplarz_id) AS `liczba_ksiazek` "
+            f"FROM `ksiazki` k LEFT JOIN `egzemplarze` e ON k.`ksiazka_id` = e.`ksiazka_id` "
+            f"GROUP BY k.`tytul` "
+            f"HAVING k.`tytul` IN {tuple(books)}")
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
 
