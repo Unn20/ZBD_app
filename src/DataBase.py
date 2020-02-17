@@ -395,6 +395,42 @@ class Database:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
+    def getSpecimensByBookId(self, bookId):
+        specimen = self.executeStatement(
+            f"SELECT e.`egzemplarz_id`, r.`numer`, d.`nazwa`, d.`lokalizacja` "
+            f"FROM `egzemplarze` e "
+            f"JOIN `regaly` r ON e.`regal_numer` = r.`numer` "
+            f"JOIN `dzialy` d ON r.`dzial_nazwa` = d.`nazwa` "
+            f"WHERE e.`ksiazka_id` = {bookId}")
+        return specimen
+
+    def deleteSpecimen(self, specimenId):
+        try:
+            self.executeStatement(f"DELETE FROM `egzemplarze` "
+                                  f"WHERE `egzemplarz_id` = {specimenId}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def addDepartment(self, name, loc):
+        try:
+            self.executeStatement(f"INSERT INTO `dzialy` "
+                                  f"VALUES (\"{name}\", \"{loc}\")")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def addSpecimen(self, bookId, rack):
+        try:
+            self.executeStatement(f"INSERT INTO `egzemplarze` "
+                                  f"VALUES (\"\", {bookId}, {rack})")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
     def addRecord(self, tableName, values):
         self.logger.debug(f"Adding new record to table {tableName}. Values = {values}")
 

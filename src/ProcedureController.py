@@ -112,8 +112,7 @@ class ProcedureController:
                 return
             else:
                 args[combo.label.cget("text")] = combo.combo.get()
-        args["Comment(optional)"] = self.commentEntry.get('1.0', END)
-
+        args["Comment(optional)"] = self.commentEntry.get('1.0', END).replace("\n", "")
         try:
             self.database.borrowBook(args["Library"], args["Employee's name"], args["Employee's surname"],
                                      args["Reader's name"], args["Reader's surname"], args["Book title"],
