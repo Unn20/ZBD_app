@@ -630,8 +630,6 @@ class ModifyController:
 
     def checkEntry(self):
         try:
-            print(f"old record = {self.oldRecord}")
-            print(f"new record = {self.entries[0].get()} {self.entries[1].get()} {self.oldAssigments}")
             self.database.modifyLibrary(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(), self.oldAssigments)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")

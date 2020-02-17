@@ -107,7 +107,6 @@ class HistoryController:
         for no, i in enumerate(self.table.multiplerowlist):
             recName = self.model.getRecName(i)
             try:
-                print(f"Deleted record = {self.data[recName]['operacja_id']}")
                 self.database.deleteHistoryRecord(self.data[recName]['operacja_id'])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
@@ -284,8 +283,6 @@ class ModifyController:
         self.newRecord.append(self.entries[4].get())
 
         try:
-            print(f"old record = {self.oldRecord}")
-            print(f"new record = {self.newRecord}")
             self.database.modifyHistoryRecord(self.oldRecord, self.newRecord)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")

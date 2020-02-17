@@ -120,7 +120,6 @@ class EmployeeController:
             deletedRecord.append(self.data[recName]["Nazwisko"])
             deletedRecord.append(self.data[recName]["Funkcja"])
             try:
-                print(f"Deleted record = {deletedRecord}")
                 self.database.deleteRecord(tableName, deletedRecord)
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
@@ -381,7 +380,6 @@ class ModifyController:
         entry.config(state="readonly")
         entry.grid(row=3, column=1, columnspan=2)
         self.entries.append(entry)
-        # TODO: PRZELOZONY NIE MOZE BYC SOBA SAMYM, POTRZEBNA PROCEDURA WYZWALANA
         valueHelper = Button(self.colFrame, text="?", command=lambda _=entry: self.showHelp(_))
         valueHelper.grid(row=3, column=3)
 
@@ -409,8 +407,6 @@ class ModifyController:
         self.newRecord.append(self.entries[2].get())
 
         try:
-            print(f"old record = {self.oldRecord}")
-            print(f"new record = {self.newRecord}")
             self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
