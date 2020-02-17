@@ -1307,10 +1307,7 @@ CREATE TRIGGER `ovner_libraryAddTriger` BEFORE INSERT ON `wlasciciel_biblioteka`
     SET @ovner_nip = NEW.wlasciciel_nip;
     SET @library_name = NEW.biblioteka_nazwa;
 
-    IF (SELECT EXISTS (SELECT * FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @library_name)) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong library name. This library has its ovner.";
-
-    ELSEIF @ovner_nip IS NULL THEN
+    IF @ovner_nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM wlasciciele WHERE nip = @ovner_nip)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this nip dosn't exist.";
@@ -1330,11 +1327,7 @@ CREATE TRIGGER `ovner_libraryUpdateTriger` BEFORE UPDATE ON `wlasciciel_bibliote
     SET @library_name = NEW.biblioteka_nazwa;
     SET @oldLibrary_name = OLD.biblioteka_nazwa;
 
-    IF (SELECT EXISTS (SELECT * FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @library_name)
-            AND @library_name <> @oldLibrary_name) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong library name. This library has its ovner.";
-
-    ELSEIF @ovner_nip IS NULL THEN
+    IF @ovner_nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
     ELSEIF (SELECT NOT EXISTS (SELECT * FROM wlasciciele WHERE nip = @ovner_nip)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this nip dosn't exist.";
