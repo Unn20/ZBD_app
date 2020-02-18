@@ -1,4 +1,5 @@
 -- phpMyAdmin SQL Dump
+-- phpMyAdmin SQL Dump
 -- version 4.9.2
 -- https://www.phpmyadmin.net/
 --
@@ -994,8 +995,6 @@ CREATE TRIGGER `booksAddTriger` BEFORE INSERT ON `ksiazki` FOR EACH ROW BEGIN
     ELSEIF @date = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. Make sure date is in 'YYYY-MM-DD' format.";
 
-    ELSEIF (SELECT NOT EXISTS (SELECT * FROM gatunki WHERE gatunek = @genre)) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Genre with this name dosn't exist.";
     ELSEIF @genre IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong genre. You need to set genre it can't be none.";
 
@@ -1023,8 +1022,6 @@ CREATE TRIGGER `booksUpdateTriger` BEFORE UPDATE ON `ksiazki` FOR EACH ROW BEGIN
     ELSEIF @date = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. Make sure date is in 'YYYY-MM-DD' format.";
 
-    ELSEIF (SELECT NOT EXISTS (SELECT * FROM gatunki WHERE gatunek = @genre)) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Genre with this name dosn't exist.";
     ELSEIF @genre IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong genre. You need to set genre it can't be none.";
 

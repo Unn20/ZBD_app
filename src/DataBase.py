@@ -35,8 +35,6 @@ class Database:
         self.cursor = self.connection.cursor()
         self.logger.debug("Global cursor created.")
 
-        #self.isSaveDeleteLibrary("Super_Bibliotekas")
-
     def __del__(self):
         """ Close connection with database """
         # Close database connection
@@ -217,8 +215,15 @@ class Database:
 
     def deleteLibraryRecord(self, libraryName):
         try:
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
+
             self.executeStatement(f"DELETE FROM `biblioteki`"
                                   f"WHERE `nazwa` = \"{libraryName}\"")
+
+            self.executeStatement(f"DELETE FROM `wlasciciel_biblioteka`"
+                                  f"WHERE `biblioteka_nazwa` = \"{libraryName}\"")
+
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -259,34 +264,81 @@ class Database:
 
     def deleteOwner(self, nip):
         try:
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
+
             self.executeStatement(f"DELETE FROM `wlasciciele` "
-                                  f"WHERE `nip` = {nip}")
+                                  f"WHERE `nip` = \"{nip}\"")
+
+            self.executeStatement(f"DELETE FROM `wlasciciel_biblioteka`"
+                                  f"WHERE `wlasciciel_nip` = \"{nip}\"")
+
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
     def addLibrary(self, name, localization, nip_assigments):
-        # TODO: ZROBIC
         try:
-            #self.executeStatement(f"INSERT INTO `wlasciciele` "
-            #                      f"VALUES ({name}, {localization})")
-            for assign in nip_assigments:
-                print(f"assign = {assign}")
+            self.executeStatement(f"INSERT INTO `biblioteki`"
+                                  f"VALUES (\'{name}\',\'{localization}\')")
+
+            for author in nip_assigments:
+                author = author.split(" ")
+                if len(author) == 2:
+                    nip = author[0]
+                    aName = 'NULL'
+                    surname = 'NULL'
+                    firm = author[1]
+                elif len(author) == 3:
+                    nip = author[0]
+                    aName = author[1]
+                    surname = author[2]
+                    firm = 'NULL'
+                if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `wlasciciele` WHERE "
+                                         f"`nip` = \'{nip}\'))")[0][0] == 0:
+                    self.executeStatement(f"INSERT INTO `wlasciciele` "
+                                          f"VALUES (\'{nip}\', \'{aName}\',"
+                                          f" \'{surname}\', \'{firm}\')")
+
+                    self.executeStatement(f"INSERT INTO `wlasciciel_biblioteka` "
+                                      f"VALUES (\'{nip}\', \'{name}\')")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
     def modifyLibrary(self, old_name, name, localization, nip_assigments):
-        print(old_name, name, localization, nip_assigments)
-        # TODO: ZROBIC
         try:
-            # self.executeStatement(f"INSERT INTO `wlasciciele` "
-            #                      f"VALUES ({name}, {localization})")
-            for assign in nip_assigments:
-                print(f"assign = {assign}")
+            self.executeStatement(f"DELETE FROM `wlasciciel_biblioteka` WHERE `biblioteka_nazwa` = \'{old_name}\'")
+
+            self.executeStatement(f"UPDATE `biblioteki`"
+                                  f"SET `nazwa` = \'{name}\',"
+                                  f"`lokalizacja` = \'{localization}\'"
+                                  f"WHERE `nazwa` = \'{old_name}\'")
+
+            for author in nip_assigments:
+                author = author.split(" ")
+                if len(author) == 2:
+                    nip = author[0]
+                    aName = 'NULL'
+                    surname = 'NULL'
+                    firm = author[1]
+                elif len(author) == 3:
+                    nip = author[0]
+                    aName = author[1]
+                    surname = author[2]
+                    firm = 'NULL'
+                if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `wlasciciele` WHERE "
+                                         f"`nip` = \'{nip}\'))")[0][0] == 0:
+                    self.executeStatement(f"INSERT INTO `wlasciciele` "
+                                          f"VALUES (\'{nip}\', \'{aName}\',"
+                                          f" \'{surname}\', \'{firm}\')")
+
+                    self.executeStatement(f"INSERT INTO `wlasciciel_biblioteka` "
+                                          f"VALUES (\'{nip}\', \'{name}\')")
             return True
+
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
@@ -330,8 +382,15 @@ class Database:
 
     def deleteBookRecord(self, bookId):
         try:
-            self.executeStatement(f"DELETE FROM `ksiazki`"
-                                  f"WHERE `ksiazka_id` = {bookId}")
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
+
+            self.executeStatement(f"DELETE FROM `ksiazki` "
+                                  f"WHERE `ksiazka_id` = \"{bookId}\"")
+
+            self.executeStatement(f"DELETE FROM `autor_ksiazka`"
+                                  f"WHERE `ksiazki_ksiazka_id` = \"{bookId}\"")
+
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -364,32 +423,100 @@ class Database:
 
     def deleteAuthor(self, authorId):
         try:
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
+
             self.executeStatement(f"DELETE FROM `autorzy` "
-                                  f"WHERE `autor_id` = {authorId}")
+                                  f"WHERE `autor_id` = \"{authorId}\"")
+
+            self.executeStatement(f"DELETE FROM `autor_ksiazka`"
+                                  f"WHERE `autorzy_autor_id` = \"{authorId}\"")
+
+            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
     def addBook(self, title, date, genre, author_assigments):
-        # TODO: ZROBIC
         try:
-            print(f"{title} {date} {genre}")
-            #self.executeStatement(f"INSERT INTO `wlasciciele` "
-            #                      f"VALUES ({name}, {localization})")
-            for assign in author_assigments:
-                print(f"assign = {assign}")
+            if self.executeStatement(f"SELECT \'{genre}\' IN "
+                                  f"(SELECT `gatunek` FROM `gatunki`)")[0][0] == 0:
+                self.executeStatement(f"INSERT INTO `gatunki` "
+                                      f"VALUES (\'{genre}\')");
+
+            self.executeStatement(f"INSERT INTO `ksiazki` "
+                                  f"VALUES (NULL, \'{title}\', \'{date}\', \'{genre}\')")
+
+            bookID = self.executeStatement(f"SELECT `ksiazka_id` FROM `ksiazki` WHERE"
+                                     f"`tytul` = \'{title}\' AND "                                     
+                                     f"`data_opublikowania` = \'{date}\' AND "
+                                     f"`gatunek` = \'{genre}\'")[0][0]
+
+            for author in author_assigments:
+                author = author.split(" ")
+                name = author[0]
+                surname = author[1]
+                birth = author[2][:10]
+                death = author[2][10:]
+                if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `autorzy` WHERE "
+                                         f"`imie` = \'{name}\' AND "                                     
+                                         f"`nazwisko` = \'{surname}\' AND "
+                                         f"`data_urodzenia` = \'{birth}\'))")[0][0] == 0:
+                    self.executeStatement(f"INSERT INTO `autorzy` "
+                                          f"VALUES (NULL, \'{name}\', \'{surname}\',"
+                                          f" \'{birth}\', \'{death}\')")
+
+                authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
+                                         f"`imie` = \'{name}\' AND "                                     
+                                         f"`nazwisko` = \'{surname}\' AND "
+                                         f"`data_urodzenia` = \'{birth}\'")[0][0]
+
+                self.executeStatement(f"INSERT INTO `autor_ksiazka` "
+                                      f"VALUES (\'{authorID}\', \'{bookID}\')")
+
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
     def modifyBook(self, old_id, title, date, genre, author_assigments):
-        print(old_id, title, date, genre, author_assigments)
-        #TODO: ZROBIC
         try:
-            # self.executeStatement(f"INSERT INTO `wlasciciele` "
-            #                      f"VALUES ({name}, {localization})")
+            self.executeStatement(f"DELETE FROM `autor_ksiazka` "
+                                  f"WHERE `ksiazki_ksiazka_id` = \'{old_id}\'")
+
+            if self.executeStatement(f"SELECT \'{genre}\' IN "
+                                     f"(SELECT `gatunek` FROM `gatunki`)")[0][0] == 0:
+                self.executeStatement(f"INSERT INTO `gatunki` "
+                                      f"VALUES (\'{genre}\')");
+
+            self.executeStatement(f"UPDATE `ksiazki`"
+                                  f"SET `tytul` = \'{title}\',"
+                                  f" `data_opublikowania` = \'{date}\',"
+                                  f" `gatunek` = \'{genre}\'"
+                                  f"WHERE `ksiazka_id` = \'{old_id}\'")
+
+            for author in author_assigments:
+                author = author.split(" ")
+                name = author[0]
+                surname = author[1]
+                birth = author[2][:10]
+                death = author[2][10:]
+                if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `autorzy` WHERE "
+                                         f"`imie` = \'{name}\' AND "
+                                         f"`nazwisko` = \'{surname}\' AND "
+                                         f"`data_urodzenia` = \'{birth}\'))")[0][0] == 0:
+                    self.executeStatement(f"INSERT INTO `autorzy` "
+                                          f"VALUES (NULL, \'{name}\', \'{surname}\',"
+                                          f" \'{birth}\', \'{death}\')")
+
+                    authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
+                                             f"`imie` = \'{name}\' AND "                                     
+                                             f"`nazwisko` = \'{surname}\' AND "
+                                             f"`data_urodzenia` = \'{birth}\'")[0][0]
+
+                    self.executeStatement(f"INSERT INTO `autor_ksiazka` "
+                                          f"VALUES (\'{authorID}\', \'{old_id}\')")
+
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
