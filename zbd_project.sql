@@ -184,7 +184,6 @@ DROP TRIGGER IF EXISTS `author_bookAddTriger`;
 DROP TRIGGER IF EXISTS `author_bookUpdateTriger`;
 DROP TRIGGER IF EXISTS `librariesAddTriger`;
 DROP TRIGGER IF EXISTS `librariesUpdateTriger`;
-DROP TRIGGER IF EXISTS `librariesDeleteTriger`;
 DROP TRIGGER IF EXISTS `readersAddTriger`;
 DROP TRIGGER IF EXISTS `readersUpdateTriger`;
 DROP TRIGGER IF EXISTS `sectionsAddTriger`;
@@ -203,10 +202,8 @@ DROP TRIGGER IF EXISTS `bookstandsAddTriger`;
 DROP TRIGGER IF EXISTS `bookstandsUpdateTriger`;
 DROP TRIGGER IF EXISTS `ovnersAddTriger`;
 DROP TRIGGER IF EXISTS `ovnersUpdateTriger`;
-DROP TRIGGER IF EXISTS `ovnersDeleteTriger`;
 DROP TRIGGER IF EXISTS `ovner_libraryAddTriger`;
 DROP TRIGGER IF EXISTS `ovner_libraryUpdateTriger`;
-DROP TRIGGER IF EXISTS `ovner_libraryDeleteTriger`;
 
 
 --
@@ -260,11 +257,15 @@ CREATE TRIGGER `authorsAddTriger` BEFORE INSERT ON `autorzy` FOR EACH ROW BEGIN
     ELSEIF NOT @surname REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @birthDay) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Date can't be from the future.";
     ELSEIF @birthDay IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. You need to set birthDay it can't be none.";
     ELSEIF @birthDay = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Make sure date is in 'YYYY-MM-DD' format.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @deathDay) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Date can't be from the future.";
     ELSEIF @deathDay = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
     ELSEIF @deathDay <= @birthDay THEN
@@ -301,11 +302,15 @@ CREATE TRIGGER `authorsUpdateTriger` BEFORE UPDATE ON `autorzy` FOR EACH ROW BEG
     ELSEIF NOT @surname REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @birthDay) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Date can't be from the future.";
     ELSEIF @birthDay IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. You need to set birthDay it can't be none.";
     ELSEIF @birthDay = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong birthDay. Make sure date is in 'YYYY-MM-DD' format.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @deathDay) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Date can't be from the future.";
     ELSEIF @deathDay = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
     ELSEIF @deathDay <= @birthDay THEN
@@ -478,28 +483,6 @@ CREATE TRIGGER `librariesUpdateTriger` BEFORE UPDATE ON `biblioteki` FOR EACH RO
 
     END IF;
 
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `librariesDeleteTriger` AFTER DELETE ON `biblioteki` FOR EACH ROW BEGIN
-    SET FOREIGN_KEY_CHECKS = 0;
-    
-    SET @libraryName = OLD.nazwa;
-    DELETE FROM wlasciciel_biblioteka WHERE biblioteka_nazwa = @libraryName;
-
-    DELETE FROM wlasciciele WHERE nip in (
-        SELECT wb.wlasciciel_nip FROM wlasciciele AS w JOIN wlasciciel_biblioteka AS wb ON w.nip = wb.wlasciciel_nip
-                JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
-            WHERE wb.biblioteka_nazwa = @libraryName AND (NOT EXISTS(
-                SELECT * FROM wlasciciele AS w1 JOIN wlasciciel_biblioteka AS wb1 ON w1.nip = wb1.wlasciciel_nip
-                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
-                WHERE wb1.wlasciciel_nip = wb.wlasciciel_nip AND
-                    wb1.biblioteka_nazwa <> @libraryName
-            ))
-    );
-
-    SET FOREIGN_KEY_CHECKS = 1;
 END
 $$
 DELIMITER ;
@@ -1323,28 +1306,6 @@ CREATE TRIGGER `ovnersUpdateTriger` BEFORE UPDATE ON `wlasciciele` FOR EACH ROW 
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong surname. Make sure surname starts with upper letter and doesn't contain any non letter chracters.";
 
     END IF;
-END
-$$
-DELIMITER ;
-DELIMITER $$
-CREATE TRIGGER `ovnersDeleteTriger` AFTER DELETE ON `wlasciciele` FOR EACH ROW BEGIN
-    SET FOREIGN_KEY_CHECKS = 0;
-
-    SET @nip = OLD.nip;
-    DELETE FROM wlasciciel_biblioteka WHERE wlasciciel_nip = @nip;
-
-    DELETE FROM biblioteki WHERE nazwa in (
-        SELECT wb.biblioteka_nazwa FROM wlasciciel_biblioteka AS wb
-            JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
-            WHERE wb.wlasciciel_nip = @nip AND (NOT EXISTS(
-                SELECT * FROM wlasciciel_biblioteka AS wb1
-                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
-                WHERE wb1.biblioteka_nazwa = wb.biblioteka_nazwa AND
-                    wb1.wlasciciel_nip <> @nip
-            ))
-    );
-
-    SET FOREIGN_KEY_CHECKS = 1;
 END
 $$
 DELIMITER ;

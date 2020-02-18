@@ -587,7 +587,6 @@ class Database:
                         raise Exception(f"Wrong {name}. Make sure {name} is in 'YYYY-MM-DD' format.")
                     elif condition == ((1,),):
                         raise Exception(f"Wrong {name}. Date can't be from the future.")
-
             self.logger.debug("Creating addRecord statement.")
 
             """Create columns_str string to hold columns names ready to put into mysql question"""
