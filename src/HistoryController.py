@@ -174,7 +174,10 @@ class ModifyController:
         self.entries = list()
 
         self.delay = IntVar()
-        self.delay.set(int(self.data[selectedRecord]["opoznienie"]))
+        if self.data[selectedRecord]["opoznienie"] == None:
+            self.delay.set(0)
+        else:
+            self.delay.set(int(self.data[selectedRecord]["opoznienie"]))
 
         rowNo = 0
 
@@ -247,7 +250,11 @@ class ModifyController:
         #entry = scrolledtext.ScrolledText(self.colFrame, width=40, height=10)
         entry = Entry(self.colFrame, width=40)
         entry.grid(row=rowNo, column=1, columnspan=2)
-        entry.insert(END, self.data[selectedRecord]["uwagi"])
+        #entry.insert(END, self.data[selectedRecord]["uwagi"])
+        if self.data[selectedRecord]["uwagi"] == None:
+            entry.insert(END, "")
+        else:
+            entry.insert(END, self.data[selectedRecord]["uwagi"])
         self.entries.append(entry)
         rowNo += 1
 

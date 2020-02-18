@@ -6,6 +6,7 @@ from tkintertable.Tables import TableCanvas
 from src.CustomTable import CustomTable
 from tkintertable.TableModels import TableModel
 import datetime
+from datetime import date
 from tkcalendar import DateEntry
 
 
@@ -580,10 +581,10 @@ class AddController:
 
         def refresh():
             self.vals = list()
-            temp_vals = self.database.executeStatement("SELECT `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
+            temp_vals = self.database.executeStatement("SELECT `autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
                                                        "FROM `autorzy`")
-            for val1, val2, val3, val4 in temp_vals:
-                author = f"{val1} {val2} {val3}"
+            for val0, val1, val2, val3, val4 in temp_vals:
+                author = f"{val0} {val1} {val2} {val3}"
                 if val4 is not None:
                     author += f"-{val4}"
                 self.vals.append(author)
@@ -640,10 +641,16 @@ class AddController:
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
                 return
 
+
             confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
             if not confirm:
                 return
-            self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            try:
+                self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            except Exception as e:
+                messagebox.showerror("Can not delete selected records!",
+                                     f"Error {e}")
+                return
             self.database.connection.commit()
             window.destroy()
             func()
@@ -693,7 +700,12 @@ class AddController:
                 id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
             else:
                 id = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
-            self.database.deleteAuthor(id)
+            try:
+                self.database.deleteAuthor(id)
+            except Exception as e:
+                messagebox.showerror("Can not delete selected records!",
+                                     f"Error {e}")
+                return
             self.database.connection.commit()
         else:
             return
@@ -712,6 +724,15 @@ class AddController:
         self.newRecord.append(self.entries[2].get())
         # Assigments
         # ...
+        if datetime.date(int(self.newRecord[1].split("-")[0]), int(self.newRecord[1].split("-")[1]),
+                             int(self.newRecord[1].split("-")[2])) > date.today():
+            messagebox.showerror("Wrong date", "Publishing date can not be bigger than today's date!")
+            return
+
+        if len(self.oldAssigments) == 0:
+            messagebox.showerror("Error", "Book can't be withour authors!")
+            return
+
 
         try:
             self.database.addBook(self.newRecord[0], self.newRecord[1], self.newRecord[2], self.oldAssigments)
@@ -859,16 +880,17 @@ class ModifyController:
         self.button.pack(side=BOTTOM)
 
     def assignAuthors(self):
+
         def acceptAuthors():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
 
         def refresh():
             self.vals = list()
-            temp_vals = self.database.executeStatement("SELECT `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
+            temp_vals = self.database.executeStatement("SELECT `autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
                                                        "FROM `autorzy`")
-            for val1, val2, val3, val4 in temp_vals:
-                author = f"{val1} {val2} {val3}"
+            for val0, val1, val2, val3, val4 in temp_vals:
+                author = f"{val0} {val1} {val2} {val3}"
                 if val4 is not None:
                     author += f"-{val4}"
                 self.vals.append(author)
@@ -909,7 +931,7 @@ class ModifyController:
         assignButton = Button(buttonFrame, text="Delete author", command=lambda: self.deleteAuthor(refresh))
         assignButton.pack(side=TOP)
 
-        Button(buttonFrame, text="Accept", command=self.acceptAuthors).pack(side=BOTTOM)
+        Button(buttonFrame, text="Accept", command=acceptAuthors).pack(side=BOTTOM)
         Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
 
 
@@ -929,7 +951,12 @@ class ModifyController:
             confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
             if not confirm:
                 return
-            self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            try:
+                self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            except Exception as e:
+                messagebox.showerror("Can not delete selected records!",
+                                     f"Error {e}")
+                return
             self.database.connection.commit()
             window.destroy()
             func()
@@ -981,7 +1008,12 @@ class ModifyController:
                 id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
             else:
                 id = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
-            self.database.deleteAuthor(id)
+            try:
+                self.database.deleteAuthor(id)
+            except Exception as e:
+                messagebox.showerror("Can not delete selected records!",
+                                     f"Error {e}")
+                return
             self.database.connection.commit()
         else:
             return
@@ -992,6 +1024,23 @@ class ModifyController:
 
     def checkEntry(self):
         self.newRecord.clear()
+        # Book title
+        self.newRecord.append(self.entries[0].get())
+        # Book date
+        self.newRecord.append(self.entries[1].get())
+        # Book genre
+        self.newRecord.append(self.entries[2].get())
+        # Assigments
+
+        if datetime.date(int(self.newRecord[1].split("-")[0]), int(self.newRecord[1].split("-")[1]),
+                         int(self.newRecord[1].split("-")[2])) > date.today():
+            messagebox.showerror("Wrong date", "Publishing date can not be bigger than today's date!")
+            return
+
+        if len(self.oldAssigments) == 0:
+            messagebox.showerror("Error", "Book can't be withour authors!")
+            return
+
         try:
             self.database.modifyBook(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(),
                                      self.entries[2].get(), self.oldAssigments)

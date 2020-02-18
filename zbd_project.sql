@@ -997,7 +997,7 @@ CREATE TRIGGER `booksUpdateTriger` BEFORE UPDATE ON `ksiazki` FOR EACH ROW BEGIN
 
     ELSEIF @title IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong title. You need to set title it can't be none.";
-    ELSEIF NOT @title REGEXP BINARY '^[A-Z]{1}' THEN
+    ELSEIF NOT @title REGEXP BINARY '^[A-Z]{1}*' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong title. Make sure title starts with upper letter.";
 
     ELSEIF @date IS NULL THEN
@@ -1065,7 +1065,7 @@ CREATE TRIGGER `workersAddTriger` BEFORE INSERT ON `pracownicy` FOR EACH ROW BEG
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
-    ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
+    ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
 
     ELSEIF @surname IS NULL THEN
@@ -1246,9 +1246,9 @@ CREATE TRIGGER `ovnersAddTriger` BEFORE INSERT ON `wlasciciele` FOR EACH ROW BEG
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this company name already exists.";
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname AND nazwisko IS NOT NULL)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
-    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
-            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
+--    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
+--            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
+--        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
 
     ELSEIF @nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
@@ -1287,9 +1287,9 @@ CREATE TRIGGER `ovnersUpdateTriger` BEFORE UPDATE ON `wlasciciele` FOR EACH ROW 
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname
             AND nazwisko IS NOT NULL) AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
-    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
-            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
+--     ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
+--             OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
+--         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
 
     ELSEIF @nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";

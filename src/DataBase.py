@@ -256,7 +256,7 @@ class Database:
             companyName = "NULL"
         try:
             self.executeStatement(f"INSERT INTO `wlasciciele` "
-                                  f"VALUES ({nip}, {name}, {companyName}, {surname})")
+                                  f"VALUES ({nip}, {companyName}, {name}, {surname})")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -298,11 +298,11 @@ class Database:
                 if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `wlasciciele` WHERE "
                                          f"`nip` = \'{nip}\'))")[0][0] == 0:
                     self.executeStatement(f"INSERT INTO `wlasciciele` "
-                                          f"VALUES (\'{nip}\', \'{aName}\',"
-                                          f" \'{surname}\', \'{firm}\')")
+                                          f"VALUES (\'{nip}\', \'{firm}\',"
+                                          f" \'{aName}\', \'{surname}\')")
 
-                    self.executeStatement(f"INSERT INTO `wlasciciel_biblioteka` "
-                                      f"VALUES (\'{nip}\', \'{name}\')")
+                self.executeStatement(f"INSERT INTO `wlasciciel_biblioteka` "
+                                  f"VALUES (\'{nip}\', \'{name}\')")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -332,11 +332,11 @@ class Database:
                 if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `wlasciciele` WHERE "
                                          f"`nip` = \'{nip}\'))")[0][0] == 0:
                     self.executeStatement(f"INSERT INTO `wlasciciele` "
-                                          f"VALUES (\'{nip}\', \'{aName}\',"
-                                          f" \'{surname}\', \'{firm}\')")
+                                          f"VALUES (\'{nip}\', \'{firm}\',"
+                                          f" \'{aName}\', \'{surname}\')")
 
-                    self.executeStatement(f"INSERT INTO `wlasciciel_biblioteka` "
-                                          f"VALUES (\'{nip}\', \'{name}\')")
+                self.executeStatement(f"INSERT INTO `wlasciciel_biblioteka` "
+                                      f"VALUES (\'{nip}\', \'{name}\')")
             return True
 
         except Exception as e:
@@ -383,12 +383,12 @@ class Database:
     def deleteBookRecord(self, bookId):
         try:
             self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
-
             self.executeStatement(f"DELETE FROM `ksiazki` "
                                   f"WHERE `ksiazka_id` = \"{bookId}\"")
 
             self.executeStatement(f"DELETE FROM `autor_ksiazka`"
                                   f"WHERE `ksiazki_ksiazka_id` = \"{bookId}\"")
+
 
             self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
@@ -509,13 +509,13 @@ class Database:
                                           f"VALUES (NULL, \'{name}\', \'{surname}\',"
                                           f" \'{birth}\', \'{death}\')")
 
-                    authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
-                                             f"`imie` = \'{name}\' AND "                                     
-                                             f"`nazwisko` = \'{surname}\' AND "
-                                             f"`data_urodzenia` = \'{birth}\'")[0][0]
+                authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
+                                         f"`imie` = \'{name}\' AND "                                     
+                                         f"`nazwisko` = \'{surname}\' AND "
+                                         f"`data_urodzenia` = \'{birth}\'")[0][0]
 
-                    self.executeStatement(f"INSERT INTO `autor_ksiazka` "
-                                          f"VALUES (\'{authorID}\', \'{old_id}\')")
+                self.executeStatement(f"INSERT INTO `autor_ksiazka` "
+                                      f"VALUES (\'{authorID}\', \'{old_id}\')")
 
             return True
         except Exception as e:

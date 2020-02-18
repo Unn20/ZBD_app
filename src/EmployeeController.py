@@ -204,7 +204,8 @@ class AddController:
         self.entries.append(entry)
 
         Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-        entry = Entry(self.colFrame, width=20)
+        #entry = Entry(self.colFrame, width=20)
+        entry = ttk.Combobox(self.colFrame, values=["szef", "kucharz", "obsluga_bazy", "pracownik", "sprzatacz", "ksiegowy"])
         entry.grid(row=2, column=1, columnspan=2)
         self.entries.append(entry)
 
@@ -369,7 +370,9 @@ class ModifyController:
         self.entries.append(entry)
 
         Label(self.colFrame, text="Funkcja", font=("Arial Bold", 12)).grid(row=2, column=0)
-        entry = Entry(self.colFrame, width=20)
+        #entry = Entry(self.colFrame, width=20)
+        entry = ttk.Combobox(self.colFrame,
+                             values=["szef", "kucharz", "obsluga_bazy", "pracownik", "sprzatacz", "ksiegowy"])
         entry.grid(row=2, column=1, columnspan=2)
         entry.insert(END, self.oldRecord[4])
         self.entries.append(entry)
