@@ -239,7 +239,10 @@ class BooksController:
             return
 
         def select():
-            atr = self.rackListbox.get(self.rackListbox.curselection())
+            try:
+                atr = self.rackListbox.get(self.rackListbox.curselection())
+            except:
+                return
             entry.config(state="normal")
             entry.delete("0", "end")
             entry.insert("end", atr)
