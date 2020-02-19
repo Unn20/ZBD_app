@@ -117,8 +117,16 @@ class ReaderController:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
                 if errorNo == 1451:
-                    messagebox.showerror("Can not delete selected records!",
-                                         f"There are bounds including selected record.")
+                    id = deletedRecord[0]
+                    confirm = messagebox.askyesno("Add",
+                                                  "Possible data loss. Are you sure?")
+                    if confirm:
+                        self.database.executeStatement(f"DELETE FROM `historia_operacji` WHERE"
+                                                       f"`czytelnik_id` = \'{id}\'")
+                        self.database.executeStatement(f"DELETE FROM `czytelnicy` WHERE"
+                                                       f"`czytelnik_id` = \'{id}\'")
+                    else:
+                        return
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")

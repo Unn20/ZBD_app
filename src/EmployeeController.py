@@ -165,8 +165,6 @@ class EmployeeController:
         if self.table is not None:
             self.table.redraw()
 
-        #TODO: Sprawdzic dlaczego usuniecie pracownika o id=7 usuwa również pracownika o id=9 ??????
-
 class AddController:
     def __init__(self, themeWindow, tableName, database, backEvent):
         self.themeWindow = themeWindow
@@ -250,7 +248,7 @@ class AddController:
         self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
 
         vals = list()
-        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
+        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy` WHERE `funkcja` = 'szef'")
         for val1, val2, val3 in temp_vals:
             vals.append(f"{val1} {val2} {val3}")
 
