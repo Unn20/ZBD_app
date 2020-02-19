@@ -127,7 +127,7 @@ class LibraryController:
 
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
-                                      f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
+                                      f"Possible data loss. Are you sure?")
         if confirm:
             self.database.connection.commit()
         else:
@@ -343,7 +343,10 @@ class AddController:
             confirm = messagebox.askyesno("New owner", "Are you sure that you want add new owner?")
             if not confirm:
                 return
-            self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            try:
+                self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            except Exception as e:
+                messagebox.showerror("Error", e)
             self.database.connection.commit()
             window.destroy()
             func()

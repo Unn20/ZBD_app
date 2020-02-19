@@ -125,19 +125,24 @@ class EmployeeController:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
                 if errorNo == 1451:
-                    messagebox.showerror("Can not delete selected records!",
-                                         f"There are bounds including selected record.")
+                    confirm = messagebox.askyesno("Delete",
+                                                  "Possible data loss. Are you sure?")
+                    if confirm:
+                        id = deletedRecord[0]
+                        self.database.executeStatement(f"DELETE FROM `historia_operacji` WHERE"
+                                                       f"`pracownik_id` = \'{id}\'")
+                        self.database.executeStatement(f"UPDATE `pracownicy` SET `szef_id` = NULL WHERE"
+                                                       f"`szef_id` = \'{id}\'")
+                        self.database.executeStatement(f"DELETE FROM `pracownicy` WHERE"
+                                                       f"`pracownik_id` = \'{id}\'")
+                    else:
+                        return
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
 
                 return
-        confirm = messagebox.askyesno("Deleting record confirmation",
-                                      f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
-        if confirm:
-            self.database.connection.commit()
-        else:
-            self.database.connection.rollback()
+        self.database.connection.commit()
         self.refreshTable()
         return
 
@@ -406,7 +411,13 @@ class ModifyController:
         self.newRecord.append(self.entries[1].get())
         # Employee's function
         self.newRecord.append(self.entries[2].get())
-
+        if self.oldRecord[4] == 'szef' and self.newRecord[4] != 'szef':
+            confirm = messagebox.askyesno("Modify record confirmation",
+                                          "All subordinates will have no boss. Are you sure?")
+            if confirm:
+                self.database.executeStatement(f"UPDATE `pracownicy` SET `szef_id` = NULL WHERE `szef_id` = \'{self.oldRecord[0]}\'")
+            else:
+                return
         try:
             self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
         except Exception as e:
@@ -429,15 +440,17 @@ class ModifyController:
                                      f"{e.__str__().split(',')[1][:-2]}")
             self.newRecord = list()
             return
-        confirm = messagebox.askyesno("Modify record confirmation",
-                                      "Are You sure that You want to modify this record in database?")
 
-        if confirm:
-            self.database.connection.commit()
-            self.goBack()
-        else:
-            self.database.connection.rollback()
-            self.themeWindow.focus_set()
+        if not(self.oldRecord[4] == 'szef' and self.newRecord[4] != 'szef'):
+            confirm = messagebox.askyesno("Modify record confirmation",
+                                          "Are You sure that You want to modify this record in database?")
+
+            if confirm:
+                self.database.connection.commit()
+                self.goBack()
+            else:
+                self.database.connection.rollback()
+                self.themeWindow.focus_set()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
@@ -467,7 +480,7 @@ class ModifyController:
         self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
 
         vals = list()
-        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
+        temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy` WHERE `funkcja` = 'szef'")
         for val1, val2, val3 in temp_vals:
             vals.append(f"{val1} {val2} {val3}")
 

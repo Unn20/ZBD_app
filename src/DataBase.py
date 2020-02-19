@@ -283,6 +283,9 @@ class Database:
             raise Exception(e)
 
     def addLibrary(self, name, localization, nip_assigments):
+        if(len(nip_assigments) == 0):
+            raise Exception("You need to assign owners.")
+
         try:
             self.executeStatement(f"INSERT INTO `biblioteki`"
                                   f"VALUES (\'{name}\',\'{localization}\')")
