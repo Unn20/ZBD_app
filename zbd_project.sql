@@ -29,8 +29,6 @@ SET time_zone = "+00:00";
 DROP PROCEDURE IF EXISTS `borrowBook`;
 DROP FUNCTION IF EXISTS `findBestBookBorrowCount`;
 DROP FUNCTION IF EXISTS `findBestBookTitle`;
-DROP FUNCTION IF EXISTS `deleteOvner`;
-DROP FUNCTION IF EXISTS `deleteLibrary`;
 
 DELIMITER $$
 --
@@ -135,36 +133,6 @@ CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookTitle` (`bookDateYear` I
     );
 END$$
 
-CREATE DEFINER=`root`@`localhost` FUNCTION `deleteOvner` (`nip` varchar(50)) RETURNS INT BEGIN
-    RETURN(
-        SELECT NOT (EXISTS(
-            SELECT * FROM wlasciciele AS w JOIN wlasciciel_biblioteka AS wb ON w.nip = wb.wlasciciel_nip
-                JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
-            WHERE wb.wlasciciel_nip = nip AND (NOT EXISTS(
-                SELECT * FROM wlasciciele AS w1 JOIN wlasciciel_biblioteka AS wb1 ON w1.nip = wb1.wlasciciel_nip
-                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
-                WHERE wb1.biblioteka_nazwa = wb.biblioteka_nazwa AND
-                    wb1.wlasciciel_nip <> nip
-            ))
-        ))
-    );
-END$$
-
-CREATE DEFINER=`root`@`localhost` FUNCTION `deleteLibrary` (`libraryName` varchar(50)) RETURNS INT BEGIN
-    RETURN(
-        SELECT NOT (EXISTS(
-            SELECT * FROM wlasciciele AS w JOIN wlasciciel_biblioteka AS wb ON w.nip = wb.wlasciciel_nip
-                JOIN biblioteki AS b ON wb.biblioteka_nazwa = b.nazwa
-            WHERE wb.biblioteka_nazwa = libraryName AND (NOT EXISTS(
-                SELECT * FROM wlasciciele AS w1 JOIN wlasciciel_biblioteka AS wb1 ON w1.nip = wb1.wlasciciel_nip
-                    JOIN biblioteki AS b1 ON wb1.biblioteka_nazwa = b1.nazwa
-                WHERE wb1.wlasciciel_nip = wb.wlasciciel_nip AND
-                    wb1.biblioteka_nazwa <> libraryName
-            ))
-        ))
-    );
-END$$
-
 DELIMITER ;
 
 -- --------------------------------------------------------
@@ -227,7 +195,7 @@ INSERT INTO `autorzy` (`autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_s
 (2, 'Magda', 'Nowak', '1975-01-22', NULL),
 (3, 'Piotr', 'Zima', '1972-08-01', NULL),
 (4, 'Karol', 'Leszczyk', '1976-03-30', '2012-04-14'),
-(5, 'Karol', 'Karol', '1979-04-14', NULL),
+(5, 'Karol', 'Majewski', '1979-04-14', NULL),
 (6, 'Joanna', 'Nowaczyk', '1971-12-25', NULL),
 (7, 'Marta', 'Kowalczyk', '1977-11-28', NULL),
 (8, 'Piotr', 'Wozniak', '1979-04-14', NULL),
@@ -244,7 +212,7 @@ CREATE TRIGGER `authorsAddTriger` BEFORE INSERT ON `autorzy` FOR EACH ROW BEGIN
     SET @birthDay = NEW.data_urodzenia;
     SET @deathDay = NEW.data_smierci;
 
-    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname)) THEN
+    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname AND data_urodzenia = @birthDay)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This author already exists.";
 
     ELSEIF @name IS NULL THEN
@@ -268,7 +236,7 @@ CREATE TRIGGER `authorsAddTriger` BEFORE INSERT ON `autorzy` FOR EACH ROW BEGIN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Date can't be from the future.";
     ELSEIF @deathDay = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
-    ELSEIF @deathDay <= @birthDay THEN
+    ELSEIF @deathDay < @birthDay THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. deathDay can't be before birthDay";
     ELSEIF @deathDay IS NULL AND DATEDIFF(CURDATE(), @birthDay) > 43830 THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Death day can't be null with this birthday. This author would have lived over 120 years.";
@@ -286,10 +254,11 @@ CREATE TRIGGER `authorsUpdateTriger` BEFORE UPDATE ON `autorzy` FOR EACH ROW BEG
     SET @oldSurname = OLD.nazwisko;
     SET @surname = NEW.nazwisko;
     SET @birthDay = NEW.data_urodzenia;
+    SET @oldBirthDay = OLD.data_urodzenia;
     SET @deathDay = NEW.data_smierci;
 
-    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname)
-        AND @name <> @oldName AND @surname <> @oldSurname) THEN
+    IF (SELECT EXISTS (SELECT * FROM autorzy WHERE imie = @name AND nazwisko = @surname AND data_urodzenia = @birthDay)
+        AND @name <> @oldName AND @surname <> @oldSurname AND @birthDay <> @oldBirthDay) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This author already exists.";
 
     ELSEIF @name IS NULL THEN
@@ -313,7 +282,7 @@ CREATE TRIGGER `authorsUpdateTriger` BEFORE UPDATE ON `autorzy` FOR EACH ROW BEG
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Date can't be from the future.";
     ELSEIF @deathDay = '0000-00-00' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. Make sure date is in 'YYYY-MM-DD' format.";
-    ELSEIF @deathDay <= @birthDay THEN
+    ELSEIF @deathDay < @birthDay THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong deathDay. deathDay can't be before birthDay";
     ELSEIF @deathDay IS NULL AND DATEDIFF(CURDATE(), @birthDay) > 43830 THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Death day can't be null with this birthday. This author would have lived over 120 years.";
@@ -474,7 +443,7 @@ CREATE TRIGGER `librariesUpdateTriger` BEFORE UPDATE ON `biblioteki` FOR EACH RO
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
     ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}' THEN
-        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. Make sure name starts with upper letter.";
 
     ELSEIF @location IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong location. You need to set location it can't be none.";
@@ -793,15 +762,15 @@ CREATE TABLE `historia_operacji` (
 
 INSERT INTO `historia_operacji` (`operacja_id`, `data`, `biblioteka_nazwa`, `pracownik_id`, `czytelnik_id`, `egzemplarz_id`, `rodzaj_operacji`, `opoznienie`, `uwagi`) VALUES
 (1, '1971-12-25', 'Biblioteka_na_rynku', 5, 4, 5, 'wypozyczenie', NULL, 'pierwszy raz od dawna'),
-(2, '1976-03-30', 'Super_Biblioteka', 3, 5, 8, 'przedluzenie', 4, 'sprawna operacja'),
-(3, '1973-07-17', 'Czytam_ksiazki', 4, 3, 3, 'przedluzenie', NULL, NULL),
-(4, '1976-03-30', 'Ksiazki_sa_super', 5, 3, 5, 'zwrot', 8, 'bez uwag'),
-(5, '1970-05-05', 'Ksiazki_sa_super', 2, 3, 4, 'zwrot', NULL, 'sprawna operacja'),
+(2, '1976-03-30', 'Super_Biblioteka', 3, 5, 8, 'wypozyczenie', 4, 'sprawna operacja'),
+(3, '1973-07-17', 'Czytam_ksiazki', 4, 3, 3, 'wypozyczenie', NULL, NULL),
+(4, '1976-03-30', 'Ksiazki_sa_super', 5, 3, 5, 'wypozyczenie', 8, 'bez uwag'),
+(5, '1970-05-05', 'Ksiazki_sa_super', 2, 3, 4, 'wypozyczenie', NULL, 'sprawna operacja'),
 (6, '1979-04-14', 'Czytam_ksiazki', 7, 4, 8, 'wypozyczenie', NULL, NULL),
 (7, '1971-12-25', 'Super_Biblioteka', 2, 1, 2, 'wypozyczenie', NULL, 'bez uwag'),
-(8, '1973-07-17', 'Ksiazki_sa_super', 9, 1, 6, 'przedluzenie', 18, NULL),
-(9, '1977-11-28', 'Biblioteka_dziecieca', 10, 4, 8, 'zwrot', 20, 'bez uwag'),
-(10, '1972-08-01', 'Biblioteka_na_rynku', 7, 7, 4, 'przedluzenie', NULL, 'bez uwag');
+(8, '1973-07-17', 'Ksiazki_sa_super', 9, 1, 6, 'wypozyczenie', 18, NULL),
+(9, '1977-11-28', 'Biblioteka_dziecieca', 10, 4, 8, 'wypozyczenie', 20, 'bez uwag'),
+(10, '1972-08-01', 'Biblioteka_na_rynku', 7, 7, 4, 'wypozyczenie', NULL, 'bez uwag');
 
 --
 -- Wyzwalacze `historia_operacji`
@@ -822,6 +791,8 @@ CREATE TRIGGER `operationsAddTriger` BEFORE INSERT ON `historia_operacji` FOR EA
             AND rodzaj_operacji = @operationType AND opoznienie = @delay AND uwagi = @comments)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This operation already exists.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @date) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. Date can't be from the future.";
     ELSEIF @date IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. You need to set date it can't be none.";
     ELSEIF @date = '0000-00-00' THEN
@@ -887,6 +858,8 @@ CREATE TRIGGER `operationsUpdateTriger` BEFORE UPDATE ON `historia_operacji` FOR
             OR @reader_id <> @oldReader_id OR @specimen_id <> @oldSpecimen_id OR @operationType <> @oldOperationType))) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "This operation already exists.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @date) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. Date can't be from the future.";
     ELSEIF @date IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. You need to set date it can't be none.";
     ELSEIF @date = '0000-00-00' THEN
@@ -973,6 +946,8 @@ CREATE TRIGGER `booksAddTriger` BEFORE INSERT ON `ksiazki` FOR EACH ROW BEGIN
     ELSEIF NOT @title REGEXP BINARY '^[A-Z]{1}' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong title. Make sure title starts with upper letter.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @date) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. Date can't be from the future.";
     ELSEIF @date IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. You need to set date it can't be none.";
     ELSEIF @date = '0000-00-00' THEN
@@ -997,9 +972,11 @@ CREATE TRIGGER `booksUpdateTriger` BEFORE UPDATE ON `ksiazki` FOR EACH ROW BEGIN
 
     ELSEIF @title IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong title. You need to set title it can't be none.";
-    ELSEIF NOT @title REGEXP BINARY '^[A-Z]{1}*' THEN
+    ELSEIF NOT @title REGEXP BINARY '^[A-Z]{1}' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong title. Make sure title starts with upper letter.";
 
+    ELSEIF (SELECT (SELECT CURDATE()) < @date) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. Date can't be from the future.";
     ELSEIF @date IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong date. You need to set date it can't be none.";
     ELSEIF @date = '0000-00-00' THEN
@@ -1038,10 +1015,10 @@ INSERT INTO `pracownicy` (`pracownik_id`, `szef_id`, `imie`, `nazwisko`, `funkcj
 (4, 6, 'Jakub', 'Leszczyk', 'obsluga_bazy'),
 (5, NULL, 'Joanna', 'Karol', 'obsluga_bazy'),
 (6, NULL, 'Karol', 'Nowaczyk', 'szef'),
-(7, NULL, 'Magda', 'Kowalczyk', 'kucharz'),
+(7, 10, 'Magda', 'Kowalczyk', 'kucharz'),
 (8, NULL, 'Piotr', 'Wozniak', 'kucharz'),
-(9, NULL, 'Natalia', 'Mazur', 'kucharz'),
-(10, NULL, 'Piotr', 'Krawczyk', 'obsluga_bazy');
+(9, 10, 'Natalia', 'Mazur', 'kucharz'),
+(10, NULL, 'Piotr', 'Krawczyk', 'szef');
 
 --
 -- Wyzwalacze `pracownicy`
@@ -1062,10 +1039,12 @@ CREATE TRIGGER `workersAddTriger` BEFORE INSERT ON `pracownicy` FOR EACH ROW BEG
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss has to have 'szef' function.";
     ELSEIF @boss_id = NEW.pracownik_id THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker can't be the boss for himself.";
+    ELSEIF @boss_id IS NOT NULL AND (SELECT szef_id FROM pracownicy WHERE pracownik_id = @boss_id) = NEW.pracownik_id THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss hierarchy problem.";
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
-    ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}' THEN
+    ELSEIF NOT @name REGEXP BINARY '^[A-Z]{1}[a-z]*$' THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. Make sure name starts with upper letter and doesn't contain any non letter chracters.";
 
     ELSEIF @surname IS NULL THEN
@@ -1099,6 +1078,8 @@ CREATE TRIGGER `workersUpdateTriger` BEFORE UPDATE ON `pracownicy` FOR EACH ROW 
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss has to have 'szef' function.";
     ELSEIF @boss_id = NEW.pracownik_id THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Worker can't be the boss for himself.";
+    ELSEIF @boss_id IS NOT NULL AND (SELECT szef_id FROM pracownicy WHERE pracownik_id = @boss_id) = NEW.pracownik_id THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong boss_id. Boss hierarchy problem.";
 
     ELSEIF @name IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong name. You need to set name it can't be none.";
@@ -1157,7 +1138,9 @@ CREATE TRIGGER `bookstandsAddTriger` BEFORE INSERT ON `regaly` FOR EACH ROW BEGI
     SET @booksCount = NEW.liczba_ksiazek;
     SET @sectionName = NEW.dzial_nazwa;
 
-    IF (SELECT EXISTS (SELECT * FROM regaly WHERE numer = @number)) THEN
+    IF NOT (@number REGEXP BINARY '^[0-9]+$') THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Bookstand number need to be intiger.";
+    ELSEIF (SELECT EXISTS (SELECT * FROM regaly WHERE numer = @number)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Bookstand with this number already exists.";
 
     ELSEIF @capacity IS NULL THEN
@@ -1246,9 +1229,9 @@ CREATE TRIGGER `ovnersAddTriger` BEFORE INSERT ON `wlasciciele` FOR EACH ROW BEG
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this company name already exists.";
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname AND nazwisko IS NOT NULL)) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
---    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
---            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
---        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
+    ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
+            OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
+        SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
 
     ELSEIF @nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";
@@ -1287,9 +1270,9 @@ CREATE TRIGGER `ovnersUpdateTriger` BEFORE UPDATE ON `wlasciciele` FOR EACH ROW 
     ELSEIF (SELECT EXISTS (SELECT * FROM wlasciciele WHERE imie = @name AND nazwisko = @surname
             AND nazwisko IS NOT NULL) AND @name <> @oldName AND @surname <> @oldSurname) THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Ovner with this name and surname already exists.";
---     ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
---             OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
---         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
+     ELSEIF NOT ((@companyName IS NOT NULL AND (@name IS NULL AND @surname IS NULL))
+             OR (@companyName IS NULL AND (@name IS NOT NULL AND @surname IS NOT NULL))) THEN
+         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "You need to set firm name or ovner name and surname.";
 
     ELSEIF @nip IS NULL THEN
         SIGNAL SQLSTATE '55555' SET MESSAGE_TEXT = "Wrong nip. You need to set nip it can't be none.";

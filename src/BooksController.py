@@ -89,6 +89,8 @@ class BooksController:
         self.specimenData = dict()
         def refresh():
             specimens = self.database.getSpecimensByBookId(self.bookId)
+            if len(specimens) == 0:
+                return
             specimenModel.createEmptyModel()
             self.specimenData = dict()
             for no, specimen in enumerate(specimens):
@@ -138,38 +140,47 @@ class BooksController:
             for r in tmp_racks:
                 racks.append(str(r[0]))
 
-            if entry2.get() in racks:
-                confirm = messagebox.askyesno("Add", "You want to add new specimen?")
-                if confirm:
-                    try:
-                        self.database.addSpecimen(self.bookId, entry2.get())
-                    except Exception as e:
-                        messagebox.showerror("Can not delete selected records!",
-                                             f"Error {e}")
-                        return
-                    self.database.connection.commit()
-                    func()
-                else:
-                    return
+            tmp_sections = self.database.executeStatement(f"SELECT `nazwa` FROM `dzialy` ")
+            sections = list()
+            for s in tmp_sections:
+                sections.append(str(s[0]))
+
+            if entry1.get() not in sections:
+                messagebox.showerror("Error", "If you want to create new Section press New button.")
+                return
             else:
-                confirm = messagebox.askyesno("Add", "Given rack doesn't exists. Would You like to create a new rack?")
-                if confirm:
-                    try:
-                        self.newRack(entry2.get(), 100, entry1.get())
-                    except Exception as e:
-                        messagebox.showerror("Can not delete selected records!",
-                                             f"Error {e}")
+                if entry2.get() in racks:
+                    confirm = messagebox.askyesno("Add", "You want to add new specimen?")
+                    if confirm:
+                        try:
+                            self.database.addSpecimen(self.bookId, entry2.get())
+                        except Exception as e:
+                            messagebox.showerror("Can not delete selected records!",
+                                                 f"Error {e}")
+                            return
+                        self.database.connection.commit()
+                        func()
+                    else:
                         return
-                    try:
-                        self.database.addSpecimen(self.bookId, entry2.get())
-                    except Exception as e:
-                        messagebox.showerror("Can not delete selected records!",
-                                             f"Error {e}")
-                        return
-                    self.database.connection.commit()
-                    func()
                 else:
-                    return
+                    confirm = messagebox.askyesno("Add", "Given rack doesn't exists. Would You like to create a new rack?")
+                    if confirm:
+                        try:
+                            self.newRack(entry2.get(), 100, entry1.get())
+                        except Exception as e:
+                            messagebox.showerror("Can not delete selected records!",
+                                                 f"Error {e}")
+                            return
+                        try:
+                            self.database.addSpecimen(self.bookId, entry2.get())
+                        except Exception as e:
+                            messagebox.showerror("Can not delete selected records!",
+                                                 f"Error {e}")
+                            return
+                        self.database.connection.commit()
+                        func()
+                    else:
+                        return
 
         window = Toplevel(self.specimenWindow)
         window.title(f"New specimen")
@@ -178,7 +189,7 @@ class BooksController:
         Label(window, text="Dział").grid(row=0, column=0)
         entry1 = Entry(window)
         entry1.grid(row=0, column=1, columnspan=2)
-        entry1.config(state="readonly")
+        entry1.config(state="normal")
         valueHelper = Button(window, text="?", command=lambda en=entry1: self.showDepartmentHelp(en))
         valueHelper.grid(row=0, column=3)
         new = Button(window, text="New", command=lambda en=entry1: self.newDepartment(en))
@@ -195,8 +206,11 @@ class BooksController:
         Button(window, text="Cancel", command=window.destroy).grid(row=2, column=1)
 
     def newRack(self, no, capability, dep):
+        if not re.match('^[0-9]+$', no):
+            raise Exception("Rack number need to be an intiger")
+            return
         self.database.executeStatement(f"INSERT INTO `regaly` "
-                                       f"VALUES ({no}, {capability}, {0}, \"{dep}\")")
+                                       f"VALUES (\'{no}\', \'{capability}\', \'{0}\', \"{dep}\")")
         self.database.connection.commit()
 
 
@@ -214,7 +228,7 @@ class BooksController:
                                          f"Error {e}")
                     return
                 self.database.connection.commit()
-                entry.set(entry1.get())
+                #entry.set(entry1.get())
             else:
                 return
 
@@ -310,14 +324,22 @@ class BooksController:
     def deleteSpecimen(self, func):
         for no, i in enumerate(self.specimenTable.multiplerowlist):
             recName = self.currentModel.getRecName(i)
+            id = self.specimenData[recName]["Egzemplarz ID"]
             try:
                 self.database.deleteSpecimen(self.specimenData[recName]["Egzemplarz ID"])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
                 if errorNo == 1451:
-                    messagebox.showerror("Can not delete selected records!",
-                                         f"There are bounds including selected record.")
+                    confirm = messagebox.askyesno("Add",
+                                                  "Possible data loss. Are you sure?")
+                    if confirm:
+                        self.database.executeStatement(f"DELETE FROM `historia_operacji` WHERE"
+                                                       f"`egzemplarz_id` = \'{id}\'")
+                        self.database.executeStatement(f"DELETE FROM `egzemplarze` WHERE"
+                                                       f"`egzemplarz_id` = \'{id}\'")
+                    else:
+                        return
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
@@ -358,14 +380,20 @@ class BooksController:
 
     def refreshTableWithAuthor(self, author):
         self.currentModel.createEmptyModel()
-        self.tableData = self.database.getBooksDataByAuthor(author)
+        try:
+            self.tableData = self.database.getBooksDataByAuthor(author)
+        except Exception as e:
+            messagebox.showerror("Error", e)
+
+
         self.data = dict()
-        for no, key in enumerate(self.tableData.keys()):
-            self.data[f"rec {no + 1}"] = dict()
-            self.data[f"rec {no + 1}"]["Tytuł"] = self.tableData[key]["tytul"]
-            self.data[f"rec {no + 1}"]["Data opublikowania"] = str(self.tableData[key]["data_opublikowania"])
-            self.data[f"rec {no + 1}"]["Gatunek"] = self.tableData[key]["gatunek"]
-            self.data[f"rec {no + 1}"]["Liczba egzemplarzy"] = self.tableData[key]["liczba_ksiazek"]
+        if self.tableData != None:
+            for no, key in enumerate(self.tableData.keys()):
+                self.data[f"rec {no + 1}"] = dict()
+                self.data[f"rec {no + 1}"]["Tytuł"] = self.tableData[key]["tytul"]
+                self.data[f"rec {no + 1}"]["Data opublikowania"] = str(self.tableData[key]["data_opublikowania"])
+                self.data[f"rec {no + 1}"]["Gatunek"] = self.tableData[key]["gatunek"]
+                self.data[f"rec {no + 1}"]["Liczba egzemplarzy"] = self.tableData[key]["liczba_ksiazek"]
 
         self.currentModel.importDict(self.data)
         if self.table is not None:
@@ -390,6 +418,7 @@ class BooksController:
                                                 f"FROM `autorzy` a "
                                                 f"JOIN `autor_ksiazka` ak ON a.`autor_id` = ak.`autorzy_autor_id` "
                                                 f"WHERE ak.`ksiazki_ksiazka_id` = \"{bookId[0][0]}\"")
+
         authorsModel = TableModel()
         authorsModel.createEmptyModel()
         authorsData = dict()
@@ -727,6 +756,23 @@ class AddController:
         self.newRecord.append(self.entries[2].get())
         # Assigments
         # ...
+
+        if self.newRecord[1] in ('', 'NULL', None):
+            messagebox.showerror("Wrong date.", "You need to set date.")
+            return
+
+        if str(self.newRecord[1].split("-")[1]) == '02' and int(self.newRecord[1].split("-")[2]) > 29:
+            messagebox.showerror("Wrong date", "This date dosn't exists.")
+            return
+
+        if int(self.newRecord[1].split("-")[2]) > 31:
+            messagebox.showerror("Wrong date", "This date dosn't exists.")
+            return
+
+        if str(self.newRecord[1].split("-")[1]) not in ('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'):
+            messagebox.showerror("Wrong date", "This date dosn't exists.")
+            return
+
         if datetime.date(int(self.newRecord[1].split("-")[0]), int(self.newRecord[1].split("-")[1]),
                              int(self.newRecord[1].split("-")[2])) > date.today():
             messagebox.showerror("Wrong date", "Publishing date can not be bigger than today's date!")
@@ -795,15 +841,17 @@ class ModifyController:
                                              f"FROM `autor_ksiazka` ak "
                                              f"JOIN `autorzy` a ON ak.`autorzy_autor_id` = a.`autor_id`"
                                              f"WHERE ak.`ksiazki_ksiazka_id` = {self.oldRecord[0]}")
+
         self.oldAssigments = list()
         for val1, val2, val3, val4 in ass:
-            owner = f"{val1}"
+            id = self.database.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE `imie` = \'{val1}\' AND `nazwisko` = \'{val2}\' AND `data_urodzenia` = \'{val3}\'")[0][0]
+            owner = f"{id} {val1}"
             if val2 is not None:
                 owner += f" {val2}"
             if val3 is not None:
                 owner += f" {val3}"
             if val4 is not None:
-                owner += f" {val4}"
+                owner += f"-{val4}"
             self.oldAssigments.append(owner)
 
         self.helpWindow = None
@@ -1034,6 +1082,22 @@ class ModifyController:
         # Book genre
         self.newRecord.append(self.entries[2].get())
         # Assigments
+
+        if self.newRecord[1] in ('', 'NULL', None):
+            messagebox.showerror("Wrong date.", "You need to set date.")
+            return
+
+        if str(self.newRecord[1].split("-")[1]) == '02' and int(self.newRecord[1].split("-")[2]) > 29:
+            messagebox.showerror("Wrong date", "This date dosn't exists.")
+            return
+
+        if int(self.newRecord[1].split("-")[2]) > 31:
+            messagebox.showerror("Wrong date", "This date dosn't exists.")
+            return
+
+        if str(self.newRecord[1].split("-")[1]) not in ('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'):
+            messagebox.showerror("Wrong date", "This date dosn't exists.")
+            return
 
         if datetime.date(int(self.newRecord[1].split("-")[0]), int(self.newRecord[1].split("-")[1]),
                          int(self.newRecord[1].split("-")[2])) > date.today():

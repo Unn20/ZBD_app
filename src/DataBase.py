@@ -178,13 +178,17 @@ class Database:
 
     def modifyHistoryRecord(self, oldRecord, newRecord):
         try:
+            if newRecord[0] == 0:
+                newRecord[0] = 'NULL'
+            else:
+                newRecord[0] = "\'" + str(newRecord[0]) + "\'"
             self.executeStatement(f"UPDATE `historia_operacji` "
                                   f"SET `opoznienie` = {newRecord[0]}, "
-                                  f"`pracownik_id` = {newRecord[1]}, "
-                                  f"`czytelnik_id` = {newRecord[2]}, "
+                                  f"`pracownik_id` = \'{newRecord[1]}\', "
+                                  f"`czytelnik_id` = \'{newRecord[2]}\', "
                                   f"`biblioteka_nazwa` = \"{newRecord[3]}\", "
                                   f"`uwagi` = \"{newRecord[4]}\" "
-                                  f"WHERE `operacja_id` = {oldRecord[0]}")
+                                  f"WHERE `operacja_id` = \'{oldRecord[0]}\'")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -279,6 +283,9 @@ class Database:
             raise Exception(e)
 
     def addLibrary(self, name, localization, nip_assigments):
+        if(len(nip_assigments) == 0):
+            raise Exception("You need to assign owners.")
+
         try:
             self.executeStatement(f"INSERT INTO `biblioteki`"
                                   f"VALUES (\'{name}\',\'{localization}\')")
@@ -364,15 +371,17 @@ class Database:
 
         if len(tmp_books) == 0:
             return
-        books = list()
+
+        books = """("""
         for b in tmp_books:
-            books.append(b[0])
+            books += f"\'{b[0]}\', "
+        books = books[:-2] + ")"
 
         rowData = self.executeStatement(
             f"SELECT k.`tytul`, k.`data_opublikowania`, k.`gatunek`, COUNT(egzemplarz_id) AS `liczba_ksiazek` "
             f"FROM `ksiazki` k LEFT JOIN `egzemplarze` e ON k.`ksiazka_id` = e.`ksiazka_id` "
             f"GROUP BY k.`tytul` "
-            f"HAVING k.`tytul` IN {tuple(books)}")
+            f"HAVING k.`tytul` IN {books}")
         result = dict()
         for noR, row in enumerate(rowData):
             result[f"rec{noR + 1}"] = dict()
@@ -439,6 +448,10 @@ class Database:
 
     def addBook(self, title, date, genre, author_assigments):
         try:
+            if genre in ('', 'NULL', None):
+                self.logger.error("you need to set genre")
+                raise Exception("you need to set genre")
+
             if self.executeStatement(f"SELECT \'{genre}\' IN "
                                   f"(SELECT `gatunek` FROM `gatunki`)")[0][0] == 0:
                 self.executeStatement(f"INSERT INTO `gatunki` "
@@ -454,17 +467,9 @@ class Database:
 
             for author in author_assigments:
                 author = author.split(" ")
-                name = author[0]
-                surname = author[1]
-                birth = author[2][:10]
-                death = author[2][10:]
-                if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `autorzy` WHERE "
-                                         f"`imie` = \'{name}\' AND "                                     
-                                         f"`nazwisko` = \'{surname}\' AND "
-                                         f"`data_urodzenia` = \'{birth}\'))")[0][0] == 0:
-                    self.executeStatement(f"INSERT INTO `autorzy` "
-                                          f"VALUES (NULL, \'{name}\', \'{surname}\',"
-                                          f" \'{birth}\', \'{death}\')")
+                name = author[1]
+                surname = author[2]
+                birth = author[3][:10]
 
                 authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
                                          f"`imie` = \'{name}\' AND "                                     
@@ -480,7 +485,12 @@ class Database:
             raise Exception(e)
 
     def modifyBook(self, old_id, title, date, genre, author_assigments):
+        print(author_assigments)
         try:
+            if genre in ('', 'NULL', None):
+                self.logger.error("you need to set genre")
+                raise Exception("you need to set genre")
+
             self.executeStatement(f"DELETE FROM `autor_ksiazka` "
                                   f"WHERE `ksiazki_ksiazka_id` = \'{old_id}\'")
 
@@ -497,17 +507,9 @@ class Database:
 
             for author in author_assigments:
                 author = author.split(" ")
-                name = author[0]
-                surname = author[1]
-                birth = author[2][:10]
-                death = author[2][10:]
-                if self.executeStatement(f"SELECT (EXISTS( SELECT * FROM `autorzy` WHERE "
-                                         f"`imie` = \'{name}\' AND "
-                                         f"`nazwisko` = \'{surname}\' AND "
-                                         f"`data_urodzenia` = \'{birth}\'))")[0][0] == 0:
-                    self.executeStatement(f"INSERT INTO `autorzy` "
-                                          f"VALUES (NULL, \'{name}\', \'{surname}\',"
-                                          f" \'{birth}\', \'{death}\')")
+                name = author[1]
+                surname = author[2]
+                birth = author[3][:10]
 
                 authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
                                          f"`imie` = \'{name}\' AND "                                     
@@ -552,7 +554,7 @@ class Database:
     def addSpecimen(self, bookId, rack):
         try:
             self.executeStatement(f"INSERT INTO `egzemplarze` "
-                                  f"VALUES (\"\", {bookId}, {rack})")
+                                  f"VALUES (\"\", \'{bookId}\', \'{rack}\')")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
