@@ -66,6 +66,16 @@ class Database:
         statement = "SELECT * FROM " + tableName + ";"
         return self.executeStatement(statement)
 
+    def getEmployeeData(self):
+        """ Gets data and return its in list form """
+        statement = "SELECT * FROM `pracownicy` ORDER BY `nazwisko`, `imie`"
+        return self.executeStatement(statement)
+
+    def getReaderData(self):
+        """ Gets data and return its in list form """
+        statement = "SELECT * FROM `czytelnicy` ORDER BY `nazwisko`, `imie`"
+        return self.executeStatement(statement)
+
     def getColumns(self, tableName):
         """Create and execute statement"""
         tableName = "'" + tableName + "'"
@@ -208,7 +218,8 @@ class Database:
         """ Owner by NIP """
         rowData = self.executeStatement(f"SELECT `nazwa`, `lokalizacja` FROM `biblioteki` b "
                                         f"JOIN `wlasciciel_biblioteka` wb ON b.`nazwa` = wb.`biblioteka_nazwa` "
-                                        f"WHERE wb.`wlasciciel_nip` = \"{owner}\"")
+                                        f"WHERE wb.`wlasciciel_nip` = \"{owner}\" "
+                                        f"ORDER BY `nazwa`")
         columns = ["nazwa", "lokalizacja"]
         result = dict()
         for noR, row in enumerate(rowData):
@@ -352,9 +363,58 @@ class Database:
 
     def getBooksData(self):
         columns = ["tytul", "data_opublikowania", "gatunek", "liczba_ksiazek"]
-        rowData = self.executeStatement("SELECT k.`tytul`, k.`data_opublikowania`, k.`gatunek`, COUNT(egzemplarz_id) AS `liczba_ksiazek`"
-                                        "FROM `ksiazki` k LEFT JOIN `egzemplarze` e ON k.`ksiazka_id` = e.`ksiazka_id`"
-                                        "GROUP BY k.`tytul`")
+        rowData = self.executeStatement("SELECT k.`tytul`, k.`data_opublikowania`, k.`gatunek`, COUNT(egzemplarz_id) AS `liczba_ksiazek` "
+                                        "FROM `ksiazki` k LEFT JOIN `egzemplarze` e ON k.`ksiazka_id` = e.`ksiazka_id` "
+                                        "GROUP BY k.`tytul` "
+                                        "ORDER BY k.`tytul`")
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
+    def getAuthorsData(self, bookId=""):
+        columns = ["imie", "nazwisko", "data_urodzenia", "data_smierci", "liczba_ksiazek"]
+        if bookId == "":
+            rowData = self.executeStatement("SELECT a.`imie`, a.`nazwisko`, a.`data_urodzenia`, a.`data_smierci`, "
+                                            "COUNT(`autor_id`) AS `liczba_ksiazek` "
+                                            "FROM `autorzy` a "
+                                            "JOIN `autor_ksiazka` ak ON a.`autor_id` = ak.`autorzy_autor_id` "
+                                            "JOIN `ksiazki` k ON ak.`ksiazki_ksiazka_id` = k.`ksiazka_id` "
+                                            "GROUP BY a.`autor_id` "
+                                            "ORDER BY a.`nazwisko`, a.`imie`")
+        else:
+            rowData = self.executeStatement("SELECT a.`imie`, a.`nazwisko`, a.`data_urodzenia`, a.`data_smierci`, "
+                                            "COUNT(`autor_id`) AS `liczba_ksiazek` "
+                                            "FROM `autorzy` a "
+                                            "JOIN `autor_ksiazka` ak ON a.`autor_id` = ak.`autorzy_autor_id` "
+                                            "JOIN `ksiazki` k ON ak.`ksiazki_ksiazka_id` = k.`ksiazka_id` "
+                                            f"WHERE k.`ksiazka_id` = {bookId} "
+                                            "GROUP BY a.`autor_id` "
+                                            "ORDER BY a.`nazwisko`, a.`imie`")
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
+    def getGenresData(self, genre=""):
+        columns = ["nazwa", 'liczba']
+        if genre == "":
+            rowData = self.executeStatement("SELECT g.`gatunek`, COUNT(*) AS `liczba` "
+                                            "FROM `gatunki` g "
+                                            "JOIN `ksiazki` k ON g.`gatunek` = k.`gatunek` "
+                                            "GROUP BY g.`gatunek` "
+                                            "ORDER BY g.`gatunek`")
+        else:
+            rowData = self.executeStatement("SELECT g.`gatunek`, COUNT(*) AS `liczba` "
+                                            "FROM `gatunki` g "
+                                            "JOIN `ksiazki` k ON g.`gatunek` = k.`gatunek` "
+                                            "GROUP BY g.`gatunek` "
+                                            f"HAVING g.`gatunek` = \'{genre}\'"
+                                            "ORDER BY g.`gatunek`")
         result = dict()
         for noR, row in enumerate(rowData):
             result[f"rec{noR + 1}"] = dict()
@@ -367,7 +427,8 @@ class Database:
         columns = ["tytul", "data_opublikowania", "gatunek", "liczba_ksiazek"]
         tmp_books = self.executeStatement(f"SELECT k.`tytul` FROM `ksiazki` k "
                                       f"JOIN `autor_ksiazka` ak ON k.`ksiazka_id` = ak.`ksiazki_ksiazka_id` "
-                                      f"WHERE ak.`autorzy_autor_id` = {author}")
+                                      f"WHERE ak.`autorzy_autor_id` = {author} "
+                                          f"ORDER BY k.`tytul`")
 
         if len(tmp_books) == 0:
             return
@@ -388,6 +449,7 @@ class Database:
             for noC, column in enumerate(columns):
                 result[f"rec{noR + 1}"][column] = row[noC]
         return result
+
 
     def deleteBookRecord(self, bookId):
         try:
@@ -485,7 +547,6 @@ class Database:
             raise Exception(e)
 
     def modifyBook(self, old_id, title, date, genre, author_assigments):
-        print(author_assigments)
         try:
             if genre in ('', 'NULL', None):
                 self.logger.error("you need to set genre")
@@ -523,6 +584,40 @@ class Database:
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
+
+    def modifyAuthor(self, oldId, name, surname, birthDate, deathDate=""):
+        print(name)
+        print(surname)
+        print(birthDate)
+        print(deathDate)
+        #TODO: wywala trigger :/
+        try:
+            if deathDate == "":
+                deathDate = "NULL"
+            self.executeStatement(f"UPDATE `autorzy` "
+                                  f"SET `imie` = \'{name}\',"
+                                  f" `nazwisko` = \'{surname}\',"
+                                  f" `data_urodzenia` = {birthDate},"
+                                  f" `data_smierci` = {deathDate} "
+                                  f"WHERE `autor_id` = {oldId}")
+
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+    def modifyGenre(self, oldGenre, genre):
+
+        try:
+            self.executeStatement(f"UPDATE `gatunki` "
+                                  f"SET `gatunek` = \'{genre}\' "
+                                  f"WHERE `gatunek` = \'{oldGenre}\'")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
 
     def getSpecimensByBookId(self, bookId):
         specimen = self.executeStatement(

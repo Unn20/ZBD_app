@@ -148,7 +148,7 @@ class EmployeeController:
 
     def refreshTable(self):
         self.model.createEmptyModel()
-        self.tableData = self.database.getRawData(self.tableName)
+        self.tableData = self.database.getEmployeeData()
         self.data = dict()
         for no, record in enumerate(self.tableData):
             self.data[f"rec {no}"] = dict()
