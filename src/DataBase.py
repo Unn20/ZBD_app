@@ -837,10 +837,14 @@ class Database:
 
     def borrowBook(self, libraryName, workerName, workerSurname,
                     readerName, readerSurname, bookTitle,
-                    bookDate, bookGenre, comments):
+                    comments):
         self.logger.debug("Borrowing book.")
 
+        bookDate = None # do usuniecia potem
+        bookGenre = None
+
         try:
+            # TODO: to przerobic bo juz nie potrzeba gatunku i daty
             self.executeStatement(f"CALL borrowBook('{libraryName}', '{workerName}', '{workerSurname}',"
                                   f"'{readerName}', '{readerSurname}', '{bookTitle}',"
                                   f"'{bookDate}', '{bookGenre}', '{comments}');")

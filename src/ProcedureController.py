@@ -13,7 +13,7 @@ class ProcedureController:
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("ProcedureController logger has started.")
 
-        self.mainLabels = ["Library", "Book title", "Genre", "Publishing date"]
+        self.mainLabels = ["Library", "Book title"]
         self.personalLabels = ["Reader's surname", "Reader's name", "Employee's surname", "Employee's name",
                                "Comment(optional)"]
 
@@ -116,7 +116,7 @@ class ProcedureController:
         try:
             self.database.borrowBook(args["Library"], args["Employee's name"], args["Employee's surname"],
                                      args["Reader's name"], args["Reader's surname"], args["Book title"],
-                                     args["Publishing date"], args["Genre"], args["Comment(optional)"])
+                                     args["Comment(optional)"])
         except Exception as e:
             errorNo = int(e.__str__().split()[0][1:-1])
             if errorNo == 1644:
@@ -213,11 +213,12 @@ class extendedComboBox:
             self.child.recurDisable()
 
     def selected(self, event):
-        if self.lab == "Book title":
-            self.child.bookName = self.combo.get()
-            self.child.child.bookName = self.combo.get()
-        elif self.lab == "Genre":
-            self.child.genre = str(self.combo.get())
+        # if self.lab == "Book title":
+        #     #self.child.bookName = self.combo.get()
+        #     #self.child.child.bookName = self.combo.get()
+        #     pass
+        # elif self.lab == "Genre":
+        #     self.child.genre = str(self.combo.get())
         self.enableChild()
 
     def refreshValues(self):
