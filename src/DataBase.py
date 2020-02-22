@@ -214,6 +214,16 @@ class Database:
                 result[f"rec{noR + 1}"][column] = row[noC]
         return result
 
+    def getOwnersData(self):
+        rowData = self.getRawData("wlasciciele")
+        columns = ["NIP", "Nazwa firmy", "Imię", "Nazwisko"]
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
     def getLibraryDataByOwner(self, owner):
         """ Owner by NIP """
         rowData = self.executeStatement(f"SELECT `nazwa`, `lokalizacja` FROM `biblioteki` b "
@@ -221,6 +231,19 @@ class Database:
                                         f"WHERE wb.`wlasciciel_nip` = \"{owner}\" "
                                         f"ORDER BY `nazwa`")
         columns = ["nazwa", "lokalizacja"]
+        result = dict()
+        for noR, row in enumerate(rowData):
+            result[f"rec{noR + 1}"] = dict()
+            for noC, column in enumerate(columns):
+                result[f"rec{noR + 1}"][column] = row[noC]
+        return result
+
+    def getOwnerDataByLibrary(self, library):
+        rowData = self.executeStatement(f"SELECT * FROM `wlasciciele` w "
+                                        f"JOIN `wlasciciel_biblioteka` wb ON w.`nip` = wb.`wlasciciel_nip` "
+                                        f"WHERE wb.`biblioteka_nazwa` = \"{library}\" "
+                                        f"ORDER BY `nip`")
+        columns = ["NIP", "Nazwa firmy", "Imię", "Nazwisko"]
         result = dict()
         for noR, row in enumerate(rowData):
             result[f"rec{noR + 1}"] = dict()
