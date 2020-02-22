@@ -586,20 +586,17 @@ class Database:
             raise Exception(e)
 
     def modifyAuthor(self, oldId, name, surname, birthDate, deathDate=""):
-        print(name)
-        print(surname)
-        print(birthDate)
-        print(deathDate)
-        #TODO: wywala trigger :/
         try:
             if deathDate == "":
                 deathDate = "NULL"
+            else:
+                deathDate = f"\'{deathDate}\'"
             self.executeStatement(f"UPDATE `autorzy` "
                                   f"SET `imie` = \'{name}\',"
                                   f" `nazwisko` = \'{surname}\',"
-                                  f" `data_urodzenia` = {birthDate},"
+                                  f" `data_urodzenia` = \'{birthDate}\',"
                                   f" `data_smierci` = {deathDate} "
-                                  f"WHERE `autor_id` = {oldId}")
+                                  f"WHERE `autor_id` = \'{oldId}\'")
 
 
             return True
