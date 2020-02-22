@@ -126,6 +126,9 @@ class BooksController:
 
         self.buttonModify2 = Button(self.bottomCanvas2, text=" MODIFY ", command=self.modify2, width=25, height=3, bd=5)
         self.buttonModify2.pack(side=LEFT)
+        self.buttonDelete2 = Button(self.bottomCanvas2, text=" DELETE ",
+                                   command=lambda: self.delete2(), width=25, height=3, bd=5)
+        self.buttonDelete2.pack(side=LEFT)
 
 
         ### GENRES
@@ -765,6 +768,39 @@ class BooksController:
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
+        if confirm:
+            self.database.connection.commit()
+        else:
+            self.database.connection.rollback()
+        self.refreshTable()
+        return
+
+    def delete2(self):
+        pass
+        """ Delete selected records """
+        for no, i in enumerate(self.table2.multiplerowlist):
+            recName = self.currentModel2.getRecName(i)
+
+            id = self.database.executeStatement(f"SELECT `autor_id` FROM `autorzy` "
+                                                f"WHERE `imie` = \"{self.data2[recName]['Imię']}\" "
+                                                f"AND `nazwisko` = \"{self.data2[recName]['Nazwisko']}\"")
+            try:
+                pass
+                #self.database.deleteAuthorRecord(id[0][0])
+                #TODO: zrobic
+            except Exception as e:
+                self.logger.error(f"Can not delete selected records! Error = {e}")
+                errorNo = int(e.__str__().split()[0][1:-1])
+                if errorNo == 1451:
+                    messagebox.showerror("Can not delete selected records!",
+                                         f"There are bounds including selected record.")
+                else:
+                    messagebox.showerror("Can not delete selected records!",
+                                         f"Error {e}")
+
+                return
+        confirm = messagebox.askyesno("Deleting record confirmation",
+                                      f"Are You sure that You want to delete {len(self.table2.multiplerowlist)} records?")
         if confirm:
             self.database.connection.commit()
         else:

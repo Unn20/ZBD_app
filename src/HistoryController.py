@@ -84,11 +84,6 @@ class HistoryController:
             self.modifyWindow = None
         self.refreshTable()
 
-    def add(self):
-        """ Go to add window """
-        if self.addWindow is None:
-            self.logger.debug("Starting add window.")
-            self.addWindow = AddController(self.themeWindow, self.database, self.backEvent)
 
     def modify(self):
         """ Go to modify window """
@@ -333,7 +328,7 @@ class ModifyController:
             entry.config(state="normal")
             entry.delete("0", "end")
             if table != "department":
-                entry.insert("end", atr.split(" ")[1] + " " + atr.split(" ")[2])
+                entry.insert("end", atr.split(" ")[0] + " " + atr.split(" ")[1])
             # else:
             #     entry.insert("end", atr.split(" ")[0])
             #     self.department = atr.split(" ")[0]
@@ -356,11 +351,11 @@ class ModifyController:
         if table == "employee":
             temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy`")
             for val1, val2, val3 in temp_vals:
-                vals.append(f"{val1} {val2} {val3}")
+                vals.append(f"{val2} {val3}")
         elif table == "reader":
             temp_vals = self.database.executeStatement("SELECT `czytelnik_id`, `imie`, `nazwisko` FROM `czytelnicy`")
             for val1, val2, val3 in temp_vals:
-                vals.append(f"{val1} {val2} {val3}")
+                vals.append(f"{val2} {val3}")
         else:
             temp_vals = self.database.executeStatement("SELECT `nazwa`, `lokalizacja` FROM `dzialy`")
             for val1, val2 in temp_vals:

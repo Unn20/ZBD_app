@@ -467,6 +467,10 @@ class Database:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
+    def deleteAuthorRecord(self):
+        pass
+        #TODO: zrobic usuwanie autora z tabeli z autorami
+
     def addAuthor(self, name, surname, birthDate, deathDate):
         if name != "":
             name = "\"" + name + "\""
