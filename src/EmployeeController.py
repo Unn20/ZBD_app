@@ -108,7 +108,10 @@ class EmployeeController:
         for no, i in enumerate(self.table.multiplerowlist):
             recName = self.model.getRecName(i)
             deletedRecord = list()
-            deletedRecord.append(self.data[recName]["ID"])
+            employeeId = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
+                                                        f"WHERE `imie` = \"{self.data[recName]['Imię']}\" "
+                                                        f"AND `nazwisko` = \"{self.data[recName]['Nazwisko']}\"")
+            deletedRecord.append(employeeId)
             if self.data[recName]["Nazwisko przełożonego"] == "":
                 deletedRecord.append("")
             else:
@@ -152,7 +155,7 @@ class EmployeeController:
         self.data = dict()
         for no, record in enumerate(self.tableData):
             self.data[f"rec {no}"] = dict()
-            self.data[f"rec {no}"]["ID"] = record[0]
+            #self.data[f"rec {no}"]["ID"] = record[0]
             self.data[f"rec {no}"]["Imię"] = record[2]
             self.data[f"rec {no}"]["Nazwisko"] = record[3]
             self.data[f"rec {no}"]["Funkcja"] = record[4]
@@ -237,7 +240,9 @@ class AddController:
             if atr == "<brak>":
                 boss_id = ""
             else:
-                boss_id = atr.split(" ")[0]
+                boss_id = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
+                                                         f"WHERE `imie` = \"{atr.split(' ')[0]}\" "
+                                                         f"AND `nazwisko` = \"{atr.split(' ')[1]}\"")
             entry.config(state="normal")
             entry.delete("0", "end")
             entry.insert("end", boss_id)
@@ -255,7 +260,7 @@ class AddController:
         vals = list()
         temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy` WHERE `funkcja` = 'szef'")
         for val1, val2, val3 in temp_vals:
-            vals.append(f"{val1} {val2} {val3}")
+            vals.append(f"{val2} {val3}")
 
         self.listbox = Listbox(self.helpWindow)
         self.listbox.pack(side=TOP)
@@ -323,7 +328,10 @@ class ModifyController:
 
         self.oldRecord = list()
         # Employee's id
-        self.oldRecord.append(data[selectedRecord]["ID"])
+        employeeId = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
+                                                    f"WHERE `imie` = \"{data[selectedRecord]['Imię']}\" "
+                                                    f"AND `nazwisko` = \"{data[selectedRecord]['Nazwisko']}\"")
+        self.oldRecord.append(employeeId[0][0])
         # Employee's boss_id
         boss_id = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
                                                  f"WHERE `imie` = \"{data[selectedRecord]['Imię przełożonego']}\" "
@@ -382,7 +390,8 @@ class ModifyController:
 
         Label(self.colFrame, text="Przełożony", font=("Arial Bold", 12)).grid(row=3, column=0)
         entry = Entry(self.colFrame, width=20, state="normal")
-        entry.insert(END, self.oldRecord[1])
+        entry.insert(END, data[selectedRecord]['Imię przełożonego'] +
+                     data[selectedRecord]['Nazwisko przełożonego'])
         entry.config(state="readonly")
         entry.grid(row=3, column=1, columnspan=2)
         self.entries.append(entry)
@@ -404,7 +413,13 @@ class ModifyController:
         # Employee's id
         self.newRecord.append(self.oldRecord[0])
         # Employee's boss_id
-        self.newRecord.append(self.entries[3].get())
+        if self.entries[3].get() != "":
+            boss_id = self.database.executeStatement(f"SELECT `pracownik_id` FROM `pracownicy` "
+                                                     f"WHERE `imie` = \"{self.entries[3].get().split(' ')[0]}\" "
+                                                     f"AND `nazwisko` = \"{self.entries[3].get().split(' ')[1]}\"")
+            self.newRecord.append(boss_id[0][0])
+        else:
+            self.newRecord.append(self.entries[3].get())
         # Employee's name
         self.newRecord.append(self.entries[0].get())
         # Employee's surname
@@ -462,12 +477,12 @@ class ModifyController:
         def select():
             atr = self.listbox.get(self.listbox.curselection())
             if atr == "<brak>":
-                boss_id = ""
+                res = ""
             else:
-                boss_id = atr.split(" ")[0]
+                res = atr
             entry.config(state="normal")
             entry.delete("0", "end")
-            entry.insert("end", boss_id)
+            entry.insert("end", res)
             entry.config(state="disabled")
             exit()
             return
@@ -482,7 +497,7 @@ class ModifyController:
         vals = list()
         temp_vals = self.database.executeStatement("SELECT `pracownik_id`, `imie`, `nazwisko` FROM `pracownicy` WHERE `funkcja` = 'szef'")
         for val1, val2, val3 in temp_vals:
-            vals.append(f"{val1} {val2} {val3}")
+            vals.append(f"{val2} {val3}")
 
         self.listbox = Listbox(self.helpWindow)
         self.listbox.pack(side=TOP)

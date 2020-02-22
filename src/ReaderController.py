@@ -147,7 +147,7 @@ class ReaderController:
         self.data = dict()
         for no, record in enumerate(self.tableData):
             self.data[f"rec {no}"] = dict()
-            self.data[f"rec {no}"]["ID"] = record[0]
+            #self.data[f"rec {no}"]["ID"] = record[0]
             self.data[f"rec {no}"]["Imię"] = record[1]
             self.data[f"rec {no}"]["Nazwisko"] = record[2]
 
@@ -245,19 +245,23 @@ class AddController:
 
 class ModifyController:
     def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
+        self.themeWindow = themeWindow
+        self.tableName = tableName
+        self.database = database
+        self.backEvent = backEvent
 
         self.oldRecord = list()
         # Reader's id
-        self.oldRecord.append(data[selectedRecord]["ID"])
+        readerId = self.database.executeStatement(f"SELECT `czytelnik_id` FROM `czytelnicy` "
+                                                  f"WHERE `imie` = \"{data[selectedRecord]['Imię']}\" "
+                                                  f"AND `nazwisko` = \"{data[selectedRecord]['Nazwisko']}\"")
+        self.oldRecord.append(readerId[0][0])
         # Reader's name
         self.oldRecord.append(data[selectedRecord]["Imię"])
         # Reader's surname
         self.oldRecord.append(data[selectedRecord]["Nazwisko"])
 
-        self.themeWindow = themeWindow
-        self.tableName = tableName
-        self.database = database
-        self.backEvent = backEvent
+
         # Start logger
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("ModifyController logger has started.")
