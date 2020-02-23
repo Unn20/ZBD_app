@@ -556,9 +556,9 @@ class Database:
 
             for author in author_assigments:
                 author = author.split(" ")
-                name = author[1]
-                surname = author[2]
-                birth = author[3][:10]
+                name = author[0]
+                surname = author[1]
+                birth = author[2][:10]
 
                 authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
                                          f"`imie` = \'{name}\' AND "                                     
@@ -595,9 +595,9 @@ class Database:
 
             for author in author_assigments:
                 author = author.split(" ")
-                name = author[1]
-                surname = author[2]
-                birth = author[3][:10]
+                name = author[0]
+                surname = author[1]
+                birth = author[2][:10]
 
                 authorID = self.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE"
                                          f"`imie` = \'{name}\' AND "                                     

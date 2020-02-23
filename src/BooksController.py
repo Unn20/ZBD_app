@@ -1000,7 +1000,7 @@ class AddController:
             temp_vals = self.database.executeStatement("SELECT `autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
                                                        "FROM `autorzy`")
             for val0, val1, val2, val3, val4 in temp_vals:
-                author = f"{val0} {val1} {val2} {val3}"
+                author = f"{val1} {val2} {val3}"
                 if val4 is not None:
                     author += f"-{val4}"
                 self.vals.append(author)
@@ -1238,7 +1238,7 @@ class ModifyController:
         self.oldAssigments = list()
         for val1, val2, val3, val4 in ass:
             id = self.database.executeStatement(f"SELECT `autor_id` FROM `autorzy` WHERE `imie` = \'{val1}\' AND `nazwisko` = \'{val2}\' AND `data_urodzenia` = \'{val3}\'")[0][0]
-            owner = f"{id} {val1}"
+            owner = f"{val1}"
             if val2 is not None:
                 owner += f" {val2}"
             if val3 is not None:
@@ -1343,7 +1343,7 @@ class ModifyController:
             temp_vals = self.database.executeStatement("SELECT `autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
                                                        "FROM `autorzy`")
             for val0, val1, val2, val3, val4 in temp_vals:
-                author = f"{val0} {val1} {val2} {val3}"
+                author = f"{val1} {val2} {val3}"
                 if val4 is not None:
                     author += f"-{val4}"
                 self.vals.append(author)
