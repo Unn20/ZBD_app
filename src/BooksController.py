@@ -1161,7 +1161,7 @@ class AddController:
             messagebox.showerror("Delete problem", "Please select an author to remove!")
             self.assignWindow.focus_set()
             return
-        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected author?")
+        confirm = messagebox.askyesno("Deleting", "Possible data loss. Are you sure?")
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
                 id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
@@ -1529,7 +1529,7 @@ class ModifyController:
             messagebox.showerror("Delete problem", "Please select an author to remove!")
             self.assignWindow.focus_set()
             return
-        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected author?")
+        confirm = messagebox.askyesno("Deleting", "Possible data loss. Are you sure?")
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
                 id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]

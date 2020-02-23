@@ -521,15 +521,22 @@ class Database:
 
     def deleteAuthor(self, authorId):
         try:
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
+            self.executeStatement(f"DELETE FROM `autor_ksiazka`"
+                                  f"WHERE `autorzy_autor_id` = \"{authorId}\"")
+
+            self.executeStatement(f"DELETE FROM `historia_operacji` "
+                                  f"where egzemplarz_id in (SELECT e.egzemplarz_id "
+                                  f"FROM `ksiazki` k JOIN `egzemplarze` as e on e.ksiazka_id = k.ksiazka_id "
+                                  f"WHERE NOT EXISTS(SELECT * FROM `autor_ksiazka`"
+                                  f"WHERE `ksiazki_ksiazka_id` = k.ksiazka_id))")
 
             self.executeStatement(f"DELETE FROM `autorzy` "
                                   f"WHERE `autor_id` = \"{authorId}\"")
 
-            self.executeStatement(f"DELETE FROM `autor_ksiazka`"
-                                  f"WHERE `autorzy_autor_id` = \"{authorId}\"")
+            self.executeStatement(f"DELETE FROM `ksiazki` WHERE "
+                                  f"NOT EXISTS(SELECT * FROM `autor_ksiazka` "
+                                  f"WHERE `ksiazki_ksiazka_id` = `ksiazka_id`)")
 
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
