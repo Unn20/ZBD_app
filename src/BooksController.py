@@ -650,7 +650,7 @@ class BooksController:
         authorsTable = CustomTable(authorsFrame, model=authorsModel)
         authorsTable.show()
 
-        Button(self.authorsWindow, text="Close", command=self.authorsWindow.destroy).pack(side=TOP)
+        Button(self.authorsWindow, text="Close", command=exit_function).pack(side=TOP)
 
     def checkBooksByAuthor(self):
         if self.table2.startrow != self.table2.endrow:
