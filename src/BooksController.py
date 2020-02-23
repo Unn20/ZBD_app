@@ -463,37 +463,23 @@ class BooksController:
             recName = self.currentModel.getRecName(i)
             id = self.specimenData[recName]["Egzemplarz ID"]
             try:
-                self.database.deleteSpecimen(self.specimenData[recName]["Egzemplarz ID"])
+                confirm = messagebox.askyesno("Add",
+                                              "Possible data loss. Are you sure?")
+                if confirm:
+                    self.database.deleteSpecimen(self.specimenData[recName]["Egzemplarz ID"])
+                else:
+                    self.specimenWindow.focus_set()
+                    return
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
-                errorNo = int(e.__str__().split()[0][1:-1])
-                if errorNo == 1451:
-                    confirm = messagebox.askyesno("Add",
-                                                  "Possible data loss. Are you sure?")
-                    if confirm:
-                        self.database.executeStatement(f"DELETE FROM `historia_operacji` WHERE"
-                                                       f"`egzemplarz_id` = \'{id}\'")
-                        self.database.executeStatement(f"DELETE FROM `egzemplarze` WHERE"
-                                                       f"`egzemplarz_id` = \'{id}\'")
-                        self.database.connection.commit()
-                        func()
-                        self.specimenWindow.focus_set()
-                    else:
-                        self.specimenWindow.focus_set()
-                        return
-                else:
-                    messagebox.showerror("Can not delete selected records!",
+                messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
                 self.specimenWindow.focus_set()
                 return
-        confirm = messagebox.askyesno("Deleting record confirmation",
-                                      f"Are You sure that You want to delete {len(self.specimenTable.multiplerowlist)} records?")
-        if confirm:
-            self.database.connection.commit()
-        else:
-            self.database.connection.rollback()
-        self.specimenWindow.focus_set()
+
+        self.database.connection.commit()
         func()
+        self.specimenWindow.focus_set()
         return
 
     def findByAuthor(self):

@@ -109,41 +109,30 @@ class ReaderController:
         for no, i in enumerate(self.table.multiplerowlist):
             recName = self.model.getRecName(i)
             deletedRecord = list()
-            readerId = self.database.executeStatement("SELECT `czytelnik_id` FROM `czytelnicy` "
-                                                      "WHERE `imie` = \"{self.data[recName]['Imię']}\" "
-                                                      "AND `nazwisko` = \"{self.data[recName]['Nazwisko']}\"")
+            name = self.data[recName]['Imię']
+            surname = self.data[recName]['Nazwisko']
+            readerId = self.database.executeStatement(f"SELECT `czytelnik_id` FROM `czytelnicy` "
+                                                      f"WHERE `imie` = \"{name}\" "
+                                                      f"AND `nazwisko` = \"{surname}\"")[0][0]
             deletedRecord.append(readerId)
             deletedRecord.append(self.data[recName]["Imię"])
             deletedRecord.append(self.data[recName]["Nazwisko"])
             try:
-                #TODO: To nie działa
-                self.database.deleteRecord(tableName, deletedRecord)
+                confirm = messagebox.askyesno("Delete",
+                                              "Possible data loss. Are you sure?")
+                if confirm:
+                    self.database.executeStatement(f"DELETE FROM `czytelnicy` WHERE"
+                                                   f"`czytelnik_id` = \'{readerId}\'")
+                else:
+                    return
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
-                errorNo = int(e.__str__().split()[0][1:-1])
-                if errorNo == 1451:
-                    id = deletedRecord[0]
-                    confirm = messagebox.askyesno("Add",
-                                                  "Possible data loss. Are you sure?")
-                    if confirm:
-                        self.database.executeStatement(f"DELETE FROM `historia_operacji` WHERE"
-                                                       f"`czytelnik_id` = \'{id}\'")
-                        self.database.executeStatement(f"DELETE FROM `czytelnicy` WHERE"
-                                                       f"`czytelnik_id` = \'{id}\'")
-                    else:
-                        return
-                else:
-                    messagebox.showerror("Can not delete selected records!",
+                messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-                    self.themeWindow.focus_set()
-
+                self.themeWindow.focus_set()
                 return
-        confirm = messagebox.askyesno("Deleting record confirmation",
-                                      f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
-        if confirm:
-            self.database.connection.commit()
-        else:
-            self.database.connection.rollback()
+
+        self.database.connection.commit()
         self.refreshTable()
         return
 

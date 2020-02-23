@@ -253,15 +253,14 @@ class Database:
 
     def deleteLibraryRecord(self, libraryName):
         try:
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
 
             self.executeStatement(f"DELETE FROM `biblioteki`"
                                   f"WHERE `nazwa` = \"{libraryName}\"")
 
-            self.executeStatement(f"DELETE FROM `wlasciciel_biblioteka`"
-                                  f"WHERE `biblioteka_nazwa` = \"{libraryName}\"")
+            self.executeStatement(f"DELETE FROM `wlasciciele` WHERE "
+                                  f"NOT EXISTS(SELECT * FROM `wlasciciel_biblioteka` "
+                                  f"WHERE `wlasciciel_nip` = `nip`)")
 
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -302,15 +301,6 @@ class Database:
 
     def deleteOwner(self, nip):
         try:
-
-            self.executeStatement(f"DELETE FROM `wlasciciel_biblioteka`"
-                                  f"WHERE `wlasciciel_nip` = \"{nip}\"")
-
-            self.executeStatement(f"DELETE FROM `historia_operacji` "
-                                  f"where biblioteka_nazwa in (SELECT b.nazwa "
-                                  f"FROM `biblioteki` as b "
-                                  f"WHERE NOT EXISTS(SELECT * FROM `wlasciciel_biblioteka` as wb "
-                                  f"WHERE wb.biblioteka_nazwa = b.nazwa))")
 
             self.executeStatement(f"DELETE FROM `wlasciciele` "
                                   f"WHERE `nip` = \"{nip}\"")
@@ -483,15 +473,13 @@ class Database:
 
     def deleteBookRecord(self, bookId):
         try:
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
+
             self.executeStatement(f"DELETE FROM `ksiazki` "
                                   f"WHERE `ksiazka_id` = \"{bookId}\"")
 
-            self.executeStatement(f"DELETE FROM `autor_ksiazka`"
-                                  f"WHERE `ksiazki_ksiazka_id` = \"{bookId}\"")
+            self.executeStatement(f"DELETE FROM autorzy WHERE autor_id not in "
+                                  f"(select autorzy_autor_id from autor_ksiazka)")
 
-
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")

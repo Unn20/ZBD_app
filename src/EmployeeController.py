@@ -119,30 +119,21 @@ class EmployeeController:
             deletedRecord.append(self.data[recName]["Nazwisko"])
             deletedRecord.append(self.data[recName]["Funkcja"])
             try:
-                self.database.deleteRecord(tableName, deletedRecord)
+                confirm = messagebox.askyesno("Delete",
+                                              "Possible data loss. Are you sure?")
+                if confirm:
+                    self.database.executeStatement(f"DELETE FROM `pracownicy` WHERE"
+                                                   f"`pracownik_id` = \'{deletedRecord[0][0][0]}\'")
+                else:
+                    return
+
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
-                errorNo = int(e.__str__().split()[0][1:-1])
-                if errorNo == 1451:
-                    confirm = messagebox.askyesno("Delete",
-                                                  "Possible data loss. Are you sure?")
-                    if confirm:
-                        id = deletedRecord[0]
-                        self.database.executeStatement(f"DELETE FROM `historia_operacji` WHERE"
-                                                       f"`pracownik_id` = \'{id}\'")
-                        self.database.executeStatement(f"UPDATE `pracownicy` SET `szef_id` = NULL WHERE"
-                                                       f"`szef_id` = \'{id}\'")
-                        self.database.executeStatement(f"DELETE FROM `pracownicy` WHERE"
-                                                       f"`pracownik_id` = \'{id}\'")
-                    else:
-                        self.themeWindow.focus_set()
-                        return
-                else:
-                    messagebox.showerror("Can not delete selected records!",
-                                         f"Error {e}")
-                    self.themeWindow.focus_set()
-
+                messagebox.showerror("Can not delete selected records!",
+                                     f"Error {e}")
+                self.themeWindow.focus_set()
                 return
+
         self.database.connection.commit()
         self.refreshTable()
         return

@@ -208,7 +208,7 @@ class LibraryController:
             deletedRecord = list()
             deletedRecord.append(self.data2[recName]["NIP"])
             try:
-                self.database.deleteAuthorRecord(deletedRecord[0])
+                self.database.deleteOwner(deletedRecord[0])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
