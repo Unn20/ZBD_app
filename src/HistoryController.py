@@ -26,12 +26,8 @@ class HistoryController:
         self.data = dict()
         self.model = TableModel()
 
-        if len(self.tableData) == 0:
-            messagebox.showwarning("Empty table", "This table has no records!")
-            self.data["_"] = dict()
-            self.data["_"]["_"] = "Empty table"
-        else:
-            self.refreshTable()
+
+        self.refreshTable()
 
         # Widgets
         self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
@@ -89,6 +85,7 @@ class HistoryController:
         """ Go to modify window """
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
@@ -112,7 +109,7 @@ class HistoryController:
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-
+                self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
@@ -120,6 +117,7 @@ class HistoryController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.themeWindow.focus_set()
         self.refreshTable()
         return
 
@@ -304,6 +302,7 @@ class ModifyController:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.modifyWindow.focus_set()
             self.newRecord = list()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
@@ -314,7 +313,7 @@ class ModifyController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
@@ -337,6 +336,7 @@ class ModifyController:
             #     #self.rackEntry.configure(values=self.racks)
             #     #self.rackEntry.set("")
             entry.config(state="readonly")
+            self.helpWindow.focus_set()
             exit()
             return
 

@@ -148,6 +148,7 @@ class LibraryController:
         """ Go to modify window """
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
@@ -161,6 +162,7 @@ class LibraryController:
         pass
         if self.table2.startrow != self.table2.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table2.currentrow
             if self.modifyWindow2 is None:
@@ -187,7 +189,7 @@ class LibraryController:
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-
+                self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Possible data loss. Are you sure?")
@@ -195,6 +197,7 @@ class LibraryController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.themeWindow.focus_set()
         self.refreshTable()
         return
 
@@ -217,7 +220,7 @@ class LibraryController:
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-
+                self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Possible data loss. Are you sure?")
@@ -225,6 +228,7 @@ class LibraryController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.themeWindow.focus_set()
         self.refreshTable()
         return
 
@@ -270,10 +274,12 @@ class LibraryController:
 
     def findByOwner(self):
         if self.findWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.findWindow.destroy()
             self.findWindow = None
+            self.themeWindow.focus_set()
         self.findWindow = Toplevel(self.themeWindow)
         self.findWindow.title("Search libraries by Owner's NIP.")
         self.findWindow.protocol('WM_DELETE_WINDOW', exit_function)
@@ -302,10 +308,12 @@ class LibraryController:
 
     def findByLibrary(self):
         if self.findWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.findWindow.destroy()
             self.findWindow = None
+            self.themeWindow.focus_set()
 
         self.findWindow = Toplevel(self.themeWindow)
         self.findWindow.title("Search owners by library's name.")
@@ -330,13 +338,16 @@ class LibraryController:
 
     def checkOwners(self):
         if self.ownersWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.ownersWindow.destroy()
             self.ownersWindow = None
+            self.themeWindow.focus_set()
 
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Owners', 'Please select only one record!')
+            self.themeWindow.focus_set()
             return
 
         recName = self.model.getRecName(self.table.currentrow)
@@ -379,13 +390,16 @@ class LibraryController:
 
     def checkLibraries(self):
         if self.ownersWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.ownersWindow.destroy()
             self.ownersWindow = None
+            self.themeWindow.focus_set()
 
         if self.table2.startrow != self.table2.endrow:
             messagebox.showwarning('Owners', 'Please select only one record!')
+            self.themeWindow.focus_set()
             return
 
         recName = self.model2.getRecName(self.table2.currentrow)
@@ -469,16 +483,19 @@ class AddController:
 
     def assignOwners(self):
         if self.assignWindow is not None:
+            self.addWindow.focus_set()
             return
 
         def acceptOwners():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
             self.assignWindow = None
+            self.addWindow.focus_set()
 
         def exit_function():
             self.assignWindow.destroy()
             self.assignWindow = None
+            self.addWindow.focus_set()
 
         def refresh():
             self.vals = list()
@@ -534,21 +551,26 @@ class AddController:
 
     def newOwner(self, func):
         if self.addWindow1 is not None:
+            self.assignWindow.focus_set()
             return
 
         def exit_function():
             self.addWindow1.destroy()
             self.addWindow1 = None
+            self.assignWindow.focus_set()
 
         def addOwner():
             if entry1.get() == "" or (entry4.get() == "" and (entry2.get() == "" or entry3.get() == "")):
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
+                self.addWindow1.focus_set()
                 return
             if len(entry1.get()) != 10 or not entry1.get().isdigit():
                 messagebox.showerror("Error", "NIP field must contains 10 digits!")
+                self.addWindow1.focus_set()
                 return
             confirm = messagebox.askyesno("New owner", "Are you sure that you want add new owner?")
             if not confirm:
+                self.addWindow1.focus_set()
                 return
             try:
                 self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
@@ -557,6 +579,7 @@ class AddController:
             self.database.connection.commit()
             window.destroy()
             self.addWindow1 = None
+            self.assignWindow.focus_set()
             func()
 
         window = Toplevel(self.assignWindow)
@@ -607,6 +630,7 @@ class AddController:
             self.database.connection.commit()
         else:
             return
+        self.assignWindow.focus_set()
         func()
 
 
@@ -640,6 +664,7 @@ class AddController:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.addWindow.focus_set()
             return
         confirm = messagebox.askyesno("Add record confirmation",
                                       "Are You sure that You want to add this record to database?")
@@ -649,7 +674,7 @@ class AddController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.addWindow.focus_set()
 
 class ModifyController:
     def __init__(self, themeWindow, database, selectedRecord, data, backEvent):
@@ -723,16 +748,19 @@ class ModifyController:
 
     def assignOwners(self):
         if self.assignWindow is not None:
+            self.modifyWindow.focus_set()
             return
 
         def acceptOwners():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
             self.assignWindow = None
+            self.modifyWindow.focus_set()
 
         def exit_function():
             self.assignWindow.destroy()
             self.assignWindow = None
+            self.modifyWindow.focus_set()
 
         def refresh():
             self.vals = list()
@@ -788,26 +816,32 @@ class ModifyController:
 
     def newOwner(self, func):
         if self.addWindow1 is not None:
+            self.assignWindow.focus_set()
             return
 
         def exit_function():
             self.addWindow1.destroy()
             self.addWindow1 = None
+            self.assignWindow.focus_set()
 
         def addOwner():
             if entry1.get() == "" or (entry4.get() == "" and (entry2.get() == "" or entry3.get() == "")):
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
+                self.addWindow1.focus_set()
                 return
             if len(entry1.get()) != 10 or not entry1.get().isdigit():
                 messagebox.showerror("Error", "NIP field must contains 10 digits!")
+                self.addWindow1.focus_set()
                 return
             confirm = messagebox.askyesno("New owner", "Are you sure that you want add new owner?")
             if not confirm:
+                self.addWindow1.focus_set()
                 return
             self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
             self.database.connection.commit()
             window.destroy()
             self.addWindow1 = None
+            self.assignWindow.focus_set()
             func()
 
         window = Toplevel(self.assignWindow)
@@ -846,6 +880,7 @@ class ModifyController:
     def deleteOwner(self, func):
         if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
             messagebox.showerror("Delete problem", "Please select an owner to remove!")
+            self.assignWindow.focus_set()
             return
         confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected owner?")
         if confirm:
@@ -856,7 +891,9 @@ class ModifyController:
             self.database.deleteOwner(nip)
             self.database.connection.commit()
         else:
+            self.assignWindow.focus_set()
             return
+        self.assignWindow.focus_set()
         func()
 
     def checkEntry(self):
@@ -881,6 +918,7 @@ class ModifyController:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
             self.newRecord = list()
+            self.modifyWindow.focus_set()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
@@ -890,7 +928,7 @@ class ModifyController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
@@ -984,6 +1022,7 @@ class ModifyController2:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
             self.newRecord = list()
+            self.modifyWindow.focus_set()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
@@ -993,7 +1032,7 @@ class ModifyController2:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")

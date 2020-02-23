@@ -27,12 +27,7 @@ class EmployeeController:
         self.data = dict()
         self.model = TableModel()
 
-        if len(self.tableData) == 0:
-            messagebox.showwarning("Empty table", "This table has no records!")
-            self.data["_"] = dict()
-            self.data["_"]["_"] = "Empty table"
-        else:
-            self.refreshTable()
+        self.refreshTable()
 
         # Widgets
         self.content = Frame(self.themeWindow, bg="#B7B9B8", bd=4, relief=RAISED,
@@ -95,6 +90,7 @@ class EmployeeController:
         """ Go to modify window """
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
@@ -139,10 +135,12 @@ class EmployeeController:
                         self.database.executeStatement(f"DELETE FROM `pracownicy` WHERE"
                                                        f"`pracownik_id` = \'{id}\'")
                     else:
+                        self.themeWindow.focus_set()
                         return
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
+                    self.themeWindow.focus_set()
 
                 return
         self.database.connection.commit()
@@ -248,6 +246,7 @@ class AddController:
             entry.insert("end", boss_id)
             entry.config(state="disabled")
             exit()
+            self.addWindow.focus_set()
             return
 
         def exit():
@@ -308,6 +307,7 @@ class AddController:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.addWindow.focus_set()
             return
         confirm = messagebox.askyesno("Add record confirmation",
                                       "Are You sure that You want to add this record to database?")
@@ -317,7 +317,7 @@ class AddController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.addWindow.focus_set()
 
 class ModifyController:
     def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
@@ -432,6 +432,7 @@ class ModifyController:
             if confirm:
                 self.database.executeStatement(f"UPDATE `pracownicy` SET `szef_id` = NULL WHERE `szef_id` = \'{self.oldRecord[0]}\'")
             else:
+                self.modifyWindow.focus_set()
                 return
         try:
             self.database.modifyRecord(self.tableName, self.oldRecord, self.newRecord)
@@ -453,6 +454,7 @@ class ModifyController:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.modifyWindow.focus_set()
             self.newRecord = list()
             return
 
@@ -465,7 +467,7 @@ class ModifyController:
                 self.goBack()
             else:
                 self.database.connection.rollback()
-                self.themeWindow.focus_set()
+                self.modifyWindow.focus_set()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
@@ -485,6 +487,7 @@ class ModifyController:
             entry.insert("end", res)
             entry.config(state="disabled")
             exit()
+            self.modifyWindow.focus_set()
             return
 
         def exit():

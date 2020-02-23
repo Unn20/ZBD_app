@@ -162,14 +162,9 @@ class BooksController:
         self.buttonModify3 = Button(self.bottomCanvas3, text=" MODIFY ", command=self.modify3, width=25, height=3, bd=5)
         self.buttonModify3.pack(side=LEFT)
 
-    def findBooksByAuthor(self):
-        pass
-
-    def findBooksByGenre(self):
-        pass
-
     def bookSpecimens(self):
         if self.specimenWindow is not None:
+            self.themeWindow.focus_set()
             return
 
         def exit_function():
@@ -179,9 +174,11 @@ class BooksController:
             self.departmentHelpWindow = None
             self.rackHelpWindow = None
             self.newDepartmentWindow = None
+            self.themeWindow.focus_set()
 
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Specimens', 'Please select only one record!')
+            self.themeWindow.focus_set()
             return
         self.specimenData = dict()
         def refresh():
@@ -227,6 +224,7 @@ class BooksController:
 
     def addSpecimen(self, func):
         if self.addSpecimenWindow is not None:
+            self.specimenWindow.focus_set()
             return
         def exit_function():
             self.addSpecimenWindow.destroy()
@@ -234,10 +232,12 @@ class BooksController:
             self.departmentHelpWindow = None
             self.rackHelpWindow = None
             self.newDepartmentWindow = None
+            self.specimenWindow.focus_set()
 
         def checkSpecimenEntry():
             if entry1.get() == "" or entry2.get() == "":
                 messagebox.showerror("Error", "Fill all mandatory fields!")
+                self.addSpecimenWindow.focus_set()
                 return
 
             tmp_racks = self.database.executeStatement(f"SELECT `numer` FROM `regaly` "
@@ -253,6 +253,7 @@ class BooksController:
 
             if entry1.get() not in sections:
                 messagebox.showerror("Error", "If you want to create new Section press New button.")
+                self.addSpecimenWindow.focus_set()
                 return
             else:
                 if entry2.get() in racks:
@@ -263,10 +264,12 @@ class BooksController:
                         except Exception as e:
                             messagebox.showerror("Can not delete selected records!",
                                                  f"Error {e}")
+                            self.addSpecimenWindow.focus_set()
                             return
                         self.database.connection.commit()
                         func()
                     else:
+                        self.addSpecimenWindow.focus_set()
                         return
                 else:
                     confirm = messagebox.askyesno("Add", "Given rack doesn't exists. Would You like to create a new rack?")
@@ -276,18 +279,21 @@ class BooksController:
                         except Exception as e:
                             messagebox.showerror("Can not delete selected records!",
                                                  f"Error {e}")
+                            self.addSpecimenWindow.focus_set()
                             return
                         try:
                             self.database.addSpecimen(self.bookId, entry2.get())
                         except Exception as e:
                             messagebox.showerror("Can not delete selected records!",
                                                  f"Error {e}")
+                            self.addSpecimenWindow.focus_set()
                             return
                         self.database.connection.commit()
                         self.addSpecimenWindow.destroy()
                         self.addSpecimenWindow = None
                         func()
                     else:
+                        self.addSpecimenWindow.focus_set()
                         return
 
         window = Toplevel(self.specimenWindow)
@@ -325,14 +331,17 @@ class BooksController:
 
     def newDepartment(self, entry):
         if self.newDepartmentWindow is not None:
+            self.addSpecimenWindow.focus_set()
             return
         def exit_function():
             self.newDepartmentWindow.destroy()
             self.newDepartmentWindow = None
+            self.addSpecimenWindow.focus_set()
 
         def addDep():
             if entry1.get() == "" or entry2.get() == "":
                 messagebox.showerror("Error", "Fill all mandatory fields!")
+                self.newDepartmentWindow
                 return
             confirm = messagebox.askyesno("Add", "You want to add new department?")
             if confirm:
@@ -341,12 +350,14 @@ class BooksController:
                 except Exception as e:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
+                    self.newDepartmentWindow
                     return
                 self.database.connection.commit()
                 self.newDepartmentWindow.destroy()
                 self.newDepartmentWindow = None
                 #entry.set(entry1.get())
             else:
+                self.newDepartmentWindow
                 return
 
         window = Toplevel(self.addSpecimenWindow)
@@ -368,6 +379,7 @@ class BooksController:
 
     def showRackHelp(self, entry, depEntry):
         if self.rackHelpWindow is not None:
+            self.addSpecimenWindow.focus_set()
             return
 
         def select():
@@ -385,6 +397,7 @@ class BooksController:
         def exit():
             self.rackHelpWindow.destroy()
             self.rackHelpWindow = None
+            self.addSpecimenWindow.focus_set()
 
         self.rackHelpWindow = Toplevel(self.addSpecimenWindow)
         self.rackHelpWindow.title("Choose rack")
@@ -406,6 +419,7 @@ class BooksController:
 
     def showDepartmentHelp(self, entry):
         if self.departmentHelpWindow is not None:
+            self.addSpecimenWindow.focus_set()
             return
 
         def select():
@@ -420,6 +434,7 @@ class BooksController:
         def exit():
             self.departmentHelpWindow.destroy()
             self.departmentHelpWindow = None
+            self.addSpecimenWindow.focus_set()
 
         self.departmentHelpWindow = Toplevel(self.addSpecimenWindow)
         self.departmentHelpWindow.title("Choose genre")
@@ -457,11 +472,12 @@ class BooksController:
                         self.database.executeStatement(f"DELETE FROM `egzemplarze` WHERE"
                                                        f"`egzemplarz_id` = \'{id}\'")
                     else:
+                        self.specimenWindow.focus_set()
                         return
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-
+                self.specimenWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Are You sure that You want to delete {len(self.specimenTable.multiplerowlist)} records?")
@@ -474,10 +490,12 @@ class BooksController:
 
     def findByAuthor(self):
         if self.findWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.findWindow.destroy()
             self.findWindow = None
+            self.themeWindow.focus_set()
         self.findWindow = Toplevel(self.themeWindow)
         self.findWindow.title("Search book by author's personal data.")
         self.findWindow.protocol('WM_DELETE_WINDOW', exit_function)
@@ -505,10 +523,12 @@ class BooksController:
 
     def findByBook(self):
         if self.findWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.findWindow.destroy()
             self.findWindow = None
+            self.themeWindow.focus_set()
         self.findWindow = Toplevel(self.themeWindow)
         self.findWindow.title("Search authors by book.")
         self.findWindow.protocol('WM_DELETE_WINDOW', exit_function)
@@ -587,13 +607,16 @@ class BooksController:
     def checkAuthors(self):
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Authors', 'Please select only one record!')
+            self.themeWindow.focus_set()
             return
         if self.authorsWindow is not None:
+            self.themeWindow.focus_set()
             return
 
         def exit_function():
             self.authorsWindow.destroy()
             self.authorsWindow = None
+            self.themeWindow.focus_set()
         recName = self.currentModel.getRecName(self.table.currentrow)
         self.authorsWindow = Toplevel(self.themeWindow)
         self.authorsWindow.title(f"Authors of book {self.data[recName]['Tytuł']}")
@@ -632,12 +655,15 @@ class BooksController:
     def checkBooksByAuthor(self):
         if self.table2.startrow != self.table2.endrow:
             messagebox.showwarning('Books', 'Please select only one record!')
+            self.themeWindow.focus_set()
             return
         if self.authorsWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.authorsWindow.destroy()
             self.authorsWindow = None
+            self.themeWindow.focus_set()
         recName = self.currentModel.getRecName(self.table2.currentrow)
 
         self.authorsWindow = Toplevel(self.themeWindow)
@@ -680,12 +706,15 @@ class BooksController:
     def checkBooksByGenre(self):
         if self.table3.startrow != self.table3.endrow:
             messagebox.showwarning('Books', 'Please select only one record!')
+            self.themeWindow.focus_set()
             return
         if self.authorsWindow is not None:
+            self.themeWindow.focus_set()
             return
         def exit_function():
             self.authorsWindow.destroy()
             self.authorsWindow = None
+            self.themeWindow.focus_set()
         recName = self.currentModel.getRecName(self.table3.currentrow)
 
         self.authorsWindow = Toplevel(self.themeWindow)
@@ -748,6 +777,7 @@ class BooksController:
         """ Go to modify window """
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
@@ -760,6 +790,7 @@ class BooksController:
         """ Go to modify window """
         if self.table2.startrow != self.table2.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table2.currentrow
             if self.modifyWindow2 is None:
@@ -772,6 +803,7 @@ class BooksController:
         """ Go to modify window """
         if self.table3.startrow != self.table3.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table3.currentrow
             if self.modifyWindow3 is None:
@@ -799,7 +831,7 @@ class BooksController:
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-
+                self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
@@ -807,6 +839,7 @@ class BooksController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.themeWindow.focus_set()
         self.refreshTable()
         return
 
@@ -832,7 +865,7 @@ class BooksController:
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-
+                self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
                                       f"Are You sure that You want to delete {len(self.table2.multiplerowlist)} records?")
@@ -840,6 +873,7 @@ class BooksController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.themeWindow.focus_set()
         self.refreshTable()
         return
 
@@ -948,6 +982,7 @@ class AddController:
 
     def showHelp(self, entry):
         if self.helpWindow is not None:
+            self.addWindow.focus_set()
             return
 
         def select():
@@ -962,6 +997,7 @@ class AddController:
         def exit():
             self.helpWindow.destroy()
             self.helpWindow = None
+            self.addWindow.focus_set()
 
         self.helpWindow = Toplevel(self.addWindow)
         self.helpWindow.title("Choose genre")
@@ -982,6 +1018,7 @@ class AddController:
 
     def assignAuthors(self):
         if self.assignWindow is not None:
+            self.addWindow.focus_set()
             return
 
         def acceptAuthors():
@@ -989,11 +1026,13 @@ class AddController:
             self.assignWindow.destroy()
             self.assignWindow = None
             self.newAuthorWindow = None
+            self.addWindow.focus_set()
 
         def exit_function():
             self.assignWindow.destroy()
             self.assignWindow = None
             self.newAuthorWindow = None
+            self.addWindow.focus_set()
 
         def refresh():
             self.vals = list()
@@ -1046,10 +1085,12 @@ class AddController:
 
     def newAuthor(self, func):
         if self.newAuthorWindow is not None:
+            self.assignWindow.focus_set()
             return
         def exit_function():
             self.newAuthorWindow.destroy()
             self.newAuthorWindow = None
+            self.assignWindow.focus_set()
         def clicked():
             if empty.get() == 1:
                 entry4.delete(0, "end")
@@ -1060,17 +1101,20 @@ class AddController:
         def addAuthor():
             if entry1.get() == "" or entry2.get() == "" or entry3.get() == "":
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
+                self.newAuthorWindow.focus_set()
                 return
 
 
             confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
             if not confirm:
+                self.newAuthorWindow.focus_set()
                 return
             try:
                 self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
             except Exception as e:
-                messagebox.showerror("Can not delete selected records!",
+                messagebox.showerror("Can not add selected record!",
                                      f"Error {e}")
+                self.newAuthorWindow.focus_set()
                 return
             self.database.connection.commit()
             window.destroy()
@@ -1115,6 +1159,7 @@ class AddController:
     def deleteAuthor(self, func):
         if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
             messagebox.showerror("Delete problem", "Please select an author to remove!")
+            self.assignWindow.focus_set()
             return
         confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected author?")
         if confirm:
@@ -1127,10 +1172,12 @@ class AddController:
             except Exception as e:
                 messagebox.showerror("Can not delete selected records!",
                                      f"Error {e}")
+                self.assignWindow.focus_set()
                 return
             self.database.connection.commit()
         else:
             return
+        self.assignWindow.focus_set()
         func()
 
     def goBack(self):
@@ -1149,27 +1196,33 @@ class AddController:
 
         if self.newRecord[1] in ('', 'NULL', None):
             messagebox.showerror("Wrong date.", "You need to set date.")
+            self.addWindow.focus_set()
             return
 
         if str(self.newRecord[1].split("-")[1]) == '02' and int(self.newRecord[1].split("-")[2]) > 29:
             messagebox.showerror("Wrong date", "This date dosn't exists.")
+            self.addWindow.focus_set()
             return
 
         if int(self.newRecord[1].split("-")[2]) > 31:
             messagebox.showerror("Wrong date", "This date dosn't exists.")
+            self.addWindow.focus_set()
             return
 
         if str(self.newRecord[1].split("-")[1]) not in ('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'):
             messagebox.showerror("Wrong date", "This date dosn't exists.")
+            self.addWindow.focus_set()
             return
 
         if datetime.date(int(self.newRecord[1].split("-")[0]), int(self.newRecord[1].split("-")[1]),
                              int(self.newRecord[1].split("-")[2])) > date.today():
             messagebox.showerror("Wrong date", "Publishing date can not be bigger than today's date!")
+            self.addWindow.focus_set()
             return
 
         if len(self.oldAssigments) == 0:
             messagebox.showerror("Error", "Book can't be withour authors!")
+            self.addWindow.focus_set()
             return
 
 
@@ -1193,6 +1246,7 @@ class AddController:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.addWindow.focus_set()
             return
         confirm = messagebox.askyesno("Add record confirmation",
                                       "Are You sure that You want to add this record to database?")
@@ -1202,7 +1256,7 @@ class AddController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.addWindow.focus_set()
 
 class ModifyController:
     def __init__(self, themeWindow, database, selectedRecord, data, backEvent):
@@ -1292,6 +1346,7 @@ class ModifyController:
 
     def showHelp(self, entry):
         if self.helpWindow is not None:
+            self.modifyWindow.focus_set()
             return
 
         def select():
@@ -1306,6 +1361,7 @@ class ModifyController:
         def exit():
             self.helpWindow.destroy()
             self.helpWindow = None
+            self.modifyWindow.focus_set()
 
         self.helpWindow = Toplevel(self.modifyWindow)
         self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
@@ -1325,6 +1381,7 @@ class ModifyController:
 
     def assignAuthors(self):
         if self.assignWindow is not None:
+            self.modifyWindow.focus_set()
             return
 
         def acceptAuthors():
@@ -1332,11 +1389,13 @@ class ModifyController:
             self.assignWindow.destroy()
             self.assignWindow = None
             self.newAuthorWindow = None
+            self.modifyWindow.focus_set()
 
         def exit_function():
             self.assignWindow.destroy()
             self.assignWindow = None
             self.newAuthorWindow = None
+            self.modifyWindow.focus_set()
 
         def refresh():
             self.vals = list()
@@ -1390,10 +1449,12 @@ class ModifyController:
 
     def newAuthor(self, func):
         if self.newAuthorWindow is not None:
+            self.assignWindow.focus_set()
             return
         def exit_function():
             self.newAuthorWindow.destroy()
             self.newAuthorWindow = None
+            self.assignWindow.focus_set()
 
         def clicked():
             if empty.get() == 0:
@@ -1405,16 +1466,19 @@ class ModifyController:
         def addAuthor():
             if entry1.get() == "" or entry2.get() == "" or entry3.get() == "":
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
+                self.newAuthorWindow.focus_set()
                 return
 
             confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
             if not confirm:
+                self.newAuthorWindow.focus_set()
                 return
             try:
                 self.database.addAuthor(entry1.get(), entry2.get(), entry3.get(), entry4.get())
             except Exception as e:
                 messagebox.showerror("Can not delete selected records!",
                                      f"Error {e}")
+                self.newAuthorWindow.focus_set()
                 return
             self.database.connection.commit()
             window.destroy()
@@ -1463,6 +1527,7 @@ class ModifyController:
     def deleteAuthor(self, func):
         if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
             messagebox.showerror("Delete problem", "Please select an author to remove!")
+            self.assignWindow.focus_set()
             return
         confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected author?")
         if confirm:
@@ -1479,6 +1544,7 @@ class ModifyController:
             self.database.connection.commit()
         else:
             return
+        self.assignWindow.focus_set()
         func()
 
     def goBack(self):
@@ -1496,27 +1562,33 @@ class ModifyController:
 
         if self.newRecord[1] in ('', 'NULL', None):
             messagebox.showerror("Wrong date.", "You need to set date.")
+            self.modifyWindow.focus_set()
             return
 
         if str(self.newRecord[1].split("-")[1]) == '02' and int(self.newRecord[1].split("-")[2]) > 29:
             messagebox.showerror("Wrong date", "This date dosn't exists.")
+            self.modifyWindow.focus_set()
             return
 
         if int(self.newRecord[1].split("-")[2]) > 31:
             messagebox.showerror("Wrong date", "This date dosn't exists.")
+            self.modifyWindow.focus_set()
             return
 
         if str(self.newRecord[1].split("-")[1]) not in ('01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'):
             messagebox.showerror("Wrong date", "This date dosn't exists.")
+            self.modifyWindow.focus_set()
             return
 
         if datetime.date(int(self.newRecord[1].split("-")[0]), int(self.newRecord[1].split("-")[1]),
                          int(self.newRecord[1].split("-")[2])) > date.today():
             messagebox.showerror("Wrong date", "Publishing date can not be bigger than today's date!")
+            self.modifyWindow.focus_set()
             return
 
         if len(self.oldAssigments) == 0:
             messagebox.showerror("Error", "Book can't be withour authors!")
+            self.modifyWindow.focus_set()
             return
 
         try:
@@ -1541,6 +1613,7 @@ class ModifyController:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
             self.newRecord = list()
+            self.modifyWindow.focus_set()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
                                       "Are You sure that You want to modify this record in database?")
@@ -1550,7 +1623,7 @@ class ModifyController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 
 
 class ModifyController2:
@@ -1673,6 +1746,7 @@ class ModifyController2:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.modifyWindow.focus_set()
             self.newRecord = list()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
@@ -1683,7 +1757,7 @@ class ModifyController2:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 
 class ModifyController3:
     def __init__(self, themeWindow, database, selectedRecord, data, backEvent):
@@ -1759,6 +1833,7 @@ class ModifyController3:
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+            self.modifyWindow.focus_set()
             self.newRecord = list()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
@@ -1769,5 +1844,5 @@ class ModifyController3:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 

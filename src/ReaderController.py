@@ -95,6 +95,7 @@ class ReaderController:
         """ Go to modify window """
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Modify error', 'Please select only one record!')
+            self.themeWindow.focus_set()
         else:
             selectedRow = self.table.currentrow
             if self.modifyWindow is None:
@@ -108,10 +109,14 @@ class ReaderController:
         for no, i in enumerate(self.table.multiplerowlist):
             recName = self.model.getRecName(i)
             deletedRecord = list()
-            deletedRecord.append(self.data[recName]["ID"])
+            readerId = self.database.executeStatement("SELECT `czytelnik_id` FROM `czytelnicy` "
+                                                      "WHERE `imie` = \"{self.data[recName]['Imię']}\" "
+                                                      "AND `nazwisko` = \"{self.data[recName]['Nazwisko']}\"")
+            deletedRecord.append(readerId)
             deletedRecord.append(self.data[recName]["Imię"])
             deletedRecord.append(self.data[recName]["Nazwisko"])
             try:
+                #TODO: To nie działa
                 self.database.deleteRecord(tableName, deletedRecord)
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
@@ -130,6 +135,7 @@ class ReaderController:
                 else:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
+                    self.themeWindow.focus_set()
 
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
@@ -223,15 +229,19 @@ class AddController:
             if errorNo == 1048:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+                self.addWindow.focus_set()
             elif errorNo == 1062:
                 messagebox.showerror("Can not add a record to database!",
                                      f"Primary column value (with '*') is duplicate!")
+                self.addWindow.focus_set()
             elif errorNo == 0:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e}")
+                self.addWindow.focus_set()
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+                self.addWindow.focus_set()
             return
         confirm = messagebox.askyesno("Add record confirmation",
                                       "Are You sure that You want to add this record to database?")
@@ -241,7 +251,7 @@ class AddController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.addWindow.focus_set()
 
 class ModifyController:
     def __init__(self, themeWindow, tableName, database, selectedRecord, data, backEvent):
@@ -324,15 +334,19 @@ class ModifyController:
             if errorNo == 1048:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+                self.modifyWindow.focus_set()
             elif errorNo == 1062:
                 messagebox.showerror("Can not add a record to database!",
                                      f"Primary column value (with '*') is duplicate!")
+                self.modifyWindow.focus_set()
             elif errorNo == 0:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e}")
+                self.modifyWindow.focus_set()
             else:
                 messagebox.showerror("Can not add a record to database!",
                                      f"{e.__str__().split(',')[1][:-2]}")
+                self.modifyWindow.focus_set()
             self.newRecord = list()
             return
         confirm = messagebox.askyesno("Modify record confirmation",
@@ -343,7 +357,7 @@ class ModifyController:
             self.goBack()
         else:
             self.database.connection.rollback()
-            self.themeWindow.focus_set()
+            self.modifyWindow.focus_set()
 
     def goBack(self):
         self.modifyWindow.event_generate("<<back>>")
