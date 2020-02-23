@@ -30,6 +30,9 @@ class BooksController:
         self.departmentHelpWindow = None
         self.findWindow = None
         self.authorsWindow = None
+        self.specimenWindow = None
+        self.addSpecimenWindow = None
+        self.newDepartmentWindow = None
 
         #self.tableData = None
         self.data = dict()
@@ -166,6 +169,17 @@ class BooksController:
         pass
 
     def bookSpecimens(self):
+        if self.specimenWindow is not None:
+            return
+
+        def exit_function():
+            self.specimenWindow.destroy()
+            self.specimenWindow = None
+            self.addSpecimenWindow = None
+            self.departmentHelpWindow = None
+            self.rackHelpWindow = None
+            self.newDepartmentWindow = None
+
         if self.table.startrow != self.table.endrow:
             messagebox.showwarning('Specimens', 'Please select only one record!')
             return
@@ -190,7 +204,7 @@ class BooksController:
 
         self.specimenWindow = Toplevel(self.themeWindow)
         self.specimenWindow.title(f"Specimens of book {self.data[recName]['Tytuł']}")
-        self.specimenWindow.protocol('WM_DELETE_WINDOW', self.specimenWindow.destroy)
+        self.specimenWindow.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(self.specimenWindow, text=f"Specimens of {self.data[recName]['Tytuł']}").pack(side=TOP)
 
@@ -209,9 +223,18 @@ class BooksController:
 
         Button(buttonFrame, text="Add", command=lambda: self.addSpecimen(refresh)).pack(side=LEFT)
         Button(buttonFrame, text="Delete", command=lambda: self.deleteSpecimen(refresh)).pack(side=LEFT)
-        Button(buttonFrame, text="Cancel", command=self.specimenWindow.destroy).pack(side=LEFT)
+        Button(buttonFrame, text="Cancel", command=exit_function).pack(side=LEFT)
 
     def addSpecimen(self, func):
+        if self.addSpecimenWindow is not None:
+            return
+        def exit_function():
+            self.addSpecimenWindow.destroy()
+            self.addSpecimenWindow = None
+            self.departmentHelpWindow = None
+            self.rackHelpWindow = None
+            self.newDepartmentWindow = None
+
         def checkSpecimenEntry():
             if entry1.get() == "" or entry2.get() == "":
                 messagebox.showerror("Error", "Fill all mandatory fields!")
@@ -261,13 +284,16 @@ class BooksController:
                                                  f"Error {e}")
                             return
                         self.database.connection.commit()
+                        self.addSpecimenWindow.destroy()
+                        self.addSpecimenWindow = None
                         func()
                     else:
                         return
 
         window = Toplevel(self.specimenWindow)
+        self.addSpecimenWindow = window
         window.title(f"New specimen")
-        window.protocol('WM_DELETE_WINDOW', window.destroy)
+        window.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(window, text="Dział").grid(row=0, column=0)
         entry1 = Entry(window)
@@ -286,7 +312,7 @@ class BooksController:
         valueHelper.grid(row=1, column=3)
 
         Button(window, text="Add", command=checkSpecimenEntry).grid(row=2, column=0)
-        Button(window, text="Cancel", command=window.destroy).grid(row=2, column=1)
+        Button(window, text="Cancel", command=exit_function).grid(row=2, column=1)
 
     def newRack(self, no, capability, dep):
         if not re.match('^[0-9]+$', no):
@@ -298,6 +324,12 @@ class BooksController:
 
 
     def newDepartment(self, entry):
+        if self.newDepartmentWindow is not None:
+            return
+        def exit_function():
+            self.newDepartmentWindow.destroy()
+            self.newDepartmentWindow = None
+
         def addDep():
             if entry1.get() == "" or entry2.get() == "":
                 messagebox.showerror("Error", "Fill all mandatory fields!")
@@ -311,13 +343,16 @@ class BooksController:
                                          f"Error {e}")
                     return
                 self.database.connection.commit()
+                self.newDepartmentWindow.destroy()
+                self.newDepartmentWindow = None
                 #entry.set(entry1.get())
             else:
                 return
 
-        window = Toplevel(self.specimenWindow)
+        window = Toplevel(self.addSpecimenWindow)
+        self.newDepartmentWindow = window
         window.title(f"New department")
-        window.protocol('WM_DELETE_WINDOW', window.destroy)
+        window.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(window, text="Nazwa", font=("Arial Bold", 12)).grid(row=0, column=0)
         entry1 = Entry(window, width=20)
@@ -328,7 +363,7 @@ class BooksController:
         entry2.grid(row=1, column=1, columnspan=2)
 
         Button(window, text="Add", command=addDep).grid(row=2, column=0)
-        Button(window, text="Cancel", command=window.destroy).grid(row=2, column=1)
+        Button(window, text="Cancel", command=exit_function).grid(row=2, column=1)
 
 
     def showRackHelp(self, entry, depEntry):
@@ -351,7 +386,7 @@ class BooksController:
             self.rackHelpWindow.destroy()
             self.rackHelpWindow = None
 
-        self.rackHelpWindow = Toplevel(self.specimenWindow)
+        self.rackHelpWindow = Toplevel(self.addSpecimenWindow)
         self.rackHelpWindow.title("Choose rack")
         self.rackHelpWindow.protocol('WM_DELETE_WINDOW', exit)
 
@@ -386,7 +421,7 @@ class BooksController:
             self.departmentHelpWindow.destroy()
             self.departmentHelpWindow = None
 
-        self.departmentHelpWindow = Toplevel(self.addWindow)
+        self.departmentHelpWindow = Toplevel(self.addSpecimenWindow)
         self.departmentHelpWindow.title("Choose genre")
         self.departmentHelpWindow.protocol('WM_DELETE_WINDOW', exit)
 
@@ -871,6 +906,8 @@ class AddController:
         self.oldAssigments = list()
 
         self.helpWindow = None
+        self.assignWindow = None
+        self.newAuthorWindow = None
 
         self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
@@ -944,9 +981,19 @@ class AddController:
         self.button.pack(side=BOTTOM)
 
     def assignAuthors(self):
+        if self.assignWindow is not None:
+            return
+
         def acceptAuthors():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
+            self.assignWindow = None
+            self.newAuthorWindow = None
+
+        def exit_function():
+            self.assignWindow.destroy()
+            self.assignWindow = None
+            self.newAuthorWindow = None
 
         def refresh():
             self.vals = list()
@@ -969,9 +1016,9 @@ class AddController:
 
         self.assigments = self.oldAssigments.copy()
 
-        self.assignWindow = Toplevel(self.themeWindow)
+        self.assignWindow = Toplevel(self.addWindow)
         self.assignWindow.title("Assign owners.")
-        self.assignWindow.protocol('WM_DELETE_WINDOW', self.assignWindow.destroy)
+        self.assignWindow.protocol('WM_DELETE_WINDOW', exit_function)
         self.vals = list()
 
         self.listboxAssigned = Listbox(self.assignWindow, width=50, bd=4)
@@ -995,9 +1042,14 @@ class AddController:
         assignButton.pack(side=TOP)
 
         Button(buttonFrame, text="Accept", command=acceptAuthors).pack(side=BOTTOM)
-        Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Cancel", command=exit_function).pack(side=BOTTOM)
 
     def newAuthor(self, func):
+        if self.newAuthorWindow is not None:
+            return
+        def exit_function():
+            self.newAuthorWindow.destroy()
+            self.newAuthorWindow = None
         def clicked():
             if empty.get() == 1:
                 entry4.delete(0, "end")
@@ -1025,8 +1077,9 @@ class AddController:
             func()
 
         window = Toplevel(self.assignWindow)
+        self.newAuthorWindow = window
         window.title("New owner.")
-        window.protocol('WM_DELETE_WINDOW', window.destroy)
+        window.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(window, text="Imię").grid(row=0, column=0)
         entry1 = Entry(window)
@@ -1045,7 +1098,7 @@ class AddController:
         emptyButton.grid(row=3, column=2)
 
         Button(window, text="Add", command=addAuthor).grid(row=4, column=0)
-        Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
+        Button(window, text="Cancel", command=exit_function).grid(row=4, column=1)
 
     def assignAuthor(self, func):
         if len(self.listboxUnAssigned.curselection()) == 0:
@@ -1161,6 +1214,9 @@ class ModifyController:
         self.logger = Logger(__name__, loggingLevel="debug")
         self.logger.debug("ModifyController logger has started.")
 
+        self.assignWindow = None
+        self.newAuthorWindow = None
+
         self.oldRecord = list()
         # Book's id
         bookId = self.database.executeStatement(f"SELECT `ksiazka_id` FROM `ksiazki` "
@@ -1268,10 +1324,19 @@ class ModifyController:
         self.button.pack(side=BOTTOM)
 
     def assignAuthors(self):
+        if self.assignWindow is not None:
+            return
 
         def acceptAuthors():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
+            self.assignWindow = None
+            self.newAuthorWindow = None
+
+        def exit_function():
+            self.assignWindow.destroy()
+            self.assignWindow = None
+            self.newAuthorWindow = None
 
         def refresh():
             self.vals = list()
@@ -1294,9 +1359,9 @@ class ModifyController:
 
         self.assigments = self.oldAssigments.copy()
 
-        self.assignWindow = Toplevel(self.themeWindow)
+        self.assignWindow = Toplevel(self.modifyWindow)
         self.assignWindow.title("Assign owners.")
-        self.assignWindow.protocol('WM_DELETE_WINDOW', self.assignWindow.destroy)
+        self.assignWindow.protocol('WM_DELETE_WINDOW', exit_function)
         self.vals = list()
 
         self.listboxAssigned = Listbox(self.assignWindow, width=50, bd=4)
@@ -1320,10 +1385,16 @@ class ModifyController:
         assignButton.pack(side=TOP)
 
         Button(buttonFrame, text="Accept", command=acceptAuthors).pack(side=BOTTOM)
-        Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Cancel", command=exit_function).pack(side=BOTTOM)
 
 
     def newAuthor(self, func):
+        if self.newAuthorWindow is not None:
+            return
+        def exit_function():
+            self.newAuthorWindow.destroy()
+            self.newAuthorWindow = None
+
         def clicked():
             if empty.get() == 0:
                 entry4.delete(0, "end")
@@ -1350,8 +1421,9 @@ class ModifyController:
             func()
 
         window = Toplevel(self.assignWindow)
+        self.newAuthorWindow = window
         window.title("New owner.")
-        window.protocol('WM_DELETE_WINDOW', window.destroy)
+        window.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(window, text="Imię").grid(row=0, column=0)
         entry1 = Entry(window)
@@ -1372,7 +1444,7 @@ class ModifyController:
         entry4.config(state='disabled')
 
         Button(window, text="Add", command=addAuthor).grid(row=4, column=0)
-        Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
+        Button(window, text="Cancel", command=exit_function).grid(row=4, column=1)
 
 
     def assignAuthor(self, func):

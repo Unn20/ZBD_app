@@ -434,6 +434,8 @@ class AddController:
         self.newRecord = list()
 
         self.helpWindow = None
+        self.assignWindow = None
+        self.addWindow1 = None
 
         self.colFrame = Frame(self.addWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
@@ -466,9 +468,17 @@ class AddController:
         self.cancelButton.pack(side=LEFT)
 
     def assignOwners(self):
+        if self.assignWindow is not None:
+            return
+
         def acceptOwners():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
+            self.assignWindow = None
+
+        def exit_function():
+            self.assignWindow.destroy()
+            self.assignWindow = None
 
         def refresh():
             self.vals = list()
@@ -494,9 +504,9 @@ class AddController:
 
         self.assigments = self.oldAssigments.copy()
 
-        self.assignWindow = Toplevel(self.themeWindow)
+        self.assignWindow = Toplevel(self.addWindow)
         self.assignWindow.title("Assign owners.")
-        self.assignWindow.protocol('WM_DELETE_WINDOW', self.assignWindow.destroy)
+        self.assignWindow.protocol('WM_DELETE_WINDOW', exit_function)
         self.vals = list()
 
         self.listboxAssigned = Listbox(self.assignWindow, width=50, bd=4)
@@ -520,9 +530,16 @@ class AddController:
         assignButton.pack(side=TOP)
 
         Button(buttonFrame, text="Accept", command=acceptOwners).pack(side=BOTTOM)
-        Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Cancel", command=exit_function).pack(side=BOTTOM)
 
     def newOwner(self, func):
+        if self.addWindow1 is not None:
+            return
+
+        def exit_function():
+            self.addWindow1.destroy()
+            self.addWindow1 = None
+
         def addOwner():
             if entry1.get() == "" or (entry4.get() == "" and (entry2.get() == "" or entry3.get() == "")):
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
@@ -539,11 +556,13 @@ class AddController:
                 messagebox.showerror("Error", e)
             self.database.connection.commit()
             window.destroy()
+            self.addWindow1 = None
             func()
 
         window = Toplevel(self.assignWindow)
+        self.addWindow1 = window
         window.title("New owner.")
-        window.protocol('WM_DELETE_WINDOW', window.destroy)
+        window.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(window, text="NIP").grid(row=0, column=0)
         entry1 = Entry(window)
@@ -559,7 +578,7 @@ class AddController:
         entry4.grid(row=3, column=1)
 
         Button(window, text="Add", command=addOwner).grid(row=4, column=0)
-        Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
+        Button(window, text="Cancel", command=exit_function).grid(row=4, column=1)
 
 
     def assignOwner(self, func):
@@ -668,6 +687,8 @@ class ModifyController:
 
 
         self.helpWindow = None
+        self.assignWindow = None
+        self.addWindow1 = None
 
         self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
                               width=self.themeWindow.winfo_width(),
@@ -701,9 +722,17 @@ class ModifyController:
         self.cancelButton.pack(side=LEFT)
 
     def assignOwners(self):
+        if self.assignWindow is not None:
+            return
+
         def acceptOwners():
             self.oldAssigments = self.assigments.copy()
             self.assignWindow.destroy()
+            self.assignWindow = None
+
+        def exit_function():
+            self.assignWindow.destroy()
+            self.assignWindow = None
 
         def refresh():
             self.vals = list()
@@ -729,9 +758,9 @@ class ModifyController:
 
         self.assigments = self.oldAssigments.copy()
 
-        self.assignWindow = Toplevel(self.themeWindow)
+        self.assignWindow = Toplevel(self.modifyWindow)
         self.assignWindow.title("Assign owners.")
-        self.assignWindow.protocol('WM_DELETE_WINDOW', self.assignWindow.destroy)
+        self.assignWindow.protocol('WM_DELETE_WINDOW', exit_function)
         self.vals = list()
 
         self.listboxAssigned = Listbox(self.assignWindow, width=50, bd=4)
@@ -755,9 +784,16 @@ class ModifyController:
         assignButton.pack(side=TOP)
 
         Button(buttonFrame, text="Accept", command=acceptOwners).pack(side=BOTTOM)
-        Button(buttonFrame, text="Cancel", command=self.assignWindow.destroy).pack(side=BOTTOM)
+        Button(buttonFrame, text="Cancel", command=exit_function).pack(side=BOTTOM)
 
     def newOwner(self, func):
+        if self.addWindow1 is not None:
+            return
+
+        def exit_function():
+            self.addWindow1.destroy()
+            self.addWindow1 = None
+
         def addOwner():
             if entry1.get() == "" or (entry4.get() == "" and (entry2.get() == "" or entry3.get() == "")):
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
@@ -771,11 +807,13 @@ class ModifyController:
             self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
             self.database.connection.commit()
             window.destroy()
+            self.addWindow1 = None
             func()
 
         window = Toplevel(self.assignWindow)
+        self.addWindow1 = window
         window.title("New owner.")
-        window.protocol('WM_DELETE_WINDOW', window.destroy)
+        window.protocol('WM_DELETE_WINDOW', exit_function)
 
         Label(window, text="NIP").grid(row=0, column=0)
         entry1 = Entry(window)
@@ -791,7 +829,7 @@ class ModifyController:
         entry4.grid(row=3, column=1)
 
         Button(window, text="Add", command=addOwner).grid(row=4, column=0)
-        Button(window, text="Cancel", command=window.destroy).grid(row=4, column=1)
+        Button(window, text="Cancel", command=exit_function).grid(row=4, column=1)
 
     def assignOwner(self, func):
         if len(self.listboxUnAssigned.curselection()) == 0:
