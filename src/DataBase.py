@@ -883,6 +883,8 @@ class Database:
                     readerName, readerSurname, bookTitle,
                     comments):
         self.logger.debug("Borrowing book.")
+        if bookTitle[0] == "{" and bookTitle[-1] == "}":
+            bookTitle = bookTitle[1:-1]
 
         try:
             self.executeStatement(f"CALL borrowBook('{libraryName}', '{workerName}', '{workerSurname}',"

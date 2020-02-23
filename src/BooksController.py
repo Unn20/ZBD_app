@@ -996,7 +996,7 @@ class AddController:
         self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
 
         vals = list()
-        temp_vals = self.database.executeStatement("SELECT `gatunek` FROM `gatunki`")
+        temp_vals = self.database.executeStatement("SELECT `gatunek` FROM `gatunki` ORDER BY `gatunek`")
         for val1 in temp_vals:
             vals.append(f"{val1[0]}")
 
@@ -1029,7 +1029,7 @@ class AddController:
         def refresh():
             self.vals = list()
             temp_vals = self.database.executeStatement("SELECT `autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
-                                                       "FROM `autorzy`")
+                                                       "FROM `autorzy` ORDER BY `nazwisko`, `imie`")
             for val0, val1, val2, val3, val4 in temp_vals:
                 author = f"{val1} {val2} {val3}"
                 if val4 is not None:
@@ -1359,7 +1359,7 @@ class ModifyController:
         self.helpWindow.protocol('WM_DELETE_WINDOW', exit)
 
         vals = list()
-        temp_vals = self.database.executeStatement("SELECT `gatunek` FROM `gatunki`")
+        temp_vals = self.database.executeStatement("SELECT `gatunek` FROM `gatunki` ORDER BY `gatunek`")
         for val1 in temp_vals:
             vals.append(f"{val1[0]}")
 
@@ -1392,7 +1392,7 @@ class ModifyController:
         def refresh():
             self.vals = list()
             temp_vals = self.database.executeStatement("SELECT `autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci` "
-                                                       "FROM `autorzy`")
+                                                       "FROM `autorzy` ORDER BY `nazwisko`, `imie`")
             for val0, val1, val2, val3, val4 in temp_vals:
                 author = f"{val1} {val2} {val3}"
                 if val4 is not None:

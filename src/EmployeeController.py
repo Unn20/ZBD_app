@@ -113,7 +113,7 @@ class EmployeeController:
             else:
                 boss_id = self.database.executeStatement(f"SELECT p1.`pracownik_id` FROM `pracownicy` p1 "
                                                          f"JOIN `pracownicy` p2 ON p1.`pracownik_id` = p2.`szef_id` "
-                                                         f"WHERE p2.`pracownik_id` = \"{self.data[recName]['ID']}\"")
+                                                         f"WHERE p2.`pracownik_id` = \"{employeeId}\"")
                 deletedRecord.append(boss_id[0][0])
             deletedRecord.append(self.data[recName]["Imię"])
             deletedRecord.append(self.data[recName]["Nazwisko"])

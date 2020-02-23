@@ -130,6 +130,8 @@ class ProcedureController:
                                      f"{e}")
                 return
         self.database.connection.commit()
+        self.procedureWindow.focus_set()
+        messagebox.showinfo("Borrow", "Book has been borrowed succesfully!")
         self.goBack()
 
     def refreshValues(self):
