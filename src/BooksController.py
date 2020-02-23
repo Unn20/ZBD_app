@@ -267,6 +267,9 @@ class BooksController:
                             self.addSpecimenWindow.focus_set()
                             return
                         self.database.connection.commit()
+                        self.specimenWindow.focus_set()
+                        self.addSpecimenWindow.destroy()
+                        self.addSpecimenWindow = None
                         func()
                     else:
                         self.specimenWindow.focus_set()
@@ -291,9 +294,8 @@ class BooksController:
                         self.database.connection.commit()
                         self.addSpecimenWindow.destroy()
                         self.addSpecimenWindow = None
-                        self.addSpecimenWindow.focus_set()
-                        self.specimenWindow.focus_set()
                         func()
+                        self.specimenWindow.focus_set()
                     else:
                         self.addSpecimenWindow.focus_set()
                         return
@@ -474,6 +476,8 @@ class BooksController:
                         self.database.executeStatement(f"DELETE FROM `egzemplarze` WHERE"
                                                        f"`egzemplarz_id` = \'{id}\'")
                         self.database.connection.commit()
+                        func()
+                        self.specimenWindow.focus_set()
                     else:
                         self.specimenWindow.focus_set()
                         return
@@ -488,6 +492,7 @@ class BooksController:
             self.database.connection.commit()
         else:
             self.database.connection.rollback()
+        self.specimenWindow.focus_set()
         func()
         return
 
