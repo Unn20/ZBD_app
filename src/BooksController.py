@@ -269,7 +269,7 @@ class BooksController:
                         self.database.connection.commit()
                         func()
                     else:
-                        self.addSpecimenWindow.focus_set()
+                        self.specimenWindow.focus_set()
                         return
                 else:
                     confirm = messagebox.askyesno("Add", "Given rack doesn't exists. Would You like to create a new rack?")
@@ -291,6 +291,8 @@ class BooksController:
                         self.database.connection.commit()
                         self.addSpecimenWindow.destroy()
                         self.addSpecimenWindow = None
+                        self.addSpecimenWindow.focus_set()
+                        self.specimenWindow.focus_set()
                         func()
                     else:
                         self.addSpecimenWindow.focus_set()
@@ -341,7 +343,7 @@ class BooksController:
         def addDep():
             if entry1.get() == "" or entry2.get() == "":
                 messagebox.showerror("Error", "Fill all mandatory fields!")
-                self.newDepartmentWindow
+                self.newDepartmentWindow.focus_set()
                 return
             confirm = messagebox.askyesno("Add", "You want to add new department?")
             if confirm:
@@ -350,14 +352,14 @@ class BooksController:
                 except Exception as e:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-                    self.newDepartmentWindow
+                    self.newDepartmentWindow.focus_set()
                     return
                 self.database.connection.commit()
                 self.newDepartmentWindow.destroy()
                 self.newDepartmentWindow = None
                 #entry.set(entry1.get())
             else:
-                self.newDepartmentWindow
+                self.newDepartmentWindow.focus_set()
                 return
 
         window = Toplevel(self.addSpecimenWindow)
@@ -471,6 +473,7 @@ class BooksController:
                                                        f"`egzemplarz_id` = \'{id}\'")
                         self.database.executeStatement(f"DELETE FROM `egzemplarze` WHERE"
                                                        f"`egzemplarz_id` = \'{id}\'")
+                        self.database.connection.commit()
                     else:
                         self.specimenWindow.focus_set()
                         return
