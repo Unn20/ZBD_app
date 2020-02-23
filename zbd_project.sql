@@ -1551,10 +1551,10 @@ ALTER TABLE `egzemplarze`
 -- Ograniczenia dla tabeli `historia_operacji`
 --
 ALTER TABLE `historia_operacji`
-  ADD CONSTRAINT `historia_biblioteka_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `historia_czytelnik_fk` FOREIGN KEY (`czytelnik_id`) REFERENCES `czytelnicy` (`czytelnik_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `historia_egzemplarz_fk` FOREIGN KEY (`egzemplarz_id`) REFERENCES `egzemplarze` (`egzemplarz_id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `historia_pracownik_fk` FOREIGN KEY (`pracownik_id`) REFERENCES `pracownicy` (`pracownik_id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `historia_biblioteka_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON UPDATE CASCADE ON DELETE CASCADE,
+  ADD CONSTRAINT `historia_czytelnik_fk` FOREIGN KEY (`czytelnik_id`) REFERENCES `czytelnicy` (`czytelnik_id`) ON UPDATE CASCADE ON DELETE CASCADE,
+  ADD CONSTRAINT `historia_egzemplarz_fk` FOREIGN KEY (`egzemplarz_id`) REFERENCES `egzemplarze` (`egzemplarz_id`) ON UPDATE CASCADE ON DELETE CASCADE,
+  ADD CONSTRAINT `historia_pracownik_fk` FOREIGN KEY (`pracownik_id`) REFERENCES `pracownicy` (`pracownik_id`) ON UPDATE CASCADE ON DELETE CASCADE;
 
 --
 -- Ograniczenia dla tabeli `ksiazki`
@@ -1578,8 +1578,8 @@ ALTER TABLE `regaly`
 -- Ograniczenia dla tabeli `wlasciciel_biblioteka`
 --
 ALTER TABLE `wlasciciel_biblioteka`
-  ADD CONSTRAINT `wlasciciel_biblioteka_b_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `wlasciciel_biblioteka_w_fk` FOREIGN KEY (`wlasciciel_nip`) REFERENCES `wlasciciele` (`nip`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `wlasciciel_biblioteka_b_fk` FOREIGN KEY (`biblioteka_nazwa`) REFERENCES `biblioteki` (`nazwa`) ON UPDATE CASCADE ON DELETE CASCADE,
+  ADD CONSTRAINT `wlasciciel_biblioteka_w_fk` FOREIGN KEY (`wlasciciel_nip`) REFERENCES `wlasciciele` (`nip`) ON UPDATE CASCADE ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

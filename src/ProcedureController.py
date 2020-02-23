@@ -220,6 +220,14 @@ class extendedComboBox:
         # elif self.lab == "Genre":
         #     self.child.genre = str(self.combo.get())
         self.enableChild()
+    def selected(self, event):
+        # if self.lab == "Book title":
+        #     #self.child.bookName = self.combo.get()
+        #     #self.child.child.bookName = self.combo.get()
+        #     pass
+        # elif self.lab == "Genre":
+        #     self.child.genre = str(self.combo.get())
+        self.enableChild()
 
     def refreshValues(self):
         if self.lab == "Library":
