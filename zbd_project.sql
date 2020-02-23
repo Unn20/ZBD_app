@@ -1,10 +1,9 @@
 -- phpMyAdmin SQL Dump
--- phpMyAdmin SQL Dump
 -- version 4.9.2
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Czas generowania: 02 Lut 2020, 20:04
+-- Czas generowania: 23 Lut 2020, 13:40
 -- Wersja serwera: 10.4.11-MariaDB
 -- Wersja PHP: 7.2.26
 
@@ -34,7 +33,7 @@ DELIMITER $$
 --
 -- Procedury
 --
-CREATE DEFINER=`root`@`localhost` PROCEDURE `borrowBook` (IN `libraryName` VARCHAR(50), IN `workerName` TEXT, IN `workerSurname` TEXT, IN `readerName` TEXT, IN `readerSurname` TEXT, IN `bookTitle` VARCHAR(100), IN `bookDate` DATE, IN `bookGenre` VARCHAR(20), IN `comments` TEXT)  BEGIN
+CREATE DEFINER=`root`@`localhost` PROCEDURE `borrowBook` (IN `libraryName` VARCHAR(50), IN `workerName` TEXT, IN `workerSurname` TEXT, IN `readerName` TEXT, IN `readerSurname` TEXT, IN `bookTitle` VARCHAR(100), IN `comments` TEXT)  BEGIN
     /*
     Declaring needed variables
     */
@@ -59,7 +58,7 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `borrowBook` (IN `libraryName` VARCH
         INTO worker_id;
     SELECT czytelnik_id FROM czytelnicy WHERE imie = readerName AND nazwisko = readerSurname
         INTO reader_id;
-    SELECT ksiazka_id FROM ksiazki WHERE tytul = bookTitle AND data_opublikowania = bookDate AND gatunek = bookGenre
+    SELECT ksiazka_id FROM ksiazki WHERE tytul = bookTitle
         INTO book_id;
     SELECT egzemplarz_id FROM egzemplarze WHERE ksiazka_id = book_id LIMIT 1
         INTO specimen_id;
@@ -116,7 +115,7 @@ CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookBorrowCount` (`bookDateY
     );
 END$$
 
-CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookTitle` (`bookDateYear` INT) RETURNS varchar(100) BEGIN
+CREATE DEFINER=`root`@`localhost` FUNCTION `findBestBookTitle` (`bookDateYear` INT) RETURNS VARCHAR(100) CHARSET utf8 COLLATE utf8_polish_ci BEGIN
     RETURN(
         WITH
             bookOperations AS (
@@ -145,7 +144,7 @@ DROP TABLE IF EXISTS `autorzy`, `autor_ksiazka`, `biblioteki`,
             `czytelnicy`, `dzialy`, `egzemplarze`,
             `gatunki`, `historia_operacji`, `ksiazki`,
             `pracownicy`, `regaly`, `wlasciciele`, `wlasciciel_biblioteka`;
-			
+
 DROP TRIGGER IF EXISTS `authorsAddTriger`;
 DROP TRIGGER IF EXISTS `authorsUpdateTriger`;
 DROP TRIGGER IF EXISTS `author_bookAddTriger`;
@@ -173,7 +172,6 @@ DROP TRIGGER IF EXISTS `ovnersUpdateTriger`;
 DROP TRIGGER IF EXISTS `ovner_libraryAddTriger`;
 DROP TRIGGER IF EXISTS `ovner_libraryUpdateTriger`;
 
-
 --
 -- Struktura tabeli dla tabeli `autorzy`
 --
@@ -191,16 +189,16 @@ CREATE TABLE `autorzy` (
 --
 
 INSERT INTO `autorzy` (`autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci`) VALUES
-(1, 'Piotr', 'Krol', '1974-10-11', '1991-10-11'),
-(2, 'Magda', 'Nowak', '1975-01-22', NULL),
-(3, 'Piotr', 'Zima', '1972-08-01', NULL),
-(4, 'Karol', 'Leszczyk', '1976-03-30', '2012-04-14'),
-(5, 'Karol', 'Majewski', '1979-04-14', NULL),
-(6, 'Joanna', 'Nowaczyk', '1971-12-25', NULL),
-(7, 'Marta', 'Kowalczyk', '1977-11-28', NULL),
-(8, 'Piotr', 'Wozniak', '1979-04-14', NULL),
-(9, 'Jan', 'Mazur', '1974-10-11', NULL),
-(10, 'Jakub', 'Krawczyk', '1974-10-11', '1986-04-14');
+(0, 'Jan', 'Krol', '1978-09-03', NULL),
+(1, 'Maciej', 'Nowak', '1976-03-30', NULL),
+(2, 'Jakub', 'Zima', '1974-10-11', '1980-10-11'),
+(3, 'Natalia', 'Leszczyk', '1971-12-25', NULL),
+(4, 'Piotr', 'Karol', '1971-12-25', '1991-07-17'),
+(5, 'Piotr', 'Nowaczyk', '1973-07-17', NULL),
+(6, 'Marta', 'Kowalczyk', '1974-10-11', NULL),
+(7, 'Joanna', 'Wozniak', '1978-09-03', '2003-01-22'),
+(8, 'Jakub', 'Mazur', '1973-07-17', '2007-08-01'),
+(9, 'Jakub', 'Krawczyk', '1973-07-17', NULL);
 
 --
 -- Wyzwalacze `autorzy`
@@ -310,16 +308,20 @@ CREATE TABLE `autor_ksiazka` (
 --
 
 INSERT INTO `autor_ksiazka` (`autorzy_autor_id`, `ksiazki_ksiazka_id`) VALUES
-(1, 3),
-(1, 9),
-(2, 1),
-(2, 7),
-(2, 10),
-(4, 2),
-(5, 4),
+(1, 1),
+(7, 1),
+(5, 1),
+(2, 2),
+(3, 3),
+(4, 4),
+(2, 4),
 (5, 5),
-(5, 6),
-(7, 8);
+(6, 6),
+(7, 7),
+(8, 8),
+(9, 9),
+(0, 0),
+(2, 0);
 
 --
 -- Wyzwalacze `autor_ksiazka`
@@ -473,16 +475,16 @@ CREATE TABLE `czytelnicy` (
 --
 
 INSERT INTO `czytelnicy` (`czytelnik_id`, `imie`, `nazwisko`) VALUES
-(1, 'Marta', 'Krol'),
-(2, 'Jakub', 'Nowak'),
-(3, 'Joanna', 'Zima'),
-(4, 'Joanna', 'Leszczyk'),
-(5, 'Olga', 'Karol'),
-(6, 'Marta', 'Nowaczyk'),
+(0, 'Marta', 'Krawczyk'),
+(1, 'Jakub', 'Krol'),
+(2, 'Olga', 'Nowak'),
+(3, 'Magda', 'Zima'),
+(4, 'Magda', 'Leszczyk'),
+(5, 'Piotr', 'Karol'),
+(6, 'Natalia', 'Nowaczyk'),
 (7, 'Natalia', 'Kowalczyk'),
-(8, 'Marta', 'Wozniak'),
-(9, 'Maciej', 'Mazur'),
-(10, 'Maciej', 'Krawczyk');
+(8, 'Karol', 'Wozniak'),
+(9, 'Karol', 'Mazur');
 
 --
 -- Wyzwalacze `czytelnicy`
@@ -626,16 +628,27 @@ CREATE TABLE `egzemplarze` (
 --
 
 INSERT INTO `egzemplarze` (`egzemplarz_id`, `ksiazka_id`, `regal_numer`) VALUES
-(1, 8, 2),
-(2, 1, 8),
-(3, 7, 0),
-(4, 9, 0),
-(5, 4, 6),
-(6, 10, 7),
-(7, 6, 8),
-(8, 6, 7),
-(9, 2, 8),
-(10, 5, 4);
+(0, 4, 8),
+(1, 5, 5),
+(2, 3, 6),
+(3, 3, 4),
+(4, 4, 0),
+(5, 1, 2),
+(6, 3, 7),
+(7, 4, 6),
+(8, 7, 1),
+(9, 8, 7),
+(10, 5, 4),
+(11, 8, 2),
+(12, 1, 8),
+(13, 7, 0),
+(14, 9, 0),
+(15, 4, 6),
+(16, 0, 7),
+(17, 6, 8),
+(18, 6, 7),
+(19, 2, 8);
+
 
 --
 -- Wyzwalacze `egzemplarze`
@@ -751,7 +764,7 @@ CREATE TABLE `historia_operacji` (
   `pracownik_id` int(11) NOT NULL,
   `czytelnik_id` int(11) NOT NULL,
   `egzemplarz_id` int(11) NOT NULL,
-  `rodzaj_operacji` text CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL CHECK (rodzaj_operacji IN ('wypozyczenie', 'zwrot', 'przedluzenie')),
+  `rodzaj_operacji` text CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL CHECK (`rodzaj_operacji` in ('wypozyczenie','zwrot','przedluzenie')),
   `opoznienie` int(11) DEFAULT NULL,
   `uwagi` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
@@ -761,16 +774,27 @@ CREATE TABLE `historia_operacji` (
 --
 
 INSERT INTO `historia_operacji` (`operacja_id`, `data`, `biblioteka_nazwa`, `pracownik_id`, `czytelnik_id`, `egzemplarz_id`, `rodzaj_operacji`, `opoznienie`, `uwagi`) VALUES
-(1, '1971-12-25', 'Biblioteka_na_rynku', 5, 4, 5, 'wypozyczenie', NULL, 'pierwszy raz od dawna'),
-(2, '1976-03-30', 'Super_Biblioteka', 3, 5, 8, 'wypozyczenie', 4, 'sprawna operacja'),
-(3, '1973-07-17', 'Czytam_ksiazki', 4, 3, 3, 'wypozyczenie', NULL, NULL),
-(4, '1976-03-30', 'Ksiazki_sa_super', 5, 3, 5, 'wypozyczenie', 8, 'bez uwag'),
-(5, '1970-05-05', 'Ksiazki_sa_super', 2, 3, 4, 'wypozyczenie', NULL, 'sprawna operacja'),
-(6, '1979-04-14', 'Czytam_ksiazki', 7, 4, 8, 'wypozyczenie', NULL, NULL),
-(7, '1971-12-25', 'Super_Biblioteka', 2, 1, 2, 'wypozyczenie', NULL, 'bez uwag'),
-(8, '1973-07-17', 'Ksiazki_sa_super', 9, 1, 6, 'wypozyczenie', 18, NULL),
-(9, '1977-11-28', 'Biblioteka_dziecieca', 10, 4, 8, 'wypozyczenie', 20, 'bez uwag'),
-(10, '1972-08-01', 'Biblioteka_na_rynku', 7, 7, 4, 'wypozyczenie', NULL, 'bez uwag');
+(0, '1972-08-01', 'Biblioteka_na_rynku', 7, 7, 4, 'wypozyczenie', NULL, 'bez uwag'),
+(1, '1975-01-22', 'Ksiazki_sa_super', 1, 1, 9, 'wypozyczenie', NULL, NULL),
+(2, '1978-09-03', 'Biblioteka_na_rynku', 1, 4, 8, 'wypozyczenie', NULL, 'pierwszy raz od dawna'),
+(3, '1978-09-03', 'Biblioteka_dziecieca', 2, 1, 7, 'wypozyczenie', NULL, NULL),
+(4, '1976-03-30', 'Super_Biblioteka', 3, 9, 5, 'wypozyczenie', NULL, 'bez uwag'),
+(5, '1973-07-17', 'Czytam_ksiazki', 1, 2, 4, 'wypozyczenie', NULL, 'sprawna operacja'),
+(6, '1978-09-03', 'Biblioteka_dziecieca', 7, 6, 4, 'wypozyczenie', NULL, NULL),
+(7, '1972-08-01', 'Czytanie_jest_fajne', 8, 2, 8, 'wypozyczenie', NULL, 'pierwszy raz od dawna'),
+(8, '1975-01-22', 'Biblioteka_na_Kwiatowej', 9, 1, 8, 'wypozyczenie', NULL, 'bez uwag'),
+(9, '1973-07-17', 'Czytam_ksiazki', 7, 9, 3, 'wypozyczenie', NULL, NULL),
+(10, '1973-07-17', 'Biblioteka_dziecieca', 1, 6, 16, 'wypozyczenie', NULL, NULL),
+(11, '1971-12-25', 'Biblioteka_na_rynku', 5, 4, 15, 'wypozyczenie', NULL, 'pierwszy raz od dawna'),
+(12, '1976-03-30', 'Super_Biblioteka', 3, 5, 18, 'wypozyczenie', NULL, 'sprawna operacja'),
+(13, '1973-07-17', 'Czytam_ksiazki', 4, 3, 13, 'wypozyczenie', NULL, NULL),
+(14, '1976-03-30', 'Ksiazki_sa_super', 5, 3, 15, 'wypozyczenie', NULL, 'bez uwag'),
+(15, '1970-05-05', 'Ksiazki_sa_super', 2, 3, 14, 'wypozyczenie', NULL, 'sprawna operacja'),
+(16, '1979-04-14', 'Czytam_ksiazki', 7, 4, 18, 'wypozyczenie', NULL, NULL),
+(17, '1971-12-25', 'Super_Biblioteka', 2, 1, 12, 'wypozyczenie', NULL, 'bez uwag'),
+(18, '1973-07-17', 'Ksiazki_sa_super', 9, 1, 16, 'wypozyczenie', NULL, NULL),
+(19, '1977-11-28', 'Biblioteka_dziecieca', 0, 4, 18, 'wypozyczenie', NULL, 'bez uwag');
+
 
 --
 -- Wyzwalacze `historia_operacji`
@@ -918,16 +942,16 @@ CREATE TABLE `ksiazki` (
 --
 
 INSERT INTO `ksiazki` (`ksiazka_id`, `tytul`, `data_opublikowania`, `gatunek`) VALUES
-(1, 'Szeptucha', '1978-09-03', 'romans'),
-(2, 'Polska_odwraca_oczy', '1978-09-03', 'literatura_mlodziezo'),
-(3, 'On', '1974-10-11', 'klasyka'),
-(4, 'Zycie_na_pelnej_petardzie', '1978-09-03', 'klasyka'),
-(5, 'Okularnik', '1971-12-25', 'thriller'),
-(6, 'Najgorszy_czlowiek_na_swiecie', '1970-05-05', 'kryminal'),
-(7, 'Inna_dusza', '1973-07-17', 'klasyka'),
-(8, 'Ksiegi_Jakubowe', '1973-07-17', 'powiesc_historyczna'),
-(9, 'Gniew', '1973-07-17', 'literatura_obyczajow'),
-(10, 'Trociny', '1976-03-30', 'powiesc_historyczna');
+(0, 'Trociny', '1979-04-14', 'powiesc_historyczna'),
+(1, 'Szeptucha', '1979-04-14', 'fantasy'),
+(2, 'Polska_odwraca_oczy', '1970-05-05', 'horror'),
+(3, 'On', '1979-04-14', 'klasyka'),
+(4, 'Zycie_na_pelnej_petardzie', '1978-09-03', 'kryminal'),
+(5, 'Okularnik', '1972-08-01', 'sensacja'),
+(6, 'Najgorszy_czlowiek_na_swiecie', '1977-11-28', 'thriller'),
+(7, 'Inna_dusza', '1972-08-01', 'literatura_mlodziezo'),
+(8, 'Ksiegi_Jakubowe', '1974-10-11', 'literatura_obyczajow'),
+(9, 'Gniew', '1974-10-11', 'romans');
 
 --
 -- Wyzwalacze `ksiazki`
@@ -1009,16 +1033,16 @@ CREATE TABLE `pracownicy` (
 --
 
 INSERT INTO `pracownicy` (`pracownik_id`, `szef_id`, `imie`, `nazwisko`, `funkcja`) VALUES
-(1, 6, 'Jakub', 'Krol', 'obsluga_bazy'),
-(2, NULL, 'Olga', 'Nowak', 'kucharz'),
-(3, NULL, 'Natalia', 'Zima', 'kucharz'),
-(4, 6, 'Jakub', 'Leszczyk', 'obsluga_bazy'),
-(5, NULL, 'Joanna', 'Karol', 'obsluga_bazy'),
-(6, NULL, 'Karol', 'Nowaczyk', 'szef'),
-(7, 10, 'Magda', 'Kowalczyk', 'kucharz'),
-(8, NULL, 'Piotr', 'Wozniak', 'kucharz'),
-(9, 10, 'Natalia', 'Mazur', 'kucharz'),
-(10, NULL, 'Piotr', 'Krawczyk', 'szef');
+(0, 3, 'Jan', 'Krol', 'obsluga_bazy'),
+(1, 3, 'Joanna', 'Nowak', 'sprzatanie'),
+(2, NULL, 'Jan', 'Zima', 'obsluga_bazy'),
+(3, NULL, 'Marta', 'Leszczyk', 'szef'),
+(4, NULL, 'Karol', 'Karol', 'kucharz'),
+(5, 6, 'Olga', 'Nowaczyk', 'kucharz'),
+(6, NULL, 'Karol', 'Kowalczyk', 'szef'),
+(7, NULL, 'Maciej', 'Wozniak', 'obsluga_bazy'),
+(8, 6, 'Jakub', 'Mazur', 'kucharz'),
+(9, NULL, 'Piotr', 'Krawczyk', 'obsluga_bazy');
 
 --
 -- Wyzwalacze `pracownicy`
@@ -1117,16 +1141,16 @@ CREATE TABLE `regaly` (
 --
 
 INSERT INTO `regaly` (`numer`, `pojemnosc`, `liczba_ksiazek`, `dzial_nazwa`) VALUES
-(0, 5, 2, 'dzial1'),
-(1, 6, 0, 'dzial5'),
-(2, 5, 1, 'dzial1'),
-(3, 8, 0, 'dzial6'),
-(4, 9, 1, 'dzial1'),
-(5, 6, 0, 'dzial1'),
-(6, 5, 1, 'dzial9'),
-(7, 8, 2, 'dzial7'),
-(8, 5, 3, 'dzial5'),
-(9, 6, 0, 'dzial7');
+(0, 6, 3, 'dzial0'),
+(1, 8, 1, 'dzial1'),
+(2, 5, 2, 'dzial2'),
+(3, 7, 0, 'dzial3'),
+(4, 9, 2, 'dzial4'),
+(5, 6, 1, 'dzial5'),
+(6, 5, 3, 'dzial6'),
+(7, 8, 4, 'dzial7'),
+(8, 8, 4, 'dzial8'),
+(9, 9, 0, 'dzial9');
 
 --
 -- Wyzwalacze `regaly`
@@ -1191,7 +1215,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `wlasciciele` (
-  `nip` varchar(50) NOT NULL,
+  `nip` varchar(50) COLLATE utf8mb4_polish_ci NOT NULL,
   `nazwa_firmy` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `imie` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL,
   `nazwisko` text CHARACTER SET utf8 COLLATE utf8_polish_ci DEFAULT NULL
@@ -1202,16 +1226,16 @@ CREATE TABLE `wlasciciele` (
 --
 
 INSERT INTO `wlasciciele` (`nip`, `nazwa_firmy`, `imie`, `nazwisko`) VALUES
-(1899339746, NULL, 'Piotr', 'Krol'),
-(1899339747, NULL, 'Jakub', 'Nowak'),
-(1899339748, 'Adidas', NULL, NULL),
-(1899339749, 'Walkman', NULL, NULL),
-(1899339750, 'Red_Bull', NULL, NULL),
-(1899339751, 'Junkers', NULL, NULL),
-(1899339752, 'Ikea', NULL, NULL),
-(1899339753, NULL, 'Jan', 'Wozniak'),
-(1899339754, NULL, 'Maciej', 'Mazur'),
-(1899339755, 'Bakoma', NULL, NULL);
+('1532573818', 'Januszpol', NULL, NULL),
+('1532573819', 'Toyota', NULL, NULL),
+('1532573820', 'Adidas', NULL, NULL),
+('1532573821', NULL, 'Natalia', 'Leszczyk'),
+('1532573822', NULL, 'Jakub', 'Karol'),
+('1532573823', NULL, 'Jan', 'Nowaczyk'),
+('1532573824', 'Ikea', NULL, NULL),
+('1532573825', 'Tesco', NULL, NULL),
+('1532573826', NULL, 'Karol', 'Mazur'),
+('1532573827', NULL, 'Magda', 'Krawczyk');
 
 --
 -- Wyzwalacze `wlasciciele`
@@ -1300,7 +1324,7 @@ DELIMITER ;
 --
 
 CREATE TABLE `wlasciciel_biblioteka` (
-  `wlasciciel_nip` varchar(50) NOT NULL,
+  `wlasciciel_nip` varchar(50) COLLATE utf8mb4_polish_ci NOT NULL,
   `biblioteka_nazwa` varchar(50) CHARACTER SET utf8 COLLATE utf8_polish_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_polish_ci;
 
@@ -1309,16 +1333,16 @@ CREATE TABLE `wlasciciel_biblioteka` (
 --
 
 INSERT INTO `wlasciciel_biblioteka` (`wlasciciel_nip`, `biblioteka_nazwa`) VALUES
-(1899339746, 'Biblioteka_miejska'),
-(1899339747, 'Ksiazki_sa_super'),
-(1899339748, 'Warto_czytac'),
-(1899339749, 'Biblioteka_na_rynku'),
-(1899339750, 'Biblioteka_szkolna'),
-(1899339751, 'Biblioteka_na_Kwiatowej'),
-(1899339752, 'Biblioteka_dziecieca'),
-(1899339753, 'Super_Biblioteka'),
-(1899339754, 'Czytam_ksiazki'),
-(1899339755, 'Czytanie_jest_fajne');
+('1532573818', 'Biblioteka_dziecieca'),
+('1532573819', 'Biblioteka_miejska'),
+('1532573820', 'Biblioteka_na_Kwiatowej'),
+('1532573821', 'Biblioteka_na_rynku'),
+('1532573822', 'Biblioteka_szkolna'),
+('1532573823', 'Czytam_ksiazki'),
+('1532573824', 'Czytanie_jest_fajne'),
+('1532573825', 'Ksiazki_sa_super'),
+('1532573826', 'Super_Biblioteka'),
+('1532573827', 'Warto_czytac');
 
 --
 -- Wyzwalacze `wlasciciel_biblioteka`
@@ -1473,19 +1497,19 @@ ALTER TABLE `wlasciciel_biblioteka`
 -- AUTO_INCREMENT dla tabeli `autorzy`
 --
 ALTER TABLE `autorzy`
-  MODIFY `autor_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `autor_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT dla tabeli `czytelnicy`
 --
 ALTER TABLE `czytelnicy`
-  MODIFY `czytelnik_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `czytelnik_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT dla tabeli `egzemplarze`
 --
 ALTER TABLE `egzemplarze`
-  MODIFY `egzemplarz_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `egzemplarz_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT dla tabeli `historia_operacji`
@@ -1497,13 +1521,13 @@ ALTER TABLE `historia_operacji`
 -- AUTO_INCREMENT dla tabeli `ksiazki`
 --
 ALTER TABLE `ksiazki`
-  MODIFY `ksiazka_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `ksiazka_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT dla tabeli `pracownicy`
 --
 ALTER TABLE `pracownicy`
-  MODIFY `pracownik_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `pracownik_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- Ograniczenia dla zrzutów tabel

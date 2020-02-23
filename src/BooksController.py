@@ -834,7 +834,7 @@ class BooksController:
                 self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
-                                      f"Are You sure that You want to delete {len(self.table.multiplerowlist)} records?")
+                                      f"Possible data loss. Are you sure?")
         if confirm:
             self.database.connection.commit()
         else:
@@ -853,9 +853,7 @@ class BooksController:
                                                 f"WHERE `imie` = \"{self.data2[recName]['Imię']}\" "
                                                 f"AND `nazwisko` = \"{self.data2[recName]['Nazwisko']}\"")
             try:
-                pass
-                #self.database.deleteAuthorRecord(id[0][0])
-                #TODO: zrobic
+                self.database.deleteAuthorRecord(id[0][0])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
@@ -868,7 +866,7 @@ class BooksController:
                 self.themeWindow.focus_set()
                 return
         confirm = messagebox.askyesno("Deleting record confirmation",
-                                      f"Are You sure that You want to delete {len(self.table2.multiplerowlist)} records?")
+                                      f"Possible data loss. Are you sure?")
         if confirm:
             self.database.connection.commit()
         else:

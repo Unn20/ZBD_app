@@ -302,15 +302,22 @@ class Database:
 
     def deleteOwner(self, nip):
         try:
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=0")
-
-            self.executeStatement(f"DELETE FROM `wlasciciele` "
-                                  f"WHERE `nip` = \"{nip}\"")
 
             self.executeStatement(f"DELETE FROM `wlasciciel_biblioteka`"
                                   f"WHERE `wlasciciel_nip` = \"{nip}\"")
 
-            self.executeStatement("SET FOREIGN_KEY_CHECKS=1")
+            self.executeStatement(f"DELETE FROM `historia_operacji` "
+                                  f"where biblioteka_nazwa in (SELECT b.nazwa "
+                                  f"FROM `biblioteki` as b "
+                                  f"WHERE NOT EXISTS(SELECT * FROM `wlasciciel_biblioteka` as wb "
+                                  f"WHERE wb.biblioteka_nazwa = b.nazwa))")
+
+            self.executeStatement(f"DELETE FROM `wlasciciele` "
+                                  f"WHERE `nip` = \"{nip}\"")
+
+            self.executeStatement(f"DELETE FROM `biblioteki` WHERE "
+                                  f"NOT EXISTS(SELECT * FROM `wlasciciel_biblioteka` "
+                                  f"WHERE `biblioteka_nazwa` = `nazwa`)")
             return True
         except Exception as e:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
@@ -490,9 +497,28 @@ class Database:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
-    def deleteAuthorRecord(self):
-        pass
-        #TODO: zrobic usuwanie autora z tabeli z autorami
+    def deleteAuthorRecord(self, authorId):
+        try:
+            self.executeStatement(f"DELETE FROM `autor_ksiazka`"
+                                  f"WHERE `autorzy_autor_id` = \"{authorId}\"")
+
+            self.executeStatement(f"DELETE FROM `historia_operacji` "
+                                  f"where egzemplarz_id in (SELECT e.egzemplarz_id "
+                                  f"FROM `ksiazki` k JOIN `egzemplarze` as e on e.ksiazka_id = k.ksiazka_id "
+                                  f"WHERE NOT EXISTS(SELECT * FROM `autor_ksiazka`"
+                                  f"WHERE `ksiazki_ksiazka_id` = k.ksiazka_id))")
+
+            self.executeStatement(f"DELETE FROM `autorzy` "
+                                  f"WHERE `autor_id` = \"{authorId}\"")
+
+            self.executeStatement(f"DELETE FROM `ksiazki` WHERE "
+                                  f"NOT EXISTS(SELECT * FROM `autor_ksiazka` "
+                                  f"WHERE `ksiazki_ksiazka_id` = `ksiazka_id`)")
+
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
 
     def addAuthor(self, name, surname, birthDate, deathDate):
         if name != "":
@@ -870,14 +896,10 @@ class Database:
                     comments):
         self.logger.debug("Borrowing book.")
 
-        bookDate = None # do usuniecia potem
-        bookGenre = None
-
         try:
-            # TODO: to przerobic bo juz nie potrzeba gatunku i daty
             self.executeStatement(f"CALL borrowBook('{libraryName}', '{workerName}', '{workerSurname}',"
                                   f"'{readerName}', '{readerSurname}', '{bookTitle}',"
-                                  f"'{bookDate}', '{bookGenre}', '{comments}');")
+                                  f"'{comments}');")
             self.logger.debug("Book borrowed succesfully.")
             return True
 
@@ -997,7 +1019,7 @@ class Database:
             book_id = 'NULL'
             title = booksTitles[i]
             date = random.choice(dates)
-            genre = random.choice(genres)
+            genre = genres[i]
             values = [book_id, title, date, genre]
             self.addRecord('ksiazki', values)
         self.logger.debug("Books records put into 'ksiazki' table succesfully.")
@@ -1008,7 +1030,7 @@ class Database:
             number = i
             capacity = random.randint(5,9)
             booksCount = 0
-            section = random.randint(0,9)
+            section = i
             section = 'dzial' + str(section)
             values = [number, capacity, booksCount, section]
             self.addRecord('regaly', values)
@@ -1038,7 +1060,7 @@ class Database:
         tmp = self.getRawData('biblioteki')
         libraries = [record[0] for record in tmp]
         for i in range(len(libraries)):
-            nip = random.choice(nips)
+            nip = nips[i]
             library = libraries[i]
             values = [nip, library]
             self.addRecord('wlasciciel_biblioteka', values)
@@ -1051,7 +1073,7 @@ class Database:
         tmp = self.getRawData('ksiazki')
         books_ids = [record[0] for record in tmp]
         for i in range(len(books_ids)):
-            author_id = random.choice(authors_ids)
+            author_id = authors_ids[i]
             book_id = books_ids[i]
             values = [author_id, book_id]
             self.addRecord('autor_ksiazka', values)
@@ -1088,15 +1110,18 @@ class Database:
         self.logger.debug("Generating workers. Putting records to `pracownicy` table.")
         self.executeStatement("SET FOREIGN_KEY_CHECKS = 0;")
         self.logger.debug("FOREIGN_KEY_CHECKS disabled")
+        bosses = []
         for i in range(10):
-            worker_id = 'NULL'
-            if i != 0:
-                boss_id = random.choice(['NULL', random.randint(0, i - 1)])
+            worker_id = i
+            if len(bosses) != 0:
+                boss_id = random.choice(['NULL', random.choice(bosses)])
             else:
                 boss_id = 'NULL'
             name = random.choice(names)
             surname = surnames[i]
             function = random.choice(workersFunctions)
+            if function == 'szef':
+                bosses.append(worker_id)
             values = [worker_id, boss_id, name, surname, function]
             self.addRecord('pracownicy', values)
         self.executeStatement("SET FOREIGN_KEY_CHECKS = 1;")

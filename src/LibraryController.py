@@ -208,9 +208,7 @@ class LibraryController:
             deletedRecord = list()
             deletedRecord.append(self.data2[recName]["NIP"])
             try:
-                print(f"Deleted record = {deletedRecord}")
-                #TODO: zrobic
-                #self.database.deleteAuthorRecord(deletedRecord[0])
+                self.database.deleteAuthorRecord(deletedRecord[0])
             except Exception as e:
                 self.logger.error(f"Can not delete selected records! Error = {e}")
                 errorNo = int(e.__str__().split()[0][1:-1])
@@ -620,7 +618,7 @@ class AddController:
         if len(self.listboxAssigned.curselection()) == 0 and len(self.listboxUnAssigned.curselection()) == 0:
             messagebox.showerror("Delete problem", "Please select an owner to remove!")
             return
-        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected owner?")
+        confirm = messagebox.askyesno("Deleting", "Possible data loss. Are you sure?")
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
                 nip = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
@@ -882,7 +880,7 @@ class ModifyController:
             messagebox.showerror("Delete problem", "Please select an owner to remove!")
             self.assignWindow.focus_set()
             return
-        confirm = messagebox.askyesno("Deleting", "Are you sure that you want to delete selected owner?")
+        confirm = messagebox.askyesno("Deleting", "Possible data loss. Are you sure?")
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
                 nip = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
@@ -1000,9 +998,7 @@ class ModifyController2:
 
     def checkEntry(self):
         try:
-            pass
-            #TODO: Modyfikowanie wlasciciela do zrobienia
-            #self.database.modifyLibrary(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(), self.oldAssigments)
+            self.database.modifyLibrary(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(), self.oldAssigments)
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:
