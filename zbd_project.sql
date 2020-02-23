@@ -191,7 +191,7 @@ CREATE TABLE `autorzy` (
 INSERT INTO `autorzy` (`autor_id`, `imie`, `nazwisko`, `data_urodzenia`, `data_smierci`) VALUES
 (0, 'Jan', 'Krol', '1978-09-03', NULL),
 (1, 'Maciej', 'Nowak', '1976-03-30', NULL),
-(2, 'Jakub', 'Zima', '1974-10-11', '1980-10-11'),
+(2, 'Jakub', 'Zima', '1974-10-11', '1990-10-11'),
 (3, 'Natalia', 'Leszczyk', '1971-12-25', NULL),
 (4, 'Piotr', 'Karol', '1971-12-25', '1991-07-17'),
 (5, 'Piotr', 'Nowaczyk', '1973-07-17', NULL),
@@ -942,16 +942,16 @@ CREATE TABLE `ksiazki` (
 --
 
 INSERT INTO `ksiazki` (`ksiazka_id`, `tytul`, `data_opublikowania`, `gatunek`) VALUES
-(0, 'Trociny', '1979-04-14', 'powiesc_historyczna'),
-(1, 'Szeptucha', '1979-04-14', 'fantasy'),
-(2, 'Polska_odwraca_oczy', '1970-05-05', 'horror'),
-(3, 'On', '1979-04-14', 'klasyka'),
-(4, 'Zycie_na_pelnej_petardzie', '1978-09-03', 'kryminal'),
-(5, 'Okularnik', '1972-08-01', 'sensacja'),
-(6, 'Najgorszy_czlowiek_na_swiecie', '1977-11-28', 'thriller'),
-(7, 'Inna_dusza', '1972-08-01', 'literatura_mlodziezo'),
-(8, 'Ksiegi_Jakubowe', '1974-10-11', 'literatura_obyczajow'),
-(9, 'Gniew', '1974-10-11', 'romans');
+(0, 'Trociny', '1989-04-14', 'powiesc_historyczna'),
+(1, 'Szeptucha', '1989-04-14', 'fantasy'),
+(2, 'Polska_odwraca_oczy', '1980-05-05', 'horror'),
+(3, 'On', '1989-04-14', 'klasyka'),
+(4, 'Zycie_na_pelnej_petardzie', '1988-09-03', 'kryminal'),
+(5, 'Okularnik', '1982-08-01', 'sensacja'),
+(6, 'Najgorszy_czlowiek_na_swiecie', '1987-11-28', 'thriller'),
+(7, 'Inna_dusza', '1982-08-01', 'literatura_mlodziezo'),
+(8, 'Ksiegi_Jakubowe', '1984-10-11', 'literatura_obyczajow'),
+(9, 'Gniew', '1984-10-11', 'romans');
 
 --
 -- Wyzwalacze `ksiazki`
