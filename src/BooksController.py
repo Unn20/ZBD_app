@@ -267,9 +267,12 @@ class BooksController:
                             self.addSpecimenWindow.focus_set()
                             return
                         self.database.connection.commit()
+                        self.specimenWindow.focus_set()
+                        self.addSpecimenWindow.destroy()
+                        self.addSpecimenWindow = None
                         func()
                     else:
-                        self.addSpecimenWindow.focus_set()
+                        self.specimenWindow.focus_set()
                         return
                 else:
                     confirm = messagebox.askyesno("Add", "Given rack doesn't exists. Would You like to create a new rack?")
@@ -292,6 +295,7 @@ class BooksController:
                         self.addSpecimenWindow.destroy()
                         self.addSpecimenWindow = None
                         func()
+                        self.specimenWindow.focus_set()
                     else:
                         self.addSpecimenWindow.focus_set()
                         return
@@ -341,7 +345,7 @@ class BooksController:
         def addDep():
             if entry1.get() == "" or entry2.get() == "":
                 messagebox.showerror("Error", "Fill all mandatory fields!")
-                self.newDepartmentWindow
+                self.newDepartmentWindow.focus_set()
                 return
             confirm = messagebox.askyesno("Add", "You want to add new department?")
             if confirm:
@@ -350,14 +354,14 @@ class BooksController:
                 except Exception as e:
                     messagebox.showerror("Can not delete selected records!",
                                          f"Error {e}")
-                    self.newDepartmentWindow
+                    self.newDepartmentWindow.focus_set()
                     return
                 self.database.connection.commit()
                 self.newDepartmentWindow.destroy()
                 self.newDepartmentWindow = None
                 #entry.set(entry1.get())
             else:
-                self.newDepartmentWindow
+                self.newDepartmentWindow.focus_set()
                 return
 
         window = Toplevel(self.addSpecimenWindow)
@@ -475,6 +479,7 @@ class BooksController:
 
         self.database.connection.commit()
         func()
+        self.specimenWindow.focus_set()
         return
 
     def findByAuthor(self):
