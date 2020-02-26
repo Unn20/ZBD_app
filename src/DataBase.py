@@ -299,6 +299,32 @@ class Database:
             self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
             raise Exception(e)
 
+    def modifyOwner(self, old_nip, new_nip, companyName, name, surname):
+        if name != "":
+            name = "\"" + name + "\""
+        else:
+            name = "NULL"
+        if surname != "":
+            surname = "\"" + surname + "\""
+        else:
+            surname = "NULL"
+        if companyName != "":
+            companyName = "\"" + companyName + "\""
+        else:
+            companyName = "NULL"
+        try:
+            self.executeStatement(f"UPDATE `wlasciciele` SET "
+                                  f"`nip` = {new_nip}, "
+                                  f"`nazwa_firmy` = {companyName}, "
+                                  f"`imie` = {name}, "
+                                  f"`nazwisko` = {surname} "
+                                  f"WHERE `nip` = {old_nip}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Could not realize an deleteRecord function. Error = {e}")
+            raise Exception(e)
+
+
     def deleteOwner(self, nip):
         try:
 

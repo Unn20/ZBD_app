@@ -574,6 +574,8 @@ class AddController:
                 self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
             except Exception as e:
                 messagebox.showerror("Error", e)
+                self.addWindow1.focus_set()
+                return
             self.database.connection.commit()
             window.destroy()
             self.addWindow1 = None
@@ -611,7 +613,7 @@ class AddController:
     def unAssignOwner(self, func):
         if len(self.listboxAssigned.curselection()) == 0:
             return
-        self.assigments.remove()
+        self.assigments.remove(self.listboxAssigned.get(self.listboxAssigned.curselection()))
         func()
 
     def deleteOwner(self, func):
@@ -835,7 +837,13 @@ class ModifyController:
             if not confirm:
                 self.addWindow1.focus_set()
                 return
-            self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            try:
+                self.database.addOwner(entry1.get(), entry2.get(), entry3.get(), entry4.get())
+            except Exception as e:
+                messagebox.showerror("Error", e)
+                self.addWindow1.focus_set()
+                return
+
             self.database.connection.commit()
             window.destroy()
             self.addWindow1 = None
@@ -951,6 +959,21 @@ class ModifyController2:
 
         self.newRecord = list()
 
+        # ass = self.database.executeStatement(f"SELECT wb.`wlasciciel_nip`, w.`imie`, w.`nazwisko`, w.`nazwa_firmy` "
+        #                                      f"FROM `wlasciciel_biblioteka` wb "
+        #                                      f"JOIN `wlasciciele` w ON wb.`wlasciciel_nip` = w.`nip`"
+        #                                      f"WHERE wb.`biblioteka_nazwa` = \"{self.oldRecord[0]}\"")
+        # self.oldAssigments = list()
+        # for val1, val2, val3, val4 in ass:
+        #     owner = f"{val1}"
+        #     if val2 is not None:
+        #         owner += f" {val2}"
+        #     if val3 is not None:
+        #         owner += f" {val3}"
+        #     if val4 is not None:
+        #         owner += f" {val4}"
+        #     self.oldAssigments.append(owner)
+
         self.helpWindow = None
 
         self.colFrame = Frame(self.modifyWindow, bd=4, relief=RAISED,
@@ -998,7 +1021,8 @@ class ModifyController2:
 
     def checkEntry(self):
         try:
-            self.database.modifyLibrary(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(), self.oldAssigments)
+            self.database.modifyOwner(self.oldRecord[0], self.entries[0].get(), self.entries[1].get(),
+                                      self.entries[2].get(), self.entries[3].get())
         except Exception as e:
             self.logger.error(f"Exception! e = {e}")
             try:

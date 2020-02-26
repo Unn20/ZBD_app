@@ -359,6 +359,7 @@ class BooksController:
                 self.database.connection.commit()
                 self.newDepartmentWindow.destroy()
                 self.newDepartmentWindow = None
+                self.addSpecimenWindow.focus_set()
                 #entry.set(entry1.get())
             else:
                 self.newDepartmentWindow.focus_set()
@@ -430,7 +431,11 @@ class BooksController:
             atr = self.departmentListbox.get(self.departmentListbox.curselection())
             entry.config(state="normal")
             entry.delete("0", "end")
-            entry.insert("end", atr.split(" ")[0])
+            depFirst = atr.split(' ')[0]
+            department = self.database.executeStatement(f"SELECT `nazwa` FROM `dzialy` "
+                                                        f"WHERE `nazwa` LIKE \'{depFirst}%\'")
+            #print(department)
+            entry.insert("end", department[0][0])
             entry.config(state="readonly")
             exit()
             return
@@ -1084,7 +1089,7 @@ class AddController:
             self.newAuthorWindow = None
             self.assignWindow.focus_set()
         def clicked():
-            if empty.get() == 1:
+            if empty.get() == 0:
                 entry4.delete(0, "end")
                 entry4.config(state='disabled')
             else:
@@ -1095,7 +1100,6 @@ class AddController:
                 messagebox.showerror("Error", "Please fill all mandatory fields!")
                 self.newAuthorWindow.focus_set()
                 return
-
 
             confirm = messagebox.askyesno("New author", "Are you sure that you want add new author?")
             if not confirm:
@@ -1110,6 +1114,7 @@ class AddController:
                 return
             self.database.connection.commit()
             window.destroy()
+            self.newAuthorWindow = None
             func()
 
         window = Toplevel(self.assignWindow)
@@ -1130,7 +1135,7 @@ class AddController:
         entry4 = DateEntry(window, date_pattern='y-mm-dd')
         entry4.grid(row=3, column=1)
         empty = IntVar()
-        emptyButton = Checkbutton(window, text="Empty", variable=empty, command=clicked)
+        emptyButton = Checkbutton(window, text="Zmarł", variable=empty, command=clicked)
         emptyButton.grid(row=3, column=2)
 
         Button(window, text="Add", command=addAuthor).grid(row=4, column=0)
@@ -1474,6 +1479,7 @@ class ModifyController:
                 return
             self.database.connection.commit()
             window.destroy()
+            self.newAuthorWindow = None
             func()
 
         window = Toplevel(self.assignWindow)
