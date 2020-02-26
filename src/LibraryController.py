@@ -624,10 +624,16 @@ class AddController:
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
                 nip = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+                other = self.listboxAssigned.get(self.listboxAssigned.curselection())[10:]
+                assigned = True
             else:
                 nip = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+                other = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection())[10:]
+                assigned = False
             self.database.deleteOwner(nip)
             self.database.connection.commit()
+            if assigned:
+                self.assigments.remove(nip + other)
         else:
             return
         self.assignWindow.focus_set()
@@ -892,10 +898,16 @@ class ModifyController:
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
                 nip = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+                other = self.listboxAssigned.get(self.listboxAssigned.curselection())[10:]
+                assigned = True
             else:
                 nip = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+                other = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection())[10:]
+                assigned = False
             self.database.deleteOwner(nip)
             self.database.connection.commit()
+            if assigned:
+                self.assigments.remove(nip + other)
         else:
             self.assignWindow.focus_set()
             return

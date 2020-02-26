@@ -1050,6 +1050,8 @@ class AddController:
             for val in self.assigments:
                 self.listboxAssigned.insert("end", val)
 
+            self.assignWindow.focus_set()
+
         self.assigments = self.oldAssigments.copy()
 
         self.assignWindow = Toplevel(self.addWindow)
@@ -1161,11 +1163,22 @@ class AddController:
         confirm = messagebox.askyesno("Deleting", "Possible data loss. Are you sure?")
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
-                id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+                name = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+                surname = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[1]
+                dates = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[2]
+                assigned = True
             else:
-                id = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+                name = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+                surname = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[1]
+                dates = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[2]
+                assigned = False
             try:
-                self.database.deleteAuthor(id)
+                id = self.database.executeStatement(f"SELECT `autor_id` FROM `autorzy` "
+                                                    f"WHERE `imie` = \'{name}\' "
+                                                    f"AND `nazwisko` = \'{surname}\'")
+                self.database.deleteAuthor(id[0][0])
+                if assigned:
+                    self.assigments.remove(f"{name} {surname} {dates}")
             except Exception as e:
                 messagebox.showerror("Can not delete selected records!",
                                      f"Error {e}")
@@ -1413,6 +1426,8 @@ class ModifyController:
             for val in self.assigments:
                 self.listboxAssigned.insert("end", val)
 
+            self.assignWindow.focus_set()
+
         self.assigments = self.oldAssigments.copy()
 
         self.assignWindow = Toplevel(self.modifyWindow)
@@ -1530,11 +1545,22 @@ class ModifyController:
         confirm = messagebox.askyesno("Deleting", "Possible data loss. Are you sure?")
         if confirm:
             if len(self.listboxAssigned.curselection()) != 0:
-                id = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+                name = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[0]
+                surname = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[1]
+                dates = self.listboxAssigned.get(self.listboxAssigned.curselection()).split(" ")[2]
+                assigned = True
             else:
-                id = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+                name = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[0]
+                surname = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[1]
+                dates = self.listboxUnAssigned.get(self.listboxUnAssigned.curselection()).split(" ")[2]
+                assigned = False
             try:
-                self.database.deleteAuthor(id)
+                id = self.database.executeStatement(f"SELECT `autor_id` FROM `autorzy` "
+                                                    f"WHERE `imie` = \'{name}\' "
+                                                    f"AND `nazwisko` = \'{surname}\'")
+                self.database.deleteAuthor(id[0][0])
+                if assigned:
+                    self.assigments.remove(f"{name} {surname} {dates}")
             except Exception as e:
                 messagebox.showerror("Can not delete selected records!",
                                      f"Error {e}")
